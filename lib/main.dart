@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:scrum_poker/firebase_options.dart';
 import 'package:scrum_poker/room_screen.dart';
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   runApp(const MyApp());
 }
 
