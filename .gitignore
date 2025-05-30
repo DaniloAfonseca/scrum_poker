@@ -47,6 +47,9 @@ app.*.map.json
 # Firebase configuration
 lib/firebase_options.dart
 
+# jira authentication
+lib/jira_authentication.dart
+
 firebase.json
 
 
