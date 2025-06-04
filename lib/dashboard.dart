@@ -5,8 +5,6 @@ class Dashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder(
-      child: Text('Hi, '),
-    );
+    return const Scaffold(body: Text('Hi, '));
   }
 }

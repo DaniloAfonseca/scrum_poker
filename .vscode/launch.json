@@ -9,7 +9,7 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "args": ["--web-port=8080", "--web-experimental-hot-reload"]
+            "args": ["--web-port=1010", "--web-experimental-hot-reload"]
         },
         {
             "name": "scrum_poker (profile mode)",
