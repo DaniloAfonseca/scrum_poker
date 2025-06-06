@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:web/web.dart' as web;
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:scrum_poker/jira_authentication.dart';
 
@@ -11,7 +11,7 @@ class Login extends StatelessWidget {
     return Scaffold(body: Center(child: ElevatedButton.icon(onPressed: () => launchJiraOAuth(), label: Text('Login'), icon: Icon(Icons.access_alarm))));
   }
 
-  void launchJiraOAuth() {
+  Future<void> launchJiraOAuth() async {
     final clientId = JiraAuthentication.clientId;
     final redirectUri = Uri.encodeComponent('https://yourapp.com/callback');
     final scope = Uri.encodeComponent('read:jira-user read:jira-work write:jira-work');
@@ -20,7 +20,8 @@ class Login extends StatelessWidget {
     final authUrl =
         'https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=$clientId&scope=$scope&redirect_uri=$redirectUri&state=$state&response_type=code&prompt=consent';
 
+    final Uri uri = Uri.parse(authUrl);
     // Open new tab/window
-    web.window.open(authUrl, '_blank');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
