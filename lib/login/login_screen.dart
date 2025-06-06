@@ -33,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
         .signInWithEmailAndPassword(_emailController.text, _passwordController.text)
         .then((user) {
           if (user != null) {
-            navigatorKey.currentContext!.go(Routes.room);
+            navigatorKey.currentContext!.go(Routes.dashboard);
           } else {
             ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(const SnackBar(content: Text('Invalid email or password')));
           }

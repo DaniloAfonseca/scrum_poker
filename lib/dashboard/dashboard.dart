@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/dashboard/user_room.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/user.dart' as u;
+import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
+import 'package:scrum_poker/shared/services/auth_services.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -26,8 +28,6 @@ class _DashboardState extends State<Dashboard> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (auth.currentUser == null) {
         context.go(Routes.login);
-      } else {
-        context.go(Routes.room);
       }
     });
   }
@@ -36,13 +36,29 @@ class _DashboardState extends State<Dashboard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
+      appBar: AppBar(
+        actionsPadding: const EdgeInsets.only(right: 16.0),
+        title: Text('Welcome ${user.name}', style: theme.textTheme.displayLarge),
+        actions: [
+          CircleAvatar(
+            backgroundColor: Colors.blueAccent,
+            child: IconButton(
+              icon: Icon(Icons.person_outline, color: Colors.white),
+              onPressed: () {
+                AuthServices().signOut().then((_) {
+                  navigatorKey.currentContext!.go(Routes.login);
+                });
+              },
+            ),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
-            Text('Welcome ${user.name}', style: theme.textTheme.displayLarge),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
