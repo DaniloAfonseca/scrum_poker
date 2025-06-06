@@ -16,4 +16,14 @@ class AuthServices {
       return null;
     }
   }
+
+  Future<void> signOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error signing out: $e');
+      }
+    }
+  }
 }
