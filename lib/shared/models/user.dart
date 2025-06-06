@@ -1,5 +1,6 @@
 class User {
-  String email;
+  final String email;
+  final String name;
 
-  User({required this.email});
+  User({required this.email, required this.name});
 }
