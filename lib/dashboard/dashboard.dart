@@ -1,8 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/dashboard/user_room.dart';
 import 'package:scrum_poker/shared/models/room.dart';
-import 'package:scrum_poker/shared/models/user.dart';
+import 'package:scrum_poker/shared/models/user.dart' as u;
 import 'package:scrum_poker/shared/router/routes.dart';
 
 class Dashboard extends StatefulWidget {
@@ -13,8 +14,23 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  final user = User(email: 'danilo.afonseca@gmail.com', name: 'Danilo');
+  final auth = FirebaseAuth.instance;
+  final user = u.User(email: 'danilo.afonseca@gmail.com', name: 'Danilo');
   final rooms = [Room(name: 'Room 1', dateAdded: DateTime.now(), id: '', stories: [])];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Redirect to login if not authenticated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (auth.currentUser == null) {
+        context.go(Routes.login);
+      } else {
+        context.go(Routes.room);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

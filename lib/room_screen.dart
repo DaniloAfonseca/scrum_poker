@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:scrum_poker/shared/router/go_router.dart';
+import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/vote_board.dart';
 import 'package:scrum_poker/voting_cards.dart';
+
+import 'shared/services/auth_services.dart';
 
 class RoomScreen extends StatelessWidget {
   const RoomScreen({super.key});
@@ -8,8 +13,30 @@ class RoomScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Scrum Poker')),
-      body: Column(children: [TextField(decoration: InputDecoration(labelText: 'Jira Issue Key')), Expanded(child: VoteBoard()), VotingCards()]),
+      appBar: AppBar(
+        actionsPadding: const EdgeInsets.only(right: 16.0),
+        title: Text('Scrum Poker'),
+        actions: [
+          CircleAvatar(
+            backgroundColor: Colors.blueAccent,
+            child: IconButton(
+              icon: Icon(Icons.person_outline, color: Colors.white),
+              onPressed: () {
+                AuthServices().signOut().then((_) {
+                  navigatorKey.currentContext!.go(Routes.login);
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(child: TextField(decoration: InputDecoration(labelText: 'Jira Issue Key'))),
+          // Expanded(child: VoteBoard()),
+          // VotingCards(),
+        ],
+      ),
     );
   }
 }
