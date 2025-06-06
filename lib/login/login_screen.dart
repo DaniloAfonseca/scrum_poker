@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 
@@ -32,15 +33,13 @@ class _LoginPageState extends State<LoginPage> {
         .signInWithEmailAndPassword(_emailController.text, _passwordController.text)
         .then((user) {
           if (user != null) {
-            if (context.mounted) {
-              context.go(Routes.room);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid email or password')));
-            }
+            navigatorKey.currentContext!.go(Routes.room);
+          } else {
+            ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(const SnackBar(content: Text('Invalid email or password')));
           }
         })
         .catchError((error) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $error')));
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(SnackBar(content: Text('Error: $error')));
         })
         .whenComplete(() {
           setState(() => _isLoading = false);

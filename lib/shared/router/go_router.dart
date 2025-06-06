@@ -6,6 +6,8 @@ import 'package:scrum_poker/login/login_screen.dart';
 import 'package:scrum_poker/room_screen.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 String? authGuard(BuildContext context, GoRouterState state) {
   final auth = FirebaseAuth.instance;
   if (auth.currentUser == null) {
@@ -18,6 +20,7 @@ class ManagerRouter {
   static final router = GoRouter(
     initialLocation: '/',
     redirect: authGuard,
+    navigatorKey: navigatorKey,
     routes: [
       GoRoute(
         path: '/',
