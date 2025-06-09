@@ -44,10 +44,13 @@ dependencies:
   go_router: ^15.1.2
   url_launcher: ^6.2.5
   intl: ^0.20.2
+  json_annotation: ^4.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  json_serializable: ^6.9.5
+  build_runner: ^2.4.15
   
 
   # The "flutter_lints" package below contains a set of recommended lints to

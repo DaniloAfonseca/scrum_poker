@@ -30,13 +30,7 @@ class RoomScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(child: TextField(decoration: InputDecoration(labelText: 'Jira Issue Key'))),
-          // Expanded(child: VoteBoard()),
-          // VotingCards(),
-        ],
-      ),
+      body: Column(children: [Expanded(child: TextField(decoration: InputDecoration(labelText: 'Jira Issue Key'))), Expanded(child: VoteBoard()), VotingCards()]),
     );
   }
 }
