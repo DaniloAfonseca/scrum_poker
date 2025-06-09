@@ -13,8 +13,8 @@ class RoomStoryEditor extends StatefulWidget {
 
 class _RoomStoryEditorState extends State<RoomStoryEditor> {
   final _menuKey = GlobalKey();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _urlController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _urlController = TextEditingController();
   late Story story;
   bool isEditing = false;
 
@@ -22,6 +22,9 @@ class _RoomStoryEditorState extends State<RoomStoryEditor> {
   void initState() {
     story = widget.story ?? Story(description: '', status: StoryStatusEnum.newStory, votes: [], added: true);
     isEditing = (widget.story?.added ?? false) || widget.story == null;
+
+    _descriptionController.value = TextEditingValue(text: story.description);
+    _urlController.value = TextEditingValue(text: story.url ?? '');
 
     super.initState();
   }
@@ -111,6 +114,7 @@ class _RoomStoryEditorState extends State<RoomStoryEditor> {
                         onPressed: () {
                           story.description = _descriptionController.value.text;
                           story.url = _urlController.value.text;
+                          story.added = false;
                           setState(() {
                             isEditing = false;
                           });
@@ -146,7 +150,7 @@ class _RoomStoryEditorState extends State<RoomStoryEditor> {
                   position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
                 );
               },
-              icon: Icon(Icons.more_vert, color: Colors.white),
+              icon: Icon(Icons.more_vert),
             ),
         ],
       ),
