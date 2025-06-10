@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,10 +19,14 @@ class Dashboard extends StatefulWidget {
   State<Dashboard> createState() => _DashboardState();
 }
 
+enum SortOrder { ascending, descending }
+
 class _DashboardState extends State<Dashboard> {
   final firebaseUser = FirebaseAuth.instance.currentUser;
   u.User? user;
   bool showDeleted = false;
+
+  final List<bool> _selectedOrder = <bool>[true, false];
 
   @override
   void initState() {
@@ -49,7 +55,7 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       appBar: AppBar(
         actionsPadding: const EdgeInsets.only(right: 16.0),
-        title: user == null ? const CircularProgressIndicator(color: Colors.white) : Text('Welcome ${user?.name}', style: theme.textTheme.displayLarge),
+        title: user == null ? const CircularProgressIndicator(color: Colors.white) : Text('Welcome ${user?.name}', style: theme.textTheme.displayMedium),
         actions: [
           CircleAvatar(
             backgroundColor: Colors.blueAccent,
@@ -71,25 +77,89 @@ class _DashboardState extends State<Dashboard> {
           spacing: 10,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                AnimatedToggleSwitch<String>.rolling(
-                  current: showDeleted ? 'All' : 'Not deleted',
-                  values: ['All', 'Not deleted'],
-                  onChanged:
-                      (value) => setState(() {
-                        showDeleted = value == 'All';
-                      }),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    context.go(Routes.editRoom, extra: {'user': user!});
+                ToggleButtons(
+                  isSelected: _selectedOrder,
+                  borderRadius: BorderRadius.circular(6),
+                  //constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: (index) {
+                    if (index == 1) {
+                      user!.rooms.sort((a, b) => b.dateAdded!.compareTo(a.dateAdded!));
+                    } else {
+                      user!.rooms.sort((a, b) => a.dateAdded!.compareTo(b.dateAdded!));
+                    }
+                    setState(() {
+                      // The button that is tapped is set to true, and the others to false.
+                      for (int i = 0; i < _selectedOrder.length; i++) {
+                        _selectedOrder[i] = i == index;
+                      }
+                    });
                   },
-                  child: Text('Add Room'),
+                  children: [
+                    Tooltip(message: 'Sort by earliest date', child: Transform.rotate(origin: Offset(-3, -3), angle: -0.5 * pi, child: Icon(Icons.arrow_back_ios))),
+                    Tooltip(message: 'Sort by latest date', child: Transform.rotate(origin: Offset(-3, 1), angle: 0.5 * pi, child: Icon(Icons.arrow_back_ios))),
+                  ],
+                ),
+                Row(
+                  spacing: 10,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    AnimatedToggleSwitch<bool>.dual(
+                      current: showDeleted,
+                      first: false,
+                      second: true,
+                      spacing: 70.0,
+                      indicatorSize: Size(22, 22),
+                      animationDuration: const Duration(milliseconds: 600),
+                      style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
+                      customStyleBuilder: (context, local, global) {
+                        if (global.position <= 0.0) {
+                          return ToggleStyle(backgroundColor: Colors.red);
+                        }
+                        return ToggleStyle(
+                          backgroundGradient: LinearGradient(
+                            colors: [Colors.blue[600]!, Colors.red],
+                            stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
+                          ),
+                        );
+                      },
+                      borderWidth: 5.0,
+                      height: 32.0,
+                      //loadingIconBuilder: (context, global) => CupertinoActivityIndicator(color: Color.lerp(Colors.red[800], green, global.position)),
+                      onChanged: (b) => setState(() => showDeleted = b),
+                      // iconBuilder:
+                      //     (value) =>
+                      //         value ? const Icon(Icons.power_outlined, color: Colors.green, size: 32.0) : Icon(Icons.power_settings_new_rounded, color: Colors.red[800], size: 32.0),
+                      textBuilder:
+                          (value) =>
+                              value
+                                  ? Center(child: Text('All', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)))
+                                  : Center(child: Text('Not deleted', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white))),
+                    ),
+
+                    ElevatedButton(
+                      onPressed: () {
+                        context.go(Routes.editRoom, extra: {'user': user!});
+                      },
+                      child: Text('Add Room'),
+                    ),
+                  ],
                 ),
               ],
             ),
-            if (user != null) Expanded(child: ListView(children: user!.rooms.map((room) => UserRoom(user: user!, room: room)).toList())),
+            if (user != null)
+              SingleChildScrollView(
+                child: Column(
+                  spacing: 10,
+                  children:
+                      user!.rooms
+                          .where((t) => showDeleted ? true : t.dateDeleted == null)
+                          .map((room) => UserRoom(user: user!, room: room, deletedChanged: () => setState(() {})))
+                          .toList(),
+                ),
+              ),
           ],
         ),
       ),

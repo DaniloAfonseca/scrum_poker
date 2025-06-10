@@ -26,6 +26,30 @@ Room _$RoomFromJson(Map<String, dynamic> json) =>
                   .map((e) => Story.fromJson(e as Map<String, dynamic>))
                   .toList(),
         ),
+        cardsToUse: $checkedConvert(
+          'cardsToUse',
+          (v) =>
+              (v as List<dynamic>)
+                  .map((e) => $enumDecode(_$VoteEnumEnumMap, e))
+                  .toList(),
+        ),
       );
       return val;
     });
+
+const _$VoteEnumEnumMap = {
+  VoteEnum.zero: 'zero',
+  VoteEnum.half: 'half',
+  VoteEnum.one: 'one',
+  VoteEnum.two: 'two',
+  VoteEnum.three: 'three',
+  VoteEnum.five: 'five',
+  VoteEnum.eight: 'eight',
+  VoteEnum.thirteen: 'thirteen',
+  VoteEnum.twenty: 'twenty',
+  VoteEnum.forty: 'forty',
+  VoteEnum.oneHundred: 'oneHundred',
+  VoteEnum.questionMark: 'questionMark',
+  VoteEnum.infinity: 'infinity',
+  VoteEnum.coffee: 'coffee',
+};

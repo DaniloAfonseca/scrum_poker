@@ -47,6 +47,7 @@ dependencies:
   json_annotation: ^4.9.0
   uuid: ^4.5.1
   animated_toggle_switch: ^0.8.5
+  collection: ^1.18.0
 
 dev_dependencies:
   flutter_test:

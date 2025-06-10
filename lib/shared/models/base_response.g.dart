@@ -9,11 +9,17 @@ part of 'base_response.dart';
 BaseResponse<T> _$BaseResponseFromJson<T>(
   Map<String, dynamic> json,
   T Function(Object? json) fromJsonT,
-) => BaseResponse<T>(
-  success: json['success'] as bool,
-  message: json['message'] as String?,
-  data: _$nullableGenericFromJson(json['data'], fromJsonT),
-);
+) => $checkedCreate('BaseResponse', json, ($checkedConvert) {
+  final val = BaseResponse<T>(
+    success: $checkedConvert('success', (v) => v as bool),
+    message: $checkedConvert('message', (v) => v as String?),
+    data: $checkedConvert(
+      'data',
+      (v) => _$nullableGenericFromJson(v, fromJsonT),
+    ),
+  );
+  return val;
+});
 
 Map<String, dynamic> _$BaseResponseToJson<T>(
   BaseResponse<T> instance,
