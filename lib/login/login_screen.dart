@@ -55,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
       body: Center(
         child: Container(
           padding: EdgeInsets.all(isSmallScreen ? 20.0 : 40.0),
-          constraints: BoxConstraints(maxWidth: isSmallScreen ? screenSize.width * 0.9 : 450.0, maxHeight: 600.0),
+          constraints: BoxConstraints(maxWidth: isSmallScreen ? screenSize.width * 0.9 : 450.0, maxHeight: 800.0),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15.0),
@@ -145,6 +145,22 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey, thickness: 1)),
+                      Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text('OR', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold))),
+                      Expanded(child: Divider(color: Colors.grey, thickness: 1)),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        AuthServices().signInWithJira();
+                      },
+                      child: Text('Login by JIRA'),
+                    ),
+                  ),
                 ],
               ),
             ),
