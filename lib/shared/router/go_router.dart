@@ -6,6 +6,7 @@ import 'package:scrum_poker/dashboard/user_room_editor.dart';
 import 'package:scrum_poker/login/login_screen.dart';
 import 'package:scrum_poker/room_screen.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
+import 'package:scrum_poker/shared/models/user.dart' as u;
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -50,7 +51,10 @@ class ManagerRouter {
       GoRoute(
         path: Routes.editRoom,
         builder: (context, state) {
-          return UserRoomEditor(roomId: state.extra as String?);
+          final map = state.extra as Map<String, dynamic>;
+          final roomId = map['roomId'] as String?;
+          final user = map['user'] as u.User;
+          return UserRoomEditor(roomId: roomId, user: user);
         },
       ),
     ],
