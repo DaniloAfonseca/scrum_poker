@@ -2,26 +2,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/dashboard/room_story_editor.dart';
+import 'package:scrum_poker/room_setup/room_story_page.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
+import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:uuid/uuid.dart';
 import 'package:scrum_poker/shared/models/user.dart' as u;
 import 'package:collection/collection.dart';
 
-class UserRoomEditor extends StatefulWidget {
+class UserRoomPage extends StatefulWidget {
   final u.User user;
   final String? roomId;
-  const UserRoomEditor({super.key, required this.user, this.roomId});
+  const UserRoomPage({super.key, required this.user, this.roomId});
 
   @override
-  State<UserRoomEditor> createState() => _UserRoomEditorState();
+  State<UserRoomPage> createState() => _UserRoomPageState();
 }
 
-class _UserRoomEditorState extends State<UserRoomEditor> {
+class _UserRoomPageState extends State<UserRoomPage> {
   final firebaseUser = FirebaseAuth.instance.currentUser!;
   final TextEditingController _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -54,11 +55,34 @@ class _UserRoomEditorState extends State<UserRoomEditor> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraint) {
         return Scaffold(
+          appBar: AppBar(
+            actionsPadding: const EdgeInsets.only(right: 16.0),
+            title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
+            actions: [
+              CircleAvatar(
+                backgroundColor: Colors.blueAccent,
+                child: IconButton(
+                  icon: Icon(Icons.person_outline, color: Colors.white),
+                  onPressed: () {
+                    AuthServices().signOut().then((_) {
+                      navigatorKey.currentContext!.go(Routes.login);
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
           body: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Form(
@@ -86,7 +110,7 @@ class _UserRoomEditorState extends State<UserRoomEditor> {
                             if (value == null || value.isEmpty) {
                               return 'Invalid room description';
                             }
-        
+
                             return null;
                           },
                         ),
@@ -110,8 +134,14 @@ class _UserRoomEditorState extends State<UserRoomEditor> {
                           ),
                         ],
                       ),
-        
+
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                          elevation: 5,
+                        ),
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             room.name = _nameController.value.text;
@@ -142,6 +172,12 @@ class _UserRoomEditorState extends State<UserRoomEditor> {
                           SizedBox(
                             width: 150,
                             child: CheckboxListTile(
+                              fillColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.blueAccent;
+                                }
+                                return Colors.white;
+                              }),
                               controlAffinity: ListTileControlAffinity.leading,
                               value: allCards,
                               title: Text('Use all cards'),
@@ -160,31 +196,40 @@ class _UserRoomEditorState extends State<UserRoomEditor> {
                               },
                             ),
                           ),
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.start,
-                            children:
-                                VoteEnum.values
-                                    .mapIndexed(
-                                      (index, value) => SizedBox(
-                                        width: 120,
-                                        child: CheckboxListTile(
-                                          controlAffinity: ListTileControlAffinity.leading,
-                                          contentPadding: EdgeInsets.all(0),
-                                          splashRadius: 10,
-                                          tristate: false,
-                                          visualDensity: VisualDensity(horizontal: -4, vertical: -4),
-                                          value: cardsToUse[index],
-                                          onChanged: (v) {
-                                            setState(() {
-                                              allCards = false;
-                                              cardsToUse[index] = v == true;
-                                            });
-                                          },
-                                          title: Text(value.label),
+                          SizedBox(
+                            width: constraint.maxWidth - 40,
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.start,
+                              children:
+                                  VoteEnum.values
+                                      .mapIndexed(
+                                        (index, value) => SizedBox(
+                                          width: 120,
+                                          child: CheckboxListTile(
+                                            fillColor: WidgetStateProperty.resolveWith((states) {
+                                              if (states.contains(WidgetState.selected)) {
+                                                return Colors.blueAccent;
+                                              }
+                                              return Colors.white;
+                                            }),
+                                            controlAffinity: ListTileControlAffinity.leading,
+                                            contentPadding: EdgeInsets.all(0),
+                                            splashRadius: 10,
+                                            tristate: false,
+                                            visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                                            value: cardsToUse[index],
+                                            onChanged: (v) {
+                                              setState(() {
+                                                allCards = false;
+                                                cardsToUse[index] = v == true;
+                                              });
+                                            },
+                                            title: Text(value.label),
+                                          ),
                                         ),
-                                      ),
-                                    )
-                                    .toList(),
+                                      )
+                                      .toList(),
+                            ),
                           ),
                         ],
                       ),
@@ -194,6 +239,12 @@ class _UserRoomEditorState extends State<UserRoomEditor> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                          elevation: 5,
+                        ),
                         onPressed: () {
                           room.stories.add(Story(description: '', status: StoryStatusEnum.newStory, votes: [], added: true));
                           setState(() {
@@ -210,7 +261,7 @@ class _UserRoomEditorState extends State<UserRoomEditor> {
                       children:
                           room.stories
                               .mapIndexed(
-                                (index, story) => RoomStoryEditor(
+                                (index, story) => RoomStoryPage(
                                   key: ValueKey(story),
                                   story: story,
                                   deletedChanged: () {
@@ -245,7 +296,7 @@ class _UserRoomEditorState extends State<UserRoomEditor> {
             ),
           ),
         );
-      }
+      },
     );
   }
 }

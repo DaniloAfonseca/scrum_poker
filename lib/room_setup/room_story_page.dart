@@ -3,23 +3,25 @@ import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_work_item.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:scrum_poker/shared/models/user.dart' as u;
 
-class RoomStoryEditor extends StatefulWidget {
+class RoomStoryPage extends StatefulWidget {
   final Story? story;
   final Function() deletedChanged;
   final Function()? moveUp;
   final Function()? moveDown;
-  const RoomStoryEditor({super.key, this.story, required this.deletedChanged, this.moveUp, this.moveDown});
+  const RoomStoryPage({super.key, this.story, required this.deletedChanged, this.moveUp, this.moveDown});
 
   @override
-  State<RoomStoryEditor> createState() => _RoomStoryEditorState();
+  State<RoomStoryPage> createState() => _RoomStoryPageState();
 }
 
-class _RoomStoryEditorState extends State<RoomStoryEditor> {
+class _RoomStoryPageState extends State<RoomStoryPage> {
   final _menuKey = GlobalKey();
   final _searchController = SearchController();
   final _descriptionController = TextEditingController();
   final _urlController = TextEditingController();
+  late u.User user;
   late Story story;
   bool isEditing = false;
   bool integratedWithJira = true;
@@ -44,12 +46,20 @@ class _RoomStoryEditorState extends State<RoomStoryEditor> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    _descriptionController.dispose();
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: isEditing ? Colors.white : Colors.blue[600],
+        color: isEditing ? Colors.white : Colors.blueAccent,
         borderRadius: BorderRadius.circular(15.0),
         boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 5, blurRadius: 7, offset: const Offset(0, 3))],
       ),
@@ -190,7 +200,13 @@ class _RoomStoryEditorState extends State<RoomStoryEditor> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton(
-                        child: Text('Save'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                          elevation: 5,
+                        ),
+                        child: Text('Update'),
                         onPressed: () {
                           story.description = _descriptionController.value.text;
                           story.url = _urlController.value.text;

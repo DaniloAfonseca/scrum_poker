@@ -5,23 +5,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/dashboard/user_room.dart';
+import 'package:scrum_poker/room_setup/user_room.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/user.dart' as u;
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 
-class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+class MainPage extends StatefulWidget {
+  const MainPage({super.key});
 
   @override
-  State<Dashboard> createState() => _DashboardState();
+  State<MainPage> createState() => _MainPageState();
 }
 
 enum SortOrder { ascending, descending }
 
-class _DashboardState extends State<Dashboard> {
+class _MainPageState extends State<MainPage> {
   final firebaseUser = FirebaseAuth.instance.currentUser;
   u.User? user;
   bool showDeleted = false;
@@ -55,7 +55,7 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       appBar: AppBar(
         actionsPadding: const EdgeInsets.only(right: 16.0),
-        title: user == null ? const CircularProgressIndicator(color: Colors.white) : Text('Welcome ${user?.name}', style: theme.textTheme.displayMedium),
+        title: user == null ? const CircularProgressIndicator(color: Colors.white) : Text('Scrum Poker', style: theme.textTheme.displayMedium),
         actions: [
           CircleAvatar(
             backgroundColor: Colors.blueAccent,
@@ -140,6 +140,12 @@ class _DashboardState extends State<Dashboard> {
                     ),
 
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                        elevation: 5,
+                      ),
                       onPressed: () {
                         context.go(Routes.editRoom, extra: {'user': user!});
                       },
