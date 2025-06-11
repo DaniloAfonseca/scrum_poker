@@ -1,15 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/user_room_page.dart';
-import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/voting/room_page.dart';
+import 'package:scrum_poker/shared/router/login_route.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/models/user.dart' as u;
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+//TODO: Manage redirections here.
 String? authGuard(BuildContext context, GoRouterState state) {
   final auth = FirebaseAuth.instance;
   if (auth.currentUser == null && !state.matchedLocation.startsWith(Routes.room)) {
@@ -31,9 +33,11 @@ class ManagerRouter {
           return const MainPage();
         },
       ),
+      loginRoute,
       GoRoute(
-        path: Routes.login,
+        path: Routes.redirect,
         builder: (context, state) {
+          final roomId = state.uri.queryParameters['id'];
           return LoginPage();
         },
       ),

@@ -4,4 +4,5 @@ class Routes {
   static String dashboard = '/dashboard';
   static String editRoom = '/editRoom';
   static String test = '/test';
+  static String redirect = '/redirect';
 }

@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:scrum_poker/shared/models/base_response.dart';
 
 class BaseServices {
-  final String baseUrl = 'https://jiraauth-fvxqqvi45a-uc.a.run.app';
+  final String baseUrl = 'http://127.0.0.1:5001/scrum-poker-2f00b/us-central1/jiraAuth';
+
+  // 'https://jiraauth-fvxqqvi45a-uc.a.run.app';
 
   Future<Map<String, String>> _getHeaders({required String token}) async {
     final headers = <String, String>{'Content-Type': 'application/json', 'Accept': 'application/json'};
