@@ -77,16 +77,16 @@ class _UserRoomState extends State<UserRoom> {
                   PopupMenuItem(
                     child: Row(spacing: 5, children: [Icon(Icons.edit), Text('Edit')]),
                     onTap: () {
-                      context.go(Routes.editRoom, extra: {'roomId': room.id, 'user': user});
+                      context.go(Routes.editRoom, extra: {'roomId': room.id});
                     },
                   ),
                   PopupMenuItem(
                     child: Row(spacing: 5, children: [Icon(FontAwesomeIcons.doorOpen), Text('Open')]),
                     onTap: () async {
-                      final roomExists = await FirebaseFirestore.instance.collection('room').doc(room.id).snapshots().isEmpty;
-                      if (roomExists) {
-                        final json = widget.user.toJson();
-                        await FirebaseFirestore.instance.collection('room').doc(room.id).set(json);
+                      final roomDoesNotExists = await FirebaseFirestore.instance.collection('rooms').doc(room.id).snapshots().isEmpty;
+                      if (!roomDoesNotExists) {
+                        final json = room.toJson();
+                        await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
                       }
                       navigatorKey.currentContext!.go('${Routes.room}/${room.id}');
                     },

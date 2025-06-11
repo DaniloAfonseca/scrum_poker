@@ -1,11 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
+import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/shared/router/go_router.dart';
+import 'package:scrum_poker/shared/router/routes.dart';
+import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/voting/room_login.dart';
-import 'package:scrum_poker/voting/vote_board.dart';
-import 'package:scrum_poker/voting/voting_cards.dart';
+import 'package:scrum_poker/voting/voting_board.dart';
+import 'package:scrum_poker/voting/voting_story.dart';
+import 'package:scrum_poker/shared/models/user.dart' as u;
 
 class RoomPage extends StatefulWidget {
   final String? roomId;
@@ -20,7 +27,10 @@ class _RoomPageState extends State<RoomPage> {
   String? _username;
   bool _isLoading = true;
   Box? _box;
-  Room? room;
+  bool invalidRoom = false;
+  String currentMessage = '';
+  u.User? user;
+  var currentStory = ValueNotifier<Story?>(null);
 
   @override
   void initState() {
@@ -36,16 +46,71 @@ class _RoomPageState extends State<RoomPage> {
     _box = await Hive.openBox('scrumPoker');
 
     if (firebaseUser != null) {
-      final dbUser = await FirebaseFirestore.instance.collection('users').doc(firebaseUser!.uid).snapshots().first;
-      _box!.put('username', dbUser['name']);
-    }
+      user = await getUser(firebaseUser!.uid);
 
-    if (_box!.get('username') != null) {}
+      _box!.put('username', user!.name);
+      addUserToStory(user!.name);
+      setState(() {
+        currentMessage = 'Click "Start" to begin voting';
+      });
+    } else {
+      setState(() {
+        currentMessage = 'Waiting for moderator';
+      });
+    }
 
     setState(() {
       _username = _box!.get('username');
       _isLoading = false;
     });
+  }
+
+  Future<void> addUserToStory(String username) async {
+    final room = await getRoom();
+    if (room == null) {
+      invalidRoom = true;
+      return;
+    }
+
+    // add user to room
+    if (room.currentUsers?.contains(username) != true) {
+      room.currentUsers ??= [];
+      room.currentUsers!.add(username);
+      final roomMap = room.toJson();
+      await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
+    }
+
+    final notStartedStories = room.stories.where((t) => t.status == StoryStatusEnum.newStory).toList();
+    if (notStartedStories.isNotEmpty) {
+      currentStory.value = notStartedStories.first;
+    }
+
+    // add user to moderator romm
+    final user = await getUser(room.userId);
+    final userRoom = user!.rooms.firstWhere((t) => t.id == room.id);
+    if (userRoom.currentUsers?.contains(username) != true) {
+      userRoom.currentUsers ??= [];
+      userRoom.currentUsers!.add(username);
+      final userMap = user.toJson();
+      await FirebaseFirestore.instance.collection('users').doc(room.userId).set(userMap);
+    }
+  }
+
+  Future<Room?> getRoom() async {
+    final roomDoesNotExists = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().isEmpty;
+    if (!roomDoesNotExists) {
+      final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().first;
+      final map = dbRoom.data()!;
+      return Room.fromJson(map);
+    }
+    return null;
+  }
+
+  Future<u.User?> getUser(String userId) async {
+    final dbUser = await FirebaseFirestore.instance.collection('users').doc(userId).snapshots().first;
+    final map = dbUser.data()!;
+
+    return u.User.fromJson(map);
   }
 
   @override
@@ -66,6 +131,11 @@ class _RoomPageState extends State<RoomPage> {
                       onPressed: () {
                         _box!.delete('username');
                         setState(() {
+                          if (firebaseUser != null) {
+                            AuthServices().signOut().then((_) {
+                              navigatorKey.currentContext!.go(Routes.login);
+                            });
+                          }
                           _username = null;
                         });
                       },
@@ -82,12 +152,88 @@ class _RoomPageState extends State<RoomPage> {
                   _box!.put('username', username);
                   setState(() async {
                     _username = username;
+                    addUserToStory(username);
                     //room = await FirebaseFirestore.instance.collection('room').doc(widget.roomId).snapshots().first;
                   });
                 },
               )
-              : //Column(children: [Text()],)
-              Column(children: [Expanded(child: TextField(decoration: InputDecoration(labelText: 'Jira Issue Key'))), Expanded(child: VoteBoard()), VotingCards()]),
+              : StreamBuilder(
+                stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+                  final map = snapshot.data!.data()!;
+                  final room = Room.fromJson(map);
+                  final currentUsers = room.currentUsers;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(room.name!, style: theme.textTheme.headlineLarge),
+                        SizedBox(
+                          height: 600,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 20,
+                            children: [
+                              Expanded(child: VotingStory(roomId: widget.roomId!, userName: _username!, cards: room.cardsToUse, story: currentStory)),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    height: 50,
+                                    width: 400,
+                                    decoration: BoxDecoration(color: Colors.blueAccent),
+                                    alignment: Alignment.center,
+                                    child: Text(currentMessage, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
+                                  ),
+                                  if (firebaseUser != null)
+                                    Container(
+                                      height: 70,
+                                      width: 400,
+                                      decoration: BoxDecoration(color: Colors.grey[100], border: Border(bottom: BorderSide(color: Colors.grey[300]!))),
+                                      alignment: Alignment.center,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.blueAccent,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                          elevation: 5,
+                                        ),
+                                        onPressed: currentStory.value != null ? () {} : null,
+                                        child: Text('Start'),
+                                      ),
+                                    ),
+                                  Container(
+                                    height: 50,
+                                    width: 400,
+                                    decoration: BoxDecoration(color: Colors.grey[100], border: Border(bottom: BorderSide(color: Colors.grey[300]!))),
+                                    alignment: Alignment.centerLeft,
+                                    padding: EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text('Players:', style: theme.textTheme.headlineSmall),
+                                  ),
+                                  if (currentUsers != null && currentUsers.isNotEmpty)
+                                    ...currentUsers.map(
+                                      (u) => Container(
+                                        height: 50,
+                                        width: 400,
+                                        decoration: BoxDecoration(color: Colors.grey[100], border: Border(bottom: BorderSide(color: Colors.grey[300]!))),
+                                        alignment: Alignment.centerLeft,
+                                        padding: EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(u, style: theme.textTheme.bodyLarge),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+      //Column(children: [Expanded(child: TextField(decoration: InputDecoration(labelText: 'Jira Issue Key'))), Expanded(child: VoteBoard()), VotingCards()]),
     );
   }
 }

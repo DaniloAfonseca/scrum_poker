@@ -62,8 +62,7 @@ class ManagerRouter {
         builder: (context, state) {
           final map = state.extra as Map<String, dynamic>;
           final roomId = map['roomId'] as String?;
-          final user = map['user'] as u.User;
-          return UserRoomPage(roomId: roomId, user: user);
+          return UserRoomPage(roomId: roomId);
         },
       ),
     ],

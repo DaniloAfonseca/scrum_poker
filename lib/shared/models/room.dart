@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -12,8 +14,10 @@ class Room {
   DateTime? dateDeleted;
   final List<Story> stories;
   final List<VoteEnum> cardsToUse;
+  List<String>? currentUsers;
+  String userId;
 
-  Room({this.name, this.id, this.dateAdded, this.dateDeleted, required this.stories, required this.cardsToUse});
+  Room({this.name, this.id, this.dateAdded, this.dateDeleted, required this.stories, required this.cardsToUse, this.currentUsers, required this.userId});
 
   factory Room.fromJson(Map<String, dynamic> json) => _$RoomFromJson(json);
   Map<String, dynamic> toJson() => _$RoomToJson(this);
@@ -24,7 +28,8 @@ class Room {
     'dateAdded': instance.dateAdded?.toIso8601String(),
     'dateDeleted': instance.dateDeleted?.toIso8601String(),
     'stories': stories.map((story) => story.toJson()).toList(),
-    'cardsToUse': cardsToUse.map((card) => _$VoteEnumEnumMap[card]!)
+    'cardsToUse': cardsToUse.map((card) => _$VoteEnumEnumMap[card]!),
+    'currentUsers': instance.currentUsers,
+    'userId': instance.userId
   };
-
 }

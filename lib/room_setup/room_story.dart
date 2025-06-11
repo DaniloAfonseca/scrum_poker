@@ -5,18 +5,18 @@ import 'package:scrum_poker/shared/models/story.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:scrum_poker/shared/models/user.dart' as u;
 
-class RoomStoryPage extends StatefulWidget {
+class RoomStory extends StatefulWidget {
   final Story? story;
   final Function() deletedChanged;
   final Function()? moveUp;
   final Function()? moveDown;
-  const RoomStoryPage({super.key, this.story, required this.deletedChanged, this.moveUp, this.moveDown});
+  const RoomStory({super.key, this.story, required this.deletedChanged, this.moveUp, this.moveDown});
 
   @override
-  State<RoomStoryPage> createState() => _RoomStoryPageState();
+  State<RoomStory> createState() => _RoomStoryState();
 }
 
-class _RoomStoryPageState extends State<RoomStoryPage> {
+class _RoomStoryState extends State<RoomStory> {
   final _menuKey = GlobalKey();
   final _searchController = SearchController();
   final _descriptionController = TextEditingController();

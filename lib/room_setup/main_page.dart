@@ -44,8 +44,9 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> loadUser() async {
     final dbUser = await FirebaseFirestore.instance.collection('users').doc(firebaseUser!.uid).snapshots().first;
+    final map = dbUser.data()!;
     setState(() {
-      user = u.User(id: firebaseUser!.uid, name: dbUser['name'], rooms: (dbUser['rooms'] as List<dynamic>).map((e) => Room.fromJson(e as Map<String, dynamic>)).toList());
+      user = u.User.fromJson(map);
     });
   }
 

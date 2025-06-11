@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class VoteBoard extends StatelessWidget {
-  const VoteBoard({super.key});
+class VotingBoard extends StatelessWidget {
+  const VotingBoard({super.key});
 
   @override
   Widget build(BuildContext context) {

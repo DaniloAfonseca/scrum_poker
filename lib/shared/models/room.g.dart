@@ -33,6 +33,11 @@ Room _$RoomFromJson(Map<String, dynamic> json) =>
                   .map((e) => $enumDecode(_$VoteEnumEnumMap, e))
                   .toList(),
         ),
+        currentUsers: $checkedConvert(
+          'currentUsers',
+          (v) => (v as List<dynamic>?)?.map((e) => e as String).toList(),
+        ),
+        userId: $checkedConvert('userId', (v) => v as String),
       );
       return val;
     });

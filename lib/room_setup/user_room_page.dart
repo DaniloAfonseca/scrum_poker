@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/room_setup/room_story_page.dart';
+import 'package:scrum_poker/room_setup/room_story.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
@@ -14,9 +14,8 @@ import 'package:scrum_poker/shared/models/user.dart' as u;
 import 'package:collection/collection.dart';
 
 class UserRoomPage extends StatefulWidget {
-  final u.User user;
   final String? roomId;
-  const UserRoomPage({super.key, required this.user, this.roomId});
+  const UserRoomPage({super.key, this.roomId});
 
   @override
   State<UserRoomPage> createState() => _UserRoomPageState();
@@ -45,8 +44,8 @@ class _UserRoomPageState extends State<UserRoomPage> {
 
   @override
   void initState() {
-    user = widget.user;
-    room = widget.roomId == null ? Room(stories: [], dateAdded: DateTime.now(), id: Uuid().v4(), cardsToUse: VoteEnum.values) : user.rooms.firstWhere((t) => t.id == widget.roomId);
+    loadUser();
+    room = widget.roomId == null ? Room(stories: [], dateAdded: DateTime.now(), id: Uuid().v4(), cardsToUse: VoteEnum.values, userId: firebaseUser.uid) : user.rooms.firstWhere((t) => t.id == widget.roomId);
     deleted = room.dateDeleted != null;
     _nameController.text = room.name ?? '';
     allCards = widget.roomId == null || room.cardsToUse.length == VoteEnum.values.length;
@@ -58,6 +57,14 @@ class _UserRoomPageState extends State<UserRoomPage> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> loadUser() async {
+    final dbUser = await FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).snapshots().first;
+    final map = dbUser.data()!;
+    setState(() {
+      user = u.User.fromJson(map);
+    });
   }
 
   @override
@@ -261,7 +268,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                       children:
                           room.stories
                               .mapIndexed(
-                                (index, story) => RoomStoryPage(
+                                (index, story) => RoomStory(
                                   key: ValueKey(story),
                                   story: story,
                                   deletedChanged: () {
