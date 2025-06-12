@@ -3,7 +3,7 @@ import 'package:scrum_poker/shared/models/enums.dart';
 
 part 'vote.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(includeIfNull: false)
 class Vote {
   String voter;
   VoteEnum value;

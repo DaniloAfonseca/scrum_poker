@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:scrum_poker/jira_authentication.dart';
 import 'package:scrum_poker/shared/services/base_services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:http/http.dart' as http;
 
 class AuthServices extends BaseServices {
   final auth = FirebaseAuth.instance;
@@ -24,8 +21,8 @@ class AuthServices extends BaseServices {
   }
 
   Future<void> signInWithJira() async {
-    final clientId = JiraAuthentication.clientId2;
-    final clientSecret = JiraAuthentication.secret2;
+    final clientId = JiraAuthentication.clientId;
+    final clientSecret = JiraAuthentication.secret;
     final redirectUri = Uri.encodeComponent('http://localhost:1010/redirect');
     final scope = Uri.encodeComponent('read:jira-work manage:jira-project manage:jira-configuration read:jira-user write:jira-work manage:jira-webhook manage:jira-data-provider');
     final state = 'random_string_to_protect_against_csrf';

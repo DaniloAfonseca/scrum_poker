@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,9 +12,9 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/voting/room_login.dart';
-import 'package:scrum_poker/voting/voting_board.dart';
+import 'package:scrum_poker/voting/voting_players.dart';
 import 'package:scrum_poker/voting/voting_story.dart';
-import 'package:scrum_poker/shared/models/user.dart' as u;
+import 'package:scrum_poker/shared/models/app_user.dart';
 
 class RoomPage extends StatefulWidget {
   final String? roomId;
@@ -24,13 +26,14 @@ class RoomPage extends StatefulWidget {
 
 class _RoomPageState extends State<RoomPage> {
   final firebaseUser = FirebaseAuth.instance.currentUser;
-  String? _username;
+  final _appUser = ValueNotifier<AppUser?>(null);
   bool _isLoading = true;
   Box? _box;
   bool invalidRoom = false;
-  String currentMessage = '';
-  u.User? user;
-  var currentStory = ValueNotifier<Story?>(null);
+  AppUser? user;
+  final currentStory = ValueNotifier<Story?>(null);
+  final currentMessage = ValueNotifier<String>('');
+  final currentUsers = ValueNotifier<List<AppUser>>([]);
 
   @override
   void initState() {
@@ -47,25 +50,26 @@ class _RoomPageState extends State<RoomPage> {
 
     if (firebaseUser != null) {
       user = await getUser(firebaseUser!.uid);
-
-      _box!.put('username', user!.name);
-      addUserToStory(user!.name);
-      setState(() {
-        currentMessage = 'Click "Start" to begin voting';
-      });
+      final appUser = AppUser.fromAppUser(user!, true);
+      _box!.put('appUser', appUser.toJson());
+      addUserToStory(appUser);
+      currentMessage.value = 'Click "Start" to begin voting';
     } else {
-      setState(() {
-        currentMessage = 'Waiting for moderator';
-      });
+      currentMessage.value = 'Waiting for moderator';
+    }
+
+    final appUserMap = _box!.get('appUser');
+    if (appUserMap != null) {
+      final map = jsonDecode(jsonEncode(appUserMap));
+      _appUser.value = AppUser.fromJson(map);
     }
 
     setState(() {
-      _username = _box!.get('username');
       _isLoading = false;
     });
   }
 
-  Future<void> addUserToStory(String username) async {
+  Future<void> addUserToStory(AppUser appUser) async {
     final room = await getRoom();
     if (room == null) {
       invalidRoom = true;
@@ -73,9 +77,9 @@ class _RoomPageState extends State<RoomPage> {
     }
 
     // add user to room
-    if (room.currentUsers?.contains(username) != true) {
+    if (room.currentUsers?.any((t) => t.name == appUser.name) != true) {
       room.currentUsers ??= [];
-      room.currentUsers!.add(username);
+      room.currentUsers!.add(appUser);
       final roomMap = room.toJson();
       await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
     }
@@ -85,12 +89,12 @@ class _RoomPageState extends State<RoomPage> {
       currentStory.value = notStartedStories.first;
     }
 
-    // add user to moderator romm
+    // add user to moderator room
     final user = await getUser(room.userId);
-    final userRoom = user!.rooms.firstWhere((t) => t.id == room.id);
-    if (userRoom.currentUsers?.contains(username) != true) {
+    final userRoom = user!.rooms!.firstWhere((t) => t.id == room.id);
+    if (userRoom.currentUsers?.any((t) => t.name == appUser.name) != true) {
       userRoom.currentUsers ??= [];
-      userRoom.currentUsers!.add(username);
+      userRoom.currentUsers!.add(appUser);
       final userMap = user.toJson();
       await FirebaseFirestore.instance.collection('users').doc(room.userId).set(userMap);
     }
@@ -106,11 +110,11 @@ class _RoomPageState extends State<RoomPage> {
     return null;
   }
 
-  Future<u.User?> getUser(String userId) async {
+  Future<AppUser?> getUser(String userId) async {
     final dbUser = await FirebaseFirestore.instance.collection('users').doc(userId).snapshots().first;
     final map = dbUser.data()!;
 
-    return u.User.fromJson(map);
+    return AppUser.fromJson(map);
   }
 
   @override
@@ -118,7 +122,7 @@ class _RoomPageState extends State<RoomPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar:
-          (_username == null)
+          (_appUser.value == null)
               ? null
               : AppBar(
                 actionsPadding: const EdgeInsets.only(right: 16.0),
@@ -136,104 +140,60 @@ class _RoomPageState extends State<RoomPage> {
                               navigatorKey.currentContext!.go(Routes.login);
                             });
                           }
-                          _username = null;
+                          _appUser.value = null;
                         });
                       },
                     ),
                   ),
                 ],
               ),
-      body:
-          _isLoading
-              ? Center(child: CircularProgressIndicator())
-              : (_username == null)
-              ? RoomLogin(
-                login: (username) {
-                  _box!.put('username', username);
-                  setState(() async {
-                    _username = username;
-                    addUserToStory(username);
-                    //room = await FirebaseFirestore.instance.collection('room').doc(widget.roomId).snapshots().first;
-                  });
-                },
-              )
-              : StreamBuilder(
-                stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-                  final map = snapshot.data!.data()!;
-                  final room = Room.fromJson(map);
-                  final currentUsers = room.currentUsers;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(room.name!, style: theme.textTheme.headlineLarge),
-                        SizedBox(
-                          height: 600,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 20,
-                            children: [
-                              Expanded(child: VotingStory(roomId: widget.roomId!, userName: _username!, cards: room.cardsToUse, story: currentStory)),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    height: 50,
-                                    width: 400,
-                                    decoration: BoxDecoration(color: Colors.blueAccent),
-                                    alignment: Alignment.center,
-                                    child: Text(currentMessage, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
-                                  ),
-                                  if (firebaseUser != null)
-                                    Container(
-                                      height: 70,
-                                      width: 400,
-                                      decoration: BoxDecoration(color: Colors.grey[100], border: Border(bottom: BorderSide(color: Colors.grey[300]!))),
-                                      alignment: Alignment.center,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.blueAccent,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                          elevation: 5,
-                                        ),
-                                        onPressed: currentStory.value != null ? () {} : null,
-                                        child: Text('Start'),
-                                      ),
-                                    ),
-                                  Container(
-                                    height: 50,
-                                    width: 400,
-                                    decoration: BoxDecoration(color: Colors.grey[100], border: Border(bottom: BorderSide(color: Colors.grey[300]!))),
-                                    alignment: Alignment.centerLeft,
-                                    padding: EdgeInsets.symmetric(horizontal: 16),
-                                    child: Text('Players:', style: theme.textTheme.headlineSmall),
-                                  ),
-                                  if (currentUsers != null && currentUsers.isNotEmpty)
-                                    ...currentUsers.map(
-                                      (u) => Container(
-                                        height: 50,
-                                        width: 400,
-                                        decoration: BoxDecoration(color: Colors.grey[100], border: Border(bottom: BorderSide(color: Colors.grey[300]!))),
-                                        alignment: Alignment.centerLeft,
-                                        padding: EdgeInsets.symmetric(horizontal: 16),
-                                        child: Text(u, style: theme.textTheme.bodyLarge),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
+      body: ValueListenableBuilder(
+        valueListenable: _appUser,
+        builder:
+            (ctx, value, child) =>
+                _isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : (_appUser.value == null)
+                    ? RoomLogin(
+                      login: (username) {
+                        final appUser = AppUser(name: username);
+
+                        _box!.put('appUser', appUser.toJson());
+
+                        _appUser.value = appUser;
+                        addUserToStory(appUser);
+                      },
+                    )
+                    : StreamBuilder(
+                      stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+                        final map = snapshot.data!.data()!;
+                        final room = Room.fromJson(map);
+                        currentUsers.value = room.currentUsers ?? [];
+                        return SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(room.name!, style: theme.textTheme.headlineLarge),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  spacing: 20,
+                                  children: [
+                                    Expanded(child: VotingStory(roomId: widget.roomId!, cards: room.cardsToUse, story: currentStory)),
+                                    VotingPlayers(currentMessage: currentMessage, currentStory: currentStory, currentUsers: currentUsers),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-      //Column(children: [Expanded(child: TextField(decoration: InputDecoration(labelText: 'Jira Issue Key'))), Expanded(child: VoteBoard()), VotingCards()]),
+        //Column(children: [Expanded(child: TextField(decoration: InputDecoration(labelText: 'Jira Issue Key'))), Expanded(child: VoteBoard()), VotingCards()]),
+      ),
     );
   }
 }

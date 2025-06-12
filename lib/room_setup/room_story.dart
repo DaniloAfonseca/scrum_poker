@@ -3,7 +3,7 @@ import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_work_item.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:scrum_poker/shared/models/user.dart' as u;
+import 'package:scrum_poker/shared/models/app_user.dart';
 
 class RoomStory extends StatefulWidget {
   final Story? story;
@@ -21,7 +21,7 @@ class _RoomStoryState extends State<RoomStory> {
   final _searchController = SearchController();
   final _descriptionController = TextEditingController();
   final _urlController = TextEditingController();
-  late u.User user;
+  late AppUser user;
   late Story story;
   bool isEditing = false;
   bool integratedWithJira = true;

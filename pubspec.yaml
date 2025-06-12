@@ -50,6 +50,7 @@ dependencies:
   collection: ^1.18.0
   hive_ce: ^2.11.3
   font_awesome_flutter: ^10.8.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

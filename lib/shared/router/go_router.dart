@@ -7,7 +7,6 @@ import 'package:scrum_poker/room_setup/user_room_page.dart';
 import 'package:scrum_poker/voting/room_page.dart';
 import 'package:scrum_poker/shared/router/login_route.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
-import 'package:scrum_poker/shared/models/user.dart' as u;
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -37,7 +36,6 @@ class ManagerRouter {
       GoRoute(
         path: Routes.redirect,
         builder: (context, state) {
-          final roomId = state.uri.queryParameters['id'];
           return LoginPage();
         },
       ),

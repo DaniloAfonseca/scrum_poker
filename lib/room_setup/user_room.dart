@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:intl/intl.dart';
-import 'package:scrum_poker/shared/models/user.dart' as u;
+import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/text_tag.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UserRoom extends StatefulWidget {
-  final u.User user;
+  final AppUser user;
   final Room room;
   final Function() deletedChanged;
   const UserRoom({super.key, required this.user, required this.room, required this.deletedChanged});
@@ -21,7 +21,7 @@ class UserRoom extends StatefulWidget {
 
 class _UserRoomState extends State<UserRoom> {
   final _menuKey = GlobalKey();
-  late u.User user;
+  late AppUser user;
   late Room room;
 
   @override
