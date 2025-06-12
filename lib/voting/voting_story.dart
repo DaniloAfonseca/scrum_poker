@@ -16,18 +16,23 @@ class VotingStory extends StatelessWidget {
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder:
-          (ctx, constraint) => Column(
+          (ctx, constraint) => ValueListenableBuilder<Story?>(
+                                      valueListenable: story,
+                                      builder: (context, value, _) {
+                                        return 
+          
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 10,
             children: [
               Text(story.value?.description ?? '', style: theme.textTheme.headlineMedium),
               Container(
                 width: constraint.maxWidth,
-                height: story.value == null ? 400 : null,
+                height: value == null ? 400 : null,
                 padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                 decoration: firebaseUser == null ? BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)) : null,
                 child:
-                    story.value == null || (firebaseUser == null && story.value?.status == StoryStatusEnum.newStory)
+                    value == null || (firebaseUser == null && value.status == StoryStatusEnum.newStory)
                         ? Center(child: Text('Waiting', style: theme.textTheme.displayLarge))
                         : Wrap(
                           alignment: WrapAlignment.center,
@@ -37,7 +42,7 @@ class VotingStory extends StatelessWidget {
                               cards
                                   .map(
                                     (e) => InkWell(
-                                      onTap: story.value?.status == StoryStatusEnum.newStory ? null : () => vote(context, e),
+                                      onTap: value.status == StoryStatusEnum.newStory ? null : () => vote(context, e),
                                       child: Container(
                                         height: 200,
                                         width: 150,
@@ -45,7 +50,7 @@ class VotingStory extends StatelessWidget {
                                         child: Center(
                                           child: Text(
                                             e.label,
-                                            style: theme.textTheme.displayLarge!.copyWith(color: story.value?.status == StoryStatusEnum.newStory ? Colors.grey : Colors.black),
+                                            style: theme.textTheme.displayLarge!.copyWith(color: value.status == StoryStatusEnum.newStory ? Colors.grey : Colors.black),
                                           ),
                                         ),
                                       ),
@@ -55,7 +60,8 @@ class VotingStory extends StatelessWidget {
                         ),
               ),
             ],
-          ),
+          );
+                                      })
     );
   }
 
