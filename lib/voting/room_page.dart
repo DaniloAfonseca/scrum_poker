@@ -10,7 +10,6 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/voting/room_login.dart';
-import 'package:scrum_poker/voting/voting_board.dart';
 import 'package:scrum_poker/voting/voting_story.dart';
 import 'package:scrum_poker/shared/models/user.dart' as u;
 
