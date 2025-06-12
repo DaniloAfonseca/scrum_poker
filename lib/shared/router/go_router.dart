@@ -1,23 +1,41 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/user_room_page.dart';
+import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/voting/room_page.dart';
 import 'package:scrum_poker/shared/router/login_route.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-//TODO: Manage redirections here.
 String? authGuard(BuildContext context, GoRouterState state) {
   final auth = FirebaseAuth.instance;
+
+  // If we receive the token we need to save in Session Storage.
+  final token = state.uri.queryParameters['code'];
+  if (token != null && token.isNotEmpty) {
+    _saveTokenToSessionStorage(token);
+  }
+
   if (auth.currentUser == null && !state.matchedLocation.startsWith(Routes.room)) {
     return Routes.login;
   }
 
   return null;
+}
+
+Future<void> _saveTokenToSessionStorage(String token) async {
+  if (token.isEmpty) return;
+
+  final response = await JiraServices().accessToken(token);
+
+  final box = await Hive.openBox('ScrumPoker');
+
+  await box.put('jiraToken', response.data['access_token']);
 }
 
 class ManagerRouter {

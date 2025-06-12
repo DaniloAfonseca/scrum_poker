@@ -21,10 +21,12 @@ class AuthServices extends BaseServices {
   }
 
   Future<void> signInWithJira() async {
-    final clientId = JiraAuthentication.clientId;
-    final clientSecret = JiraAuthentication.secret;
+    final clientId = JiraAuthentication.clientId2;
+    //final clientSecret = JiraAuthentication.secret2;
     final redirectUri = Uri.encodeComponent('http://localhost:1010/redirect');
-    final scope = Uri.encodeComponent('read:jira-work manage:jira-project manage:jira-configuration read:jira-user write:jira-work manage:jira-webhook manage:jira-data-provider');
+    final scope = Uri.encodeComponent(
+      'read:me read:account read:jira-work manage:jira-project manage:jira-configuration read:jira-user write:jira-work manage:jira-webhook manage:jira-data-provider',
+    );
     final state = 'random_string_to_protect_against_csrf';
 
     final authUrl =
