@@ -10,7 +10,7 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:uuid/uuid.dart';
-import 'package:scrum_poker/shared/models/user.dart' as u;
+import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:collection/collection.dart';
 
 class UserRoomPage extends StatefulWidget {
@@ -25,7 +25,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
   final firebaseUser = FirebaseAuth.instance.currentUser!;
   final TextEditingController _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  late u.User user;
+  late AppUser user;
   late Room room;
   bool newStory = false;
   bool deleted = false;
@@ -45,7 +45,10 @@ class _UserRoomPageState extends State<UserRoomPage> {
   @override
   void initState() {
     loadUser();
-    room = widget.roomId == null ? Room(stories: [], dateAdded: DateTime.now(), id: Uuid().v4(), cardsToUse: VoteEnum.values, userId: firebaseUser.uid) : user.rooms.firstWhere((t) => t.id == widget.roomId);
+    room =
+        widget.roomId == null
+            ? Room(stories: [], dateAdded: DateTime.now(), id: Uuid().v4(), cardsToUse: VoteEnum.values, userId: firebaseUser.uid)
+            : user.rooms!.firstWhere((t) => t.id == widget.roomId);
     deleted = room.dateDeleted != null;
     _nameController.text = room.name ?? '';
     allCards = widget.roomId == null || room.cardsToUse.length == VoteEnum.values.length;
@@ -63,7 +66,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
     final dbUser = await FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).snapshots().first;
     final map = dbUser.data()!;
     setState(() {
-      user = u.User.fromJson(map);
+      user = AppUser.fromJson(map);
     });
   }
 
@@ -159,7 +162,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                               }
                             }
                             if (widget.roomId == null) {
-                              user.rooms.add(room);
+                              user.rooms?.add(room);
                             }
                             final json = user.toJson();
                             await FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).set(json);

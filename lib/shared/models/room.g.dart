@@ -35,7 +35,10 @@ Room _$RoomFromJson(Map<String, dynamic> json) =>
         ),
         currentUsers: $checkedConvert(
           'currentUsers',
-          (v) => (v as List<dynamic>?)?.map((e) => e as String).toList(),
+          (v) =>
+              (v as List<dynamic>?)
+                  ?.map((e) => AppUser.fromJson(e as Map<String, dynamic>))
+                  .toList(),
         ),
         userId: $checkedConvert('userId', (v) => v as String),
       );

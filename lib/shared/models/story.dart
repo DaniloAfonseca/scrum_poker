@@ -4,7 +4,7 @@ import 'package:scrum_poker/shared/models/vote.dart';
 
 part 'story.g.dart';
 
-@JsonSerializable(createToJson: false)
+@JsonSerializable(createToJson: false, includeIfNull: false)
 class Story {
   String description;
   String? url;

@@ -6,8 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/room_setup/user_room.dart';
-import 'package:scrum_poker/shared/models/room.dart';
-import 'package:scrum_poker/shared/models/user.dart' as u;
+import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
@@ -23,7 +22,7 @@ enum SortOrder { ascending, descending }
 
 class _MainPageState extends State<MainPage> {
   final firebaseUser = FirebaseAuth.instance.currentUser;
-  u.User? user;
+  AppUser? user;
   bool showDeleted = false;
 
   final List<bool> _selectedOrder = <bool>[true, false];
@@ -46,7 +45,7 @@ class _MainPageState extends State<MainPage> {
     final dbUser = await FirebaseFirestore.instance.collection('users').doc(firebaseUser!.uid).snapshots().first;
     final map = dbUser.data()!;
     setState(() {
-      user = u.User.fromJson(map);
+      user = AppUser.fromJson(map);
     });
   }
 
@@ -87,9 +86,9 @@ class _MainPageState extends State<MainPage> {
                   //constraints: BoxConstraints(minWidth: 32, minHeight: 32),
                   onPressed: (index) {
                     if (index == 1) {
-                      user!.rooms.sort((a, b) => b.dateAdded!.compareTo(a.dateAdded!));
+                      user!.rooms?.sort((a, b) => b.dateAdded!.compareTo(a.dateAdded!));
                     } else {
-                      user!.rooms.sort((a, b) => a.dateAdded!.compareTo(b.dateAdded!));
+                      user!.rooms?.sort((a, b) => a.dateAdded!.compareTo(b.dateAdded!));
                     }
                     setState(() {
                       // The button that is tapped is set to true, and the others to false.
@@ -161,7 +160,7 @@ class _MainPageState extends State<MainPage> {
                 child: Column(
                   spacing: 10,
                   children:
-                      user!.rooms
+                      user!.rooms!
                           .where((t) => showDeleted ? true : t.dateDeleted == null)
                           .map((room) => UserRoom(user: user!, room: room, deletedChanged: () => setState(() {})))
                           .toList(),

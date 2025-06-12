@@ -54,7 +54,6 @@ class ManagerRouter {
       GoRoute(
         path: Routes.redirect,
         builder: (context, state) {
-          final roomId = state.uri.queryParameters['id'];
           return LoginPage();
         },
       ),
