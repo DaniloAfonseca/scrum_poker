@@ -195,13 +195,57 @@ class _RoomPageState extends State<RoomPage> with SingleTickerProviderStateMixin
                                         spacing: 20,
                                         children: [
                                           VotingStory(roomId: widget.roomId!, cards: room.cardsToUse, story: currentStory),
-                                          TabBar(
-                                            controller: _tabController,
-                                            tabs: [
-                                              Tab(child: Text('Active Stories', style: theme.textTheme.bodyLarge)),
-                                              Tab(child: Text('Completed Stories', style: theme.textTheme.bodyLarge)),
-                                              Tab(child: Text('All Stories', style: theme.textTheme.bodyLarge)),
-                                            ],
+                                          Container(
+                                            decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)),
+                                            child: Column(
+                                              children: [
+                                                TabBar(
+                                                  controller: _tabController,
+                                                  tabs: [
+                                                    Tab(
+                                                      child: Row(
+                                                        spacing: 10,
+                                                        children: [
+                                                          Text('Active Stories', style: theme.textTheme.bodyLarge),
+                                                          CircleAvatar(
+                                                            backgroundColor: Colors.blueAccent,
+                                                            radius: 15,
+                                                            child: Text(room.stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    Tab(
+                                                      child: Row(
+                                                        spacing: 10,
+                                                        children: [
+                                                          Text('Completed Stories', style: theme.textTheme.bodyLarge),
+                                                          CircleAvatar(
+                                                            backgroundColor: Colors.blueAccent,
+                                                            radius: 15,
+                                                            child: Text('0', style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    Tab(
+                                                      child: Row(
+                                                        spacing: 10,
+                                                        children: [
+                                                          Text('All Stories', style: theme.textTheme.bodyLarge),
+                                                          CircleAvatar(
+                                                            backgroundColor: Colors.blueAccent,
+                                                            radius: 15,
+                                                            child: Text('0', style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 500, child: TabBarView(controller: _tabController, children: <Widget>[Container(), Container(), Container()])),
+                                              ],
+                                            ),
                                           ),
                                         ],
                                       ),
