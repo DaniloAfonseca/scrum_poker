@@ -13,6 +13,7 @@ import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/voting/room_login.dart';
 import 'package:scrum_poker/voting/voting_players.dart';
+import 'package:scrum_poker/voting/voting_stories.dart';
 import 'package:scrum_poker/voting/voting_story.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 
@@ -24,7 +25,7 @@ class RoomPage extends StatefulWidget {
   State<RoomPage> createState() => _RoomPageState();
 }
 
-class _RoomPageState extends State<RoomPage> with SingleTickerProviderStateMixin {
+class _RoomPageState extends State<RoomPage> {
   final firebaseUser = FirebaseAuth.instance.currentUser;
   final _appUser = ValueNotifier<AppUser?>(null);
   bool _isLoading = true;
@@ -34,18 +35,15 @@ class _RoomPageState extends State<RoomPage> with SingleTickerProviderStateMixin
   final currentStory = ValueNotifier<Story?>(null);
   final currentMessage = ValueNotifier<String>('');
   final currentUsers = ValueNotifier<List<AppUser>>([]);
-  late TabController _tabController;
 
   @override
   void initState() {
-    _tabController = TabController(length: 3, vsync: this);
     loadUser();
     super.initState();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -178,6 +176,7 @@ class _RoomPageState extends State<RoomPage> with SingleTickerProviderStateMixin
                         if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
                         final map = snapshot.data!.data()!;
                         final room = Room.fromJson(map);
+
                         currentUsers.value = room.currentUsers ?? [];
                         return SingleChildScrollView(
                           child: Padding(
@@ -193,64 +192,10 @@ class _RoomPageState extends State<RoomPage> with SingleTickerProviderStateMixin
                                     Expanded(
                                       child: Column(
                                         spacing: 20,
-                                        children: [
-                                          VotingStory(roomId: widget.roomId!, cards: room.cardsToUse, story: currentStory),
-                                          Container(
-                                            decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)),
-                                            child: Column(
-                                              children: [
-                                                TabBar(
-                                                  controller: _tabController,
-                                                  tabs: [
-                                                    Tab(
-                                                      child: Row(
-                                                        spacing: 10,
-                                                        children: [
-                                                          Text('Active Stories', style: theme.textTheme.bodyLarge),
-                                                          CircleAvatar(
-                                                            backgroundColor: Colors.blueAccent,
-                                                            radius: 15,
-                                                            child: Text(room.stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    Tab(
-                                                      child: Row(
-                                                        spacing: 10,
-                                                        children: [
-                                                          Text('Completed Stories', style: theme.textTheme.bodyLarge),
-                                                          CircleAvatar(
-                                                            backgroundColor: Colors.blueAccent,
-                                                            radius: 15,
-                                                            child: Text('0', style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    Tab(
-                                                      child: Row(
-                                                        spacing: 10,
-                                                        children: [
-                                                          Text('All Stories', style: theme.textTheme.bodyLarge),
-                                                          CircleAvatar(
-                                                            backgroundColor: Colors.blueAccent,
-                                                            radius: 15,
-                                                            child: Text('0', style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                SizedBox(height: 500, child: TabBarView(controller: _tabController, children: <Widget>[Container(), Container(), Container()])),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                                        children: [VotingStory(roomId: widget.roomId!, cards: room.cardsToUse, story: currentStory), VotingStories(room: room)],
                                       ),
                                     ),
-                                    VotingPlayers(currentMessage: currentMessage, currentStory: currentStory, currentUsers: currentUsers),
+                                    VotingPlayers(currentMessage: currentMessage, currentStory: currentStory, currentUsers: currentUsers, appUser: _appUser.value!),
                                   ],
                                 ),
                               ],

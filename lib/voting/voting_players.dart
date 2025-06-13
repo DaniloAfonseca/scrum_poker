@@ -10,7 +10,8 @@ class VotingPlayers extends StatelessWidget {
   final ValueNotifier<String> currentMessage;
   final ValueNotifier<Story?> currentStory;
   final ValueNotifier<List<AppUser>> currentUsers;
-  const VotingPlayers({super.key, required this.currentMessage, required this.currentStory, required this.currentUsers});
+  final AppUser appUser;
+  const VotingPlayers({super.key, required this.currentMessage, required this.currentStory, required this.currentUsers, required this.appUser});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +36,7 @@ class VotingPlayers extends StatelessWidget {
                 valueListenable: currentMessage,
                 builder: (context, value, _) {
                   return Text(value, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white));
-                }
+                },
               ),
             ),
             if (firebaseUser != null)
@@ -60,7 +61,7 @@ class VotingPlayers extends StatelessWidget {
                       onPressed: value != null ? () {} : null,
                       child: Text('Start'),
                     );
-                  }
+                  },
                 ),
               ),
             Container(
@@ -90,7 +91,7 @@ class VotingPlayers extends StatelessWidget {
                   child: Row(spacing: 5, children: [Icon(Icons.person, color: u.moderator ? Colors.blueAccent : Colors.black), Text(u.name, style: theme.textTheme.bodyLarge)]),
                 ),
               ),
-            if (firebaseUser != null)
+            if (appUser.moderator)
               Container(
                 width: 400,
                 decoration: BoxDecoration(
@@ -123,7 +124,7 @@ class VotingPlayers extends StatelessWidget {
               ),
           ],
         );
-      }
+      },
     );
   }
 }
