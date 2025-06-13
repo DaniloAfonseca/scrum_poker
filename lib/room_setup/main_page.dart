@@ -160,10 +160,12 @@ class _MainPageState extends State<MainPage> {
                 child: Column(
                   spacing: 10,
                   children:
-                      user!.rooms!
-                          .where((t) => showDeleted ? true : t.dateDeleted == null)
-                          .map((room) => UserRoom(user: user!, room: room, deletedChanged: () => setState(() {})))
-                          .toList(),
+                      user!.rooms == null || user!.rooms!.isEmpty
+                          ? []
+                          : user!.rooms!
+                              .where((t) => showDeleted ? true : t.dateDeleted == null)
+                              .map((room) => UserRoom(user: user!, room: room, deletedChanged: () => setState(() {})))
+                              .toList(),
                 ),
               ),
           ],

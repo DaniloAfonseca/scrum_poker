@@ -9,6 +9,7 @@ import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
+import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:uuid/uuid.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:collection/collection.dart';
@@ -166,7 +167,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                             }
                             final json = user.toJson();
                             await FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).set(json);
-                            navigatorKey.currentContext!.go(Routes.dashboard);
+                            navigatorKey.currentContext!.go(Routes.home);
                           }
                         },
                         child: Text('Save'),
@@ -248,6 +249,19 @@ class _UserRoomPageState extends State<UserRoomPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                          elevation: 5,
+                        ),
+                        onPressed: () async {
+                          await JiraServices().searchIssues(query: 'project = AC ORDER BY created DESC', fields: ['summary', 'status', 'assignee', 'description'], maxResults: 10);
+                        },
+                        child: Text('Search Issues'),
+                      ),
+                      const SizedBox(width: 10),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent,

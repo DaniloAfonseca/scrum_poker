@@ -7,18 +7,17 @@ import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/user_room_page.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/voting/room_page.dart';
-import 'package:scrum_poker/shared/router/login_route.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-String? authGuard(BuildContext context, GoRouterState state) {
+Future<String?> authGuard(BuildContext context, GoRouterState state) async {
   final auth = FirebaseAuth.instance;
 
   // If we receive the token we need to save in Session Storage.
   final token = state.uri.queryParameters['code'];
   if (token != null && token.isNotEmpty) {
-    _saveTokenToSessionStorage(token);
+    await _saveTokenToSessionStorage(token);
   }
 
   if (auth.currentUser == null && !state.matchedLocation.startsWith(Routes.room)) {
@@ -45,12 +44,17 @@ class ManagerRouter {
     navigatorKey: navigatorKey,
     routes: [
       GoRoute(
-        path: '/',
+        path: Routes.home,
         builder: (context, state) {
           return const MainPage();
         },
       ),
-      loginRoute,
+      GoRoute(
+        path: Routes.login,
+        builder: (context, state) {
+          return LoginPage();
+        },
+      ),
       GoRoute(
         path: Routes.redirect,
         builder: (context, state) {
@@ -72,7 +76,7 @@ class ManagerRouter {
         },
       ),
       GoRoute(
-        path: Routes.dashboard,
+        path: Routes.home,
         builder: (context, state) {
           return MainPage();
         },
