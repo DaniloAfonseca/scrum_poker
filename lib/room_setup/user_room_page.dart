@@ -203,7 +203,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                     final userRoomsMap = {'rooms': userRooms.map((story) => story.toJson()).toList()};
                                     await FirebaseFirestore.instance.collection('usersRooms').doc(user.uid).set(userRoomsMap);
 
-                                    navigatorKey.currentContext!.go(Routes.dashboard);
+                                    navigatorKey.currentContext!.go(Routes.home);
                                   }
                                 },
                                 child: Text('Save'),
