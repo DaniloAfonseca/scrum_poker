@@ -74,7 +74,6 @@ class _UserRoomPageState extends State<UserRoomPage> {
       setState(() {
         room = Room.fromJson(json);
       });
-      
     }
 
     deleted = room!.dateDeleted != null;
@@ -183,25 +182,10 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                     final json = room!.toJson();
                                     await FirebaseFirestore.instance.collection('rooms').doc(room!.id).set(json);
 
-                                    final roomExists = await FirebaseFirestore.instance.collection('usersRooms').doc(user.uid).snapshots().isEmpty;
-                                    final userRooms = <UserRoom>[];
-                                    if (roomExists) {
-                                      final dbUserRooms = await FirebaseFirestore.instance.collection('usersRooms').doc(user.uid).snapshots().toList();
-                                      userRooms.addAll(dbUserRooms.map((t) => UserRoom.fromJson(t.data()!)).toList());
-                                    }
+                                    final userRoom = UserRoom.fromRoom(room!);
 
-                                    var existingUserRoom = userRooms.firstWhereOrNull((t) => t.roomId == room!.id);
-                                    if (existingUserRoom != null) {
-                                      existingUserRoom.dateDeleted = room!.dateDeleted;
-                                      existingUserRoom.name = room!.name!;
-                                      existingUserRoom.status = room!.status;
-                                    } else {
-                                      existingUserRoom = UserRoom.fromRoom(room!);
-                                      userRooms.add(existingUserRoom);
-                                    }
-
-                                    final userRoomsMap = {'rooms': userRooms.map((story) => story.toJson()).toList()};
-                                    await FirebaseFirestore.instance.collection('usersRooms').doc(user.uid).set(userRoomsMap);
+                                    final userRoomsMap = userRoom.toJson();
+                                    await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('rooms').doc(room!.id).set(userRoomsMap);
 
                                     navigatorKey.currentContext!.go(Routes.home);
                                   }
