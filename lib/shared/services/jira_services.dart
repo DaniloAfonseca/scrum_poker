@@ -1,26 +1,34 @@
 import 'dart:convert';
 
+import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:scrum_poker/jira_authentication.dart';
+import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/base_response.dart';
-import 'package:scrum_poker/shared/models/jira_user.dart';
 
 class JiraServices {
-  Uri jiraApiUrl(String url) => Uri.parse('https://api.atlassian.com/$url');
+  Uri jiraApiAuthUrl(String url) => Uri.parse('https://api.atlassian.com/$url');
+  String get jiraApiUrl => 'apotec.atlassian.net';
 
-  Future<BaseResponse<JiraUser>> getJiraUser(String token) async {
+  Future<String> get accessJiraToken async {
+    final box = await Hive.openBox('ScrumPoker');
+
+    return box.get('jiraToken');
+  }
+
+  Future<BaseResponse<AppUser>> getJiraUser(String token) async {
     if (token.isEmpty) {
       return BaseResponse(success: false, message: 'Token is empty');
     }
 
     try {
-      final response = await http.get(jiraApiUrl('me'), headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'});
+      final response = await http.get(jiraApiAuthUrl('me'), headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'});
 
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
-        final user = JiraUser.fromJson(responseBody);
+        final user = AppUser.fromJson(responseBody);
 
-        return BaseResponse<JiraUser>(success: true, message: 'Login successfully', data: user);
+        return BaseResponse<AppUser>(success: true, message: 'Login successfully', data: user);
       } else {
         return BaseResponse(success: false, message: 'Error trying to get JIRA user');
       }
@@ -35,7 +43,7 @@ class JiraServices {
     }
 
     final response = await http.post(
-      jiraApiUrl('oauth/token'),
+      jiraApiAuthUrl('oauth/token'),
       headers: {'Content-Type': 'application/json'},
 
       body: json.encode({
@@ -48,5 +56,29 @@ class JiraServices {
     );
 
     return BaseResponse(success: response.statusCode == 200, data: json.decode(response.body));
+  }
+
+  Future<BaseResponse> searchIssues({required String query, int maxResults = 20, List<String>? fields, int startAt = 0}) async {
+    final accessToken = await accessJiraToken;
+
+    if (accessToken.isEmpty) {
+      return BaseResponse(success: false, message: 'Access Token is empty');
+    }
+
+    try {
+      Uri uri = Uri.parse('$jiraApiUrl/rest/api/3/search').replace(
+        queryParameters: {'jql': query, 'maxResults': maxResults.toString(), 'startAt': startAt.toString(), if (fields != null && fields.isNotEmpty) 'fields': fields.join(',')},
+      );
+      final response = await http.get(
+        uri,
+        headers: {'Authorization': 'Bearer $accessToken', 'X-Atlassian-Token': 'no-check', 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded'},
+      );
+
+      final data = json.encode(response.body);
+
+      return BaseResponse(success: response.statusCode == 200, data: json.encode(response.body));
+    } catch (e) {
+      return BaseResponse(success: false, message: 'There was an error: $e');
+    }
   }
 }

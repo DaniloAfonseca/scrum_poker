@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
@@ -39,8 +41,17 @@ class _LoginPageState extends State<LoginPage> {
 
         final response = await JiraServices().getJiraUser(token);
         final user = response.data;
+
+        await AuthServices().signInWithCredentials(user!);
+
+        final firebaseUser = FirebaseAuth.instance.currentUser!;
+
+        FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).set(user.toJson());
+
+        navigatorKey.currentContext!.go(Routes.home);
       }
     }
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -59,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
         .signInWithEmailAndPassword(_emailController.text, _passwordController.text)
         .then((user) {
           if (user != null) {
-            navigatorKey.currentContext!.go(Routes.dashboard);
+            navigatorKey.currentContext!.go(Routes.home);
           } else {
             ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(const SnackBar(content: Text('Invalid email or password')));
           }

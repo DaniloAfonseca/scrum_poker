@@ -82,7 +82,7 @@ class _MainPageState extends State<MainPage> {
         stream: FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-          final rooms = snapshot.data!.docs.map((t) => UserRoom.fromJson(t.data())).where((t) => showDeleted == true || t.dateDeleted == null).toList();
+          final rooms = snapshot.data!.docs.map((t) => UserRoom.fromJson(t.data())).toList();
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             child: Column(
