@@ -14,7 +14,7 @@ Story _$StoryFromJson(Map<String, dynamic> json) =>
         vote: $checkedConvert('vote', (v) => (v as num?)?.toInt()),
         status: $checkedConvert(
           'status',
-          (v) => $enumDecode(_$StoryStatusEnumEnumMap, v),
+          (v) => $enumDecode(_$StatusEnumEnumMap, v),
         ),
         votes: $checkedConvert(
           'votes',
@@ -23,13 +23,12 @@ Story _$StoryFromJson(Map<String, dynamic> json) =>
                   .map((e) => Vote.fromJson(e as Map<String, dynamic>))
                   .toList(),
         ),
-        added: $checkedConvert('added', (v) => v as bool? ?? false),
       );
       return val;
     });
 
-const _$StoryStatusEnumEnumMap = {
-  StoryStatusEnum.newStory: 'newStory',
-  StoryStatusEnum.voting: 'voting',
-  StoryStatusEnum.voted: 'voted',
+const _$StatusEnumEnumMap = {
+  StatusEnum.notStarted: 'notStarted',
+  StatusEnum.started: 'started',
+  StatusEnum.ended: 'ended',
 };

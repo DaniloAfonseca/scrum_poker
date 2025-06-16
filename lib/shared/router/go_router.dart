@@ -80,8 +80,7 @@ class ManagerRouter {
       GoRoute(
         path: Routes.editRoom,
         builder: (context, state) {
-          final map = state.extra as Map<String, dynamic>;
-          final roomId = map['roomId'] as String?;
+          final roomId = state.extra as String?;
           return UserRoomPage(roomId: roomId);
         },
       ),

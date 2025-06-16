@@ -16,6 +16,7 @@ import 'package:scrum_poker/voting/voting_players.dart';
 import 'package:scrum_poker/voting/voting_stories.dart';
 import 'package:scrum_poker/voting/voting_story.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
+import 'package:uuid/uuid.dart';
 
 class RoomPage extends StatefulWidget {
   final String? roomId;
@@ -26,12 +27,11 @@ class RoomPage extends StatefulWidget {
 }
 
 class _RoomPageState extends State<RoomPage> {
-  final firebaseUser = FirebaseAuth.instance.currentUser;
+  final user = FirebaseAuth.instance.currentUser;
   final _appUser = ValueNotifier<AppUser?>(null);
   bool _isLoading = true;
   Box? _box;
   bool invalidRoom = false;
-  AppUser? user;
   final currentStory = ValueNotifier<Story?>(null);
   final currentMessage = ValueNotifier<String>('');
   final currentUsers = ValueNotifier<List<AppUser>>([]);
@@ -54,9 +54,8 @@ class _RoomPageState extends State<RoomPage> {
 
     _box = await Hive.openBox('scrumPoker');
 
-    if (firebaseUser != null) {
-      user = await getUser(firebaseUser!.uid);
-      final appUser = AppUser.fromAppUser(user!, true);
+    if (user?.displayName != null) {
+      final appUser = AppUser.fromUser(user!);
       _box!.put('appUser', appUser.toJson());
       addUserToStory(appUser);
       currentMessage.value = 'Click "Start" to begin voting';
@@ -83,26 +82,16 @@ class _RoomPageState extends State<RoomPage> {
     }
 
     // add user to room
-    if (room.currentUsers?.any((t) => t.name == appUser.name) != true) {
+    if (room.currentUsers?.any((t) => t.id == appUser.id) != true) {
       room.currentUsers ??= [];
       room.currentUsers!.add(appUser);
       final roomMap = room.toJson();
       await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
     }
 
-    final notStartedStories = room.stories.where((t) => t.status == StoryStatusEnum.newStory).toList();
+    final notStartedStories = room.stories.where((t) => t.status == StatusEnum.notStarted).toList();
     if (notStartedStories.isNotEmpty) {
       currentStory.value = notStartedStories.first;
-    }
-
-    // add user to moderator room
-    final user = await getUser(room.userId);
-    final userRoom = user!.rooms!.firstWhere((t) => t.id == room.id);
-    if (userRoom.currentUsers?.any((t) => t.name == appUser.name) != true) {
-      userRoom.currentUsers ??= [];
-      userRoom.currentUsers!.add(appUser);
-      final userMap = user.toJson();
-      await FirebaseFirestore.instance.collection('users').doc(room.userId).set(userMap);
     }
   }
 
@@ -116,11 +105,61 @@ class _RoomPageState extends State<RoomPage> {
     return null;
   }
 
-  Future<AppUser?> getUser(String userId) async {
-    final dbUser = await FirebaseFirestore.instance.collection('users').doc(userId).snapshots().first;
-    final map = dbUser.data()!;
+  Future<void> checkChanges(Room room) async {
+    final messages = <String>[];
+    // check if user entered
+    if (currentUsers.value.isNotEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
+      // check if there is a new user
+      for (final user in room.currentUsers!) {
+        if (!currentUsers.value.any((t) => t.id == user.id)) {
+          // new user
+          messages.add('${user.name} joined the room.');
+        } else {
+          // check user changes
+          final currentUser = currentUsers.value.firstWhere((t) => t.id == user.id);
+          if (currentUser.observer != user.observer) {
+            if (user.observer) {
+              messages.add('${user.name} is now an observer.');
+            } else {
+              messages.add('${user.name} is now a player.');
+            }
+          }
+        }
+      }
+      for (final user in currentUsers.value) {
+        if (!room.currentUsers!.any((t) => t.id == user.id)) {
+          // user left
+          messages.add('${user.name} left the room.');
+        }
+      }
+    } else if (currentUsers.value.isEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
+      // new users joined
+      for (final user in room.currentUsers!) {
+        messages.add('${user.name} joined the room.');
+      }
+    }
 
-    return AppUser.fromJson(map);
+    ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? controller;
+
+    // show messages
+    for (final message in messages) {
+      final duration = Duration(milliseconds: controller == null ? 0 : 1000);
+      Future.delayed(duration, () {
+        controller = ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.blueAccent[200],
+            behavior: SnackBarBehavior.floating,
+            content: Text(message),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () {
+                ScaffoldMessenger.of(navigatorKey.currentContext!).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -139,9 +178,9 @@ class _RoomPageState extends State<RoomPage> {
                     child: IconButton(
                       icon: Icon(Icons.person_outline, color: Colors.white),
                       onPressed: () {
-                        _box!.delete('username');
+                        _box!.delete('appUser');
                         setState(() {
-                          if (firebaseUser != null) {
+                          if (user != null) {
                             AuthServices().signOut().then((_) {
                               navigatorKey.currentContext!.go(Routes.login);
                             });
@@ -161,13 +200,17 @@ class _RoomPageState extends State<RoomPage> {
                     ? Center(child: CircularProgressIndicator())
                     : (_appUser.value == null)
                     ? RoomLogin(
-                      login: (username) {
-                        final appUser = AppUser(name: username);
+                      isModerator: user != null,
+                      login: (username) async {
+                        if (user != null) {
+                          await user!.updateDisplayName(username);
+                        }
+                        final appUser = user == null ? AppUser(name: username, id: Uuid().v4()) : AppUser.fromUser(user!);
 
                         _box!.put('appUser', appUser.toJson());
 
-                        _appUser.value = appUser;
                         addUserToStory(appUser);
+                        _appUser.value = appUser;
                       },
                     )
                     : StreamBuilder(
@@ -176,6 +219,8 @@ class _RoomPageState extends State<RoomPage> {
                         if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
                         final map = snapshot.data!.data()!;
                         final room = Room.fromJson(map);
+
+                        checkChanges(room);
 
                         currentUsers.value = room.currentUsers ?? [];
                         return SingleChildScrollView(
@@ -195,7 +240,21 @@ class _RoomPageState extends State<RoomPage> {
                                         children: [VotingStory(roomId: widget.roomId!, cards: room.cardsToUse, story: currentStory), VotingStories(room: room)],
                                       ),
                                     ),
-                                    VotingPlayers(currentMessage: currentMessage, currentStory: currentStory, currentUsers: currentUsers, appUser: _appUser.value!),
+                                    VotingPlayers(
+                                      currentMessage: currentMessage,
+                                      currentStory: currentStory,
+                                      currentUsers: currentUsers,
+                                      appUser: _appUser.value!,
+                                      onUserRemoved: (appUser) async {
+                                        room.currentUsers?.removeWhere((t) => t.name == appUser.name);
+                                        final json = room.toJson();
+                                        await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
+                                      },
+                                      onObserverChanged: (appUser) async {
+                                        final json = room.toJson();
+                                        await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
+                                      },
+                                    ),
                                   ],
                                 ),
                               ],

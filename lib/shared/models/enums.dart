@@ -1,4 +1,4 @@
-enum StoryStatusEnum { newStory, voting, voted }
+enum StatusEnum { notStarted, started, ended }
 
 enum VoteEnum {
   zero('0', 0),

@@ -9,8 +9,9 @@ class Story {
   String description;
   String? url;
   int? vote;
-  StoryStatusEnum status;
+  StatusEnum status;
   final List<Vote> votes;
+  @JsonKey(includeFromJson: false)
   bool added;
 
   Story({required this.description, this.url, this.vote, required this.status, required this.votes, this.added = false});
@@ -22,8 +23,7 @@ class Story {
     'description': instance.description,
     'url': instance.url,
     'vote': instance.vote,
-    'status': _$StoryStatusEnumEnumMap[instance.status]!,
-    'votes': votes.map((vote) => vote.toJson()).toList(),
-    'added': instance.added,
+    'status': _$StatusEnumEnumMap[instance.status],
+    'votes': votes.map((vote) => vote.toJson()).toList()
   };
 }

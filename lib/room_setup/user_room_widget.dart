@@ -1,32 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/shared/models/room.dart';
 import 'package:intl/intl.dart';
-import 'package:scrum_poker/shared/models/app_user.dart';
+import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/text_tag.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class UserRoom extends StatefulWidget {
-  final AppUser user;
-  final Room room;
+class UserRoomWidget extends StatefulWidget {
+  final UserRoom room;
   final Function() deletedChanged;
-  const UserRoom({super.key, required this.user, required this.room, required this.deletedChanged});
+  const UserRoomWidget({super.key, required this.room, required this.deletedChanged});
 
   @override
-  State<UserRoom> createState() => _UserRoomState();
+  State<UserRoomWidget> createState() => _UserRoomWidgetState();
 }
 
-class _UserRoomState extends State<UserRoom> {
+class _UserRoomWidgetState extends State<UserRoomWidget> {
   final _menuKey = GlobalKey();
-  late AppUser user;
-  late Room room;
+  final user = FirebaseAuth.instance.currentUser;
+  late UserRoom room;
 
   @override
   void initState() {
-    user = widget.user;
     room = widget.room;
     super.initState();
   }
@@ -77,26 +75,21 @@ class _UserRoomState extends State<UserRoom> {
                   PopupMenuItem(
                     child: Row(spacing: 5, children: [Icon(Icons.edit), Text('Edit')]),
                     onTap: () {
-                      context.go(Routes.editRoom, extra: {'roomId': room.id});
+                      context.go(Routes.editRoom, extra: room.roomId);
                     },
                   ),
                   PopupMenuItem(
                     child: Row(spacing: 5, children: [Icon(FontAwesomeIcons.doorOpen), Text('Open')]),
                     onTap: () async {
-                      final roomDoesNotExists = await FirebaseFirestore.instance.collection('rooms').doc(room.id).snapshots().isEmpty;
-                      if (!roomDoesNotExists) {
-                        final json = room.toJson();
-                        await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
-                      }
-                      navigatorKey.currentContext!.go('${Routes.room}/${room.id}');
+                      navigatorKey.currentContext!.go('${Routes.room}/${room.roomId}');
                     },
                   ),
                   PopupMenuItem(
                     child: Row(spacing: 5, children: [Icon(Icons.delete_outline), Text('Delete')]),
                     onTap: () async {
                       widget.room.dateDeleted = DateTime.now();
-                      final json = widget.user.toJson();
-                      await FirebaseFirestore.instance.collection('users').doc(user.id).set(json);
+                      final json = room.toJson();
+                      await FirebaseFirestore.instance.collection('rooms').doc(room.roomId).set(json);
                       widget.deletedChanged();
                     },
                   ),

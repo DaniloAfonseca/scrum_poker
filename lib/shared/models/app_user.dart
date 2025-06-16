@@ -1,5 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:scrum_poker/shared/models/room.dart';
 
 part 'app_user.g.dart';
 
@@ -7,11 +7,10 @@ part 'app_user.g.dart';
 class AppUser {
   final String? id;
   final String name;
-  final List<Room>? rooms;
-  final bool moderator;
-  final bool observer;
+  bool moderator;
+  bool observer;
 
-  AppUser({this.id, required this.name, this.rooms, this.moderator = false, this.observer = false});
+  AppUser({this.id, required this.name, this.moderator = false, this.observer = false});
 
   factory AppUser.fromJson(Map<String, dynamic> json) => _$AppUserFromJson(json);
   Map<String, dynamic> toJson() => _$AppUserToJson(this);
@@ -19,7 +18,6 @@ class AppUser {
   Map<String, dynamic> _$AppUserToJson(AppUser instance) => <String, dynamic>{
     'id': instance.id,
     'name': instance.name,
-    'rooms': instance.rooms?.map((room) => room.toJson()).toList(),
     'moderator': instance.moderator,
     'observer': instance.observer
   };
@@ -27,4 +25,10 @@ class AppUser {
   factory AppUser.fromAppUser(AppUser user, bool moderator) {
     return AppUser(name: user.name, moderator: moderator);
   }
+
+  factory AppUser.fromUser(User user) {
+    return AppUser(name: user.displayName ?? user.uid, id: user.uid, moderator: true);
+  }
+
+  
 }

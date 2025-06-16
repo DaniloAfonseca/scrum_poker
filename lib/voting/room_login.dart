@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class RoomLogin extends StatefulWidget {
   final Function(String userName) login;
-  const RoomLogin({super.key, required this.login});
+  final bool? isModerator;
+  const RoomLogin({super.key, required this.login, this.isModerator = false});
 
   @override
   State<RoomLogin> createState() => _RoomLoginState();
@@ -52,12 +53,15 @@ class _RoomLoginState extends State<RoomLogin> {
                   const SizedBox(height: 20),
                   Text('Welcome Scrum Poker', style: TextStyle(fontSize: isSmallScreen ? 24 : 28, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade800)),
                   const SizedBox(height: 10),
-                  Text('Sign in', style: TextStyle(fontSize: isSmallScreen ? 24 : 48, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade800)),
+                  Text(
+                    widget.isModerator == true ? 'Choose a name' : 'Sign in',
+                    style: TextStyle(fontSize: isSmallScreen ? 24 : 48, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade800),
+                  ),
                   const SizedBox(height: 30),
                   TextFormField(
                     controller: _userNameController,
                     decoration: InputDecoration(
-                      labelText: 'Username',
+                      labelText: widget.isModerator == true ? 'Name' : 'Username',
                       prefixIcon: const Icon(Icons.person),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),

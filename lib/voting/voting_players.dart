@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/voting/voting_player.dart';
 import 'package:web/web.dart' as web;
 import 'package:scrum_poker/shared/models/app_user.dart';
 
@@ -10,8 +11,18 @@ class VotingPlayers extends StatelessWidget {
   final ValueNotifier<String> currentMessage;
   final ValueNotifier<Story?> currentStory;
   final ValueNotifier<List<AppUser>> currentUsers;
+  final Function(AppUser appUser) onUserRemoved;
+  final Function(AppUser appUser) onObserverChanged;
   final AppUser appUser;
-  const VotingPlayers({super.key, required this.currentMessage, required this.currentStory, required this.currentUsers, required this.appUser});
+  const VotingPlayers({
+    super.key,
+    required this.currentMessage,
+    required this.currentStory,
+    required this.currentUsers,
+    required this.appUser,
+    required this.onUserRemoved,
+    required this.onObserverChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +99,15 @@ class VotingPlayers extends StatelessWidget {
                   ),
                   alignment: Alignment.centerLeft,
                   padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(spacing: 5, children: [Icon(Icons.person, color: u.moderator ? Colors.blueAccent : Colors.black), Text(u.name, style: theme.textTheme.bodyLarge)]),
+                  child: VotingPlayer(
+                    appUser: u,
+                    onObserverTap: () {
+                      onObserverChanged(u);
+                    },
+                    onRemoveTap: () {
+                      onUserRemoved(u);
+                    },
+                  ),
                 ),
               ),
             if (appUser.moderator)

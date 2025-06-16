@@ -35,7 +35,7 @@ class _RoomStoryState extends State<RoomStory> {
 
   @override
   void initState() {
-    story = widget.story ?? Story(description: '', status: StoryStatusEnum.newStory, votes: [], added: true);
+    story = widget.story ?? Story(description: '', status: StatusEnum.notStarted, votes: [], added: true);
     isEditing = (widget.story?.added ?? false) || widget.story == null;
 
     _descriptionController.text = story.description;

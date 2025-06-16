@@ -15,8 +15,9 @@ class Room {
   final List<VoteEnum> cardsToUse;
   List<AppUser>? currentUsers;
   String userId;
+  StatusEnum status;
 
-  Room({this.name, this.id, this.dateAdded, this.dateDeleted, required this.stories, required this.cardsToUse, this.currentUsers, required this.userId});
+  Room({this.name, this.id, this.dateAdded, this.dateDeleted, required this.stories, required this.cardsToUse, this.currentUsers, required this.userId, required this.status});
 
   factory Room.fromJson(Map<String, dynamic> json) => _$RoomFromJson(json);
   Map<String, dynamic> toJson() => _$RoomToJson(this);
@@ -24,11 +25,12 @@ class Room {
   Map<String, dynamic> _$RoomToJson(Room instance) => <String, dynamic>{
     'name': instance.name,
     'id': instance.id,
-    'dateAdded': instance.dateAdded?.toIso8601String(),
-    'dateDeleted': instance.dateDeleted?.toIso8601String(),
+    if (instance.dateAdded?.toIso8601String() case final value?) 'dateAdded': value,
+    if (instance.dateDeleted?.toIso8601String() case final value?) 'dateDeleted': value,
     'stories': instance.stories.map((story) => story.toJson()).toList(),
     'cardsToUse': instance.cardsToUse.map((card) => _$VoteEnumEnumMap[card]!),
-    'currentUsers': instance.currentUsers?.map((user) => user.toJson()).toList(),
+    if (instance.currentUsers?.map((user) => user.toJson()).toList() case final value?) 'currentUsers': value,
     'userId': instance.userId,
+    'status': _$StatusEnumEnumMap[instance.status],
   };
 }

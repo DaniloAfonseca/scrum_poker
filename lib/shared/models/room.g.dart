@@ -41,6 +41,10 @@ Room _$RoomFromJson(Map<String, dynamic> json) =>
                   .toList(),
         ),
         userId: $checkedConvert('userId', (v) => v as String),
+        status: $checkedConvert(
+          'status',
+          (v) => $enumDecode(_$StatusEnumEnumMap, v),
+        ),
       );
       return val;
     });
@@ -60,4 +64,10 @@ const _$VoteEnumEnumMap = {
   VoteEnum.questionMark: 'questionMark',
   VoteEnum.infinity: 'infinity',
   VoteEnum.coffee: 'coffee',
+};
+
+const _$StatusEnumEnumMap = {
+  StatusEnum.notStarted: 'notStarted',
+  StatusEnum.started: 'started',
+  StatusEnum.ended: 'ended',
 };
