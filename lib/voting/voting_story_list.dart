@@ -104,13 +104,12 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                           .mapIndexed(
                             (index, t) => VotingStoryItem(
                               currentStory: widget.currentStory,
-                              canEdit: true,
-                              deletedChanged: () {},
+                              onDelete: () {},
                               story: t,
-                              moveDown: index < activeStories.length ? () {} : null,
-                              moveUp: index == 0 ? null : () {},
-                              skipped: () {
-                                widget.currentStory.value!.status = StatusEnum.skipped;
+                              onMoveDown: index < activeStories.length - 1 ? () {} : null,
+                              onMoveUp: index == 0 ? null : () {},
+                              onSkip: () {
+                                t.status = StatusEnum.skipped;
                                 saveRoom();
                               },
                             ),
@@ -126,7 +125,19 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                         Container(padding: EdgeInsets.only(right: 16), width: 136, child: Text('Real Est.', style: theme.textTheme.headlineSmall)),
                       ],
                     ),
-                    ...completedStories.map((t) => VotingStoryItem(currentStory: widget.currentStory, story: t)),
+                    ...completedStories.map(
+                      (t) => VotingStoryItem(
+                        currentStory: widget.currentStory,
+                        story: t,
+                        onMoveToActive:
+                            t.status == StatusEnum.skipped
+                                ? () {
+                                  t.status = StatusEnum.notStarted;
+                                  saveRoom();
+                                }
+                                : null,
+                      ),
+                    ),
                   ],
                 ),
                 Column(
@@ -138,7 +149,19 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                         Container(padding: EdgeInsets.only(right: 16), width: 136, child: Text('Real Est.', style: theme.textTheme.headlineSmall)),
                       ],
                     ),
-                    ...room.stories.map((t) => VotingStoryItem(currentStory: widget.currentStory, story: t)),
+                    ...room.stories.map(
+                      (t) => VotingStoryItem(
+                        currentStory: widget.currentStory,
+                        story: t,
+                        onMoveToActive:
+                            t.status == StatusEnum.skipped
+                                ? () {
+                                  t.status = StatusEnum.notStarted;
+                                  saveRoom();
+                                }
+                                : null,
+                      ),
+                    ),
                   ],
                 ),
               ],

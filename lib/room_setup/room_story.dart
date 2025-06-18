@@ -4,6 +4,7 @@ import 'package:scrum_poker/shared/models/jira_work_item.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
+import 'package:uuid/uuid.dart';
 
 class RoomStory extends StatefulWidget {
   final Story? story;
@@ -35,7 +36,7 @@ class _RoomStoryState extends State<RoomStory> {
 
   @override
   void initState() {
-    story = widget.story ?? Story(description: '', status: StatusEnum.notStarted, votes: [], added: true);
+    story = widget.story ?? Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true);
     isEditing = (widget.story?.added ?? false) || widget.story == null;
 
     _descriptionController.text = story.description;

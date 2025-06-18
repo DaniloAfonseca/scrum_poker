@@ -277,7 +277,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                   elevation: 5,
                                 ),
                                 onPressed: () {
-                                  room!.stories.add(Story(description: '', status: StatusEnum.notStarted, votes: [], added: true));
+                                  room!.stories.add(Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true));
                                   setState(() {
                                     newStory = true;
                                   });

@@ -35,6 +35,7 @@ class _RoomPageState extends State<RoomPage> {
   final currentStory = ValueNotifier<Story?>(null);
   final currentMessage = ValueNotifier<String>('');
   final currentUsers = ValueNotifier<List<AppUser>>([]);
+  final oldStories = <Story>[];
   bool firstLoad = true;
 
   @override
@@ -108,7 +109,8 @@ class _RoomPageState extends State<RoomPage> {
   Future<void> checkChanges(Room room) async {
     if (firstLoad) return;
     final messages = <String>[];
-    // check if user entered
+
+    // check users 
     if (currentUsers.value.isNotEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
       // check if there is a new user
       for (final user in room.currentUsers!) {
@@ -140,6 +142,14 @@ class _RoomPageState extends State<RoomPage> {
       }
     }
 
+    // check stories
+    if (oldStories.isNotEmpty) {
+      for(final story in room.stories) {
+      
+    }
+
+    }
+    
     ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? controller;
 
     // show messages
@@ -226,6 +236,8 @@ class _RoomPageState extends State<RoomPage> {
                         }
 
                         checkChanges(room);
+                        oldStories.clear();
+                        oldStories.addAll(room.stories);
                         firstLoad = false;
 
                         currentUsers.value = room.currentUsers ?? [];

@@ -80,7 +80,7 @@ class _UserRoomWidgetState extends State<UserRoomWidget> {
                     },
                   ),
                   PopupMenuItem(
-                    child: Row(spacing: 5, children: [Icon(FontAwesomeIcons.doorOpen, color: Colors.blueAccent), Text('Open')]),
+                    child: Row(spacing: 5, children: [Icon(Icons.play_arrow_outlined, color: Colors.blueAccent), Text('Open')]),
                     onTap: () async {
                       navigatorKey.currentContext!.go('${Routes.room}/${userRoom.roomId}');
                     },

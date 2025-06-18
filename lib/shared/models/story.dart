@@ -6,6 +6,7 @@ part 'story.g.dart';
 
 @JsonSerializable(createToJson: false, includeIfNull: false)
 class Story {
+  String id;
   String description;
   String? url;
   int? vote;
@@ -15,12 +16,13 @@ class Story {
   bool added;
   int? revisedVote;
 
-  Story({required this.description, this.url, this.vote, required this.status, required this.votes, this.added = false, this.revisedVote});
+  Story({required this.id, required this.description, this.url, this.vote, required this.status, required this.votes, this.added = false, this.revisedVote});
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
   Map<String, dynamic> toJson() => _$StoryToJson(this);
 
   Map<String, dynamic> _$StoryToJson(Story instance) => <String, dynamic>{
+    'id': instance.id,
     'description': instance.description,
     if (instance.url case final value?) 'url': value,
     if (instance.vote case final value?) 'vote': value,

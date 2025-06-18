@@ -28,10 +28,11 @@ class VotingStory extends StatelessWidget {
                     width: constraint.maxWidth,
                     height: user == null ? 400 : null,
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                    decoration: user == null ? BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)) : null,
+                    decoration:
+                        user == null || story.value == null ? BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)) : null,
                     child:
                         value == null || (user == null && value.status == StatusEnum.notStarted)
-                            ? Center(child: Text('Waiting', style: theme.textTheme.displayLarge))
+                            ? Center(child: Text(value == null ? '' : 'Waiting', style: theme.textTheme.displayLarge))
                             : Wrap(
                               alignment: WrapAlignment.center,
                               spacing: 10,
