@@ -38,6 +38,21 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void signOut() {
+    AuthServices().signOut().then((_) {
+      navigatorKey.currentContext!.go(Routes.login);
+    });
+  }
+
+  void sortToggle(index) {
+    setState(() {
+      // The button that is tapped is set to true, and the others to false.
+      for (int i = 0; i < _selectedOrder.length; i++) {
+        _selectedOrder[i] = i == index;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -50,11 +65,7 @@ class _MainPageState extends State<MainPage> {
             backgroundColor: Colors.blueAccent,
             child: IconButton(
               icon: Icon(Icons.person_outline, color: Colors.white),
-              onPressed: () {
-                AuthServices().signOut().then((_) {
-                  navigatorKey.currentContext!.go(Routes.login);
-                });
-              },
+              onPressed: signOut,
             ),
           ),
         ],
@@ -87,15 +98,7 @@ class _MainPageState extends State<MainPage> {
                     ToggleButtons(
                       isSelected: _selectedOrder,
                       borderRadius: BorderRadius.circular(6),
-                      //constraints: BoxConstraints(minWidth: 32, minHeight: 32),
-                      onPressed: (index) {
-                        setState(() {
-                          // The button that is tapped is set to true, and the others to false.
-                          for (int i = 0; i < _selectedOrder.length; i++) {
-                            _selectedOrder[i] = i == index;
-                          }
-                        });
-                      },
+                      onPressed: sortToggle,
                       children: [
                         Tooltip(message: 'Sort by earliest date', child: Transform.rotate(origin: Offset(-3, -3), angle: -0.5 * pi, child: Icon(Icons.arrow_back_ios))),
                         Tooltip(message: 'Sort by latest date', child: Transform.rotate(origin: Offset(-3, 1), angle: 0.5 * pi, child: Icon(Icons.arrow_back_ios))),

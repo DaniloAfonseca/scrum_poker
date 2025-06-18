@@ -49,6 +49,18 @@ class _RoomPageState extends State<RoomPage> {
     super.dispose();
   }
 
+  void signOut() {
+    _box!.delete('appUser');
+    setState(() {
+      if (user != null) {
+        AuthServices().signOut().then((_) {
+          navigatorKey.currentContext!.go(Routes.login);
+        });
+      }
+      _appUser.value = null;
+    });
+  }
+
   Future<void> loadUser() async {
     setState(() {
       _isLoading = true;
@@ -75,6 +87,17 @@ class _RoomPageState extends State<RoomPage> {
     });
   }
 
+  Future<void> logIn(username) async {
+    if (user != null) {
+      await user!.updateDisplayName(username);
+    }
+    final appUser = user == null ? AppUser(name: username, id: Uuid().v4()) : AppUser.fromUser(user!);
+
+    _box!.put('appUser', appUser.toJson());
+
+    _appUser.value = appUser;
+  }
+
   Future<void> addUserToStory(Room room) async {
     if (_appUser.value == null) {
       return;
@@ -96,21 +119,11 @@ class _RoomPageState extends State<RoomPage> {
     }
   }
 
-  // Future<Room?> getRoom() async {
-  //   final roomDoesNotExists = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().isEmpty;
-  //   if (!roomDoesNotExists) {
-  //     final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().first;
-  //     final map = dbRoom.data()!;
-  //     return Room.fromJson(map);
-  //   }
-  //   return null;
-  // }
-
   Future<void> checkChanges(Room room) async {
     if (firstLoad) return;
     final messages = <String>[];
 
-    // check users 
+    // check users
     if (currentUsers.value.isNotEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
       // check if there is a new user
       for (final user in room.currentUsers!) {
@@ -144,12 +157,9 @@ class _RoomPageState extends State<RoomPage> {
 
     // check stories
     if (oldStories.isNotEmpty) {
-      for(final story in room.stories) {
-      
+      for (final story in room.stories) {}
     }
 
-    }
-    
     ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? controller;
 
     // show messages
@@ -173,6 +183,16 @@ class _RoomPageState extends State<RoomPage> {
     }
   }
 
+  Future<void> removeUser(AppUser appUser, Room room) async {
+    room.currentUsers?.removeWhere((t) => t.name == appUser.name);
+    await saveRoom(room);
+  }
+
+  Future<void> saveRoom(Room room) async {
+    final json = room.toJson();
+    await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -183,25 +203,7 @@ class _RoomPageState extends State<RoomPage> {
               : AppBar(
                 actionsPadding: const EdgeInsets.only(right: 16.0),
                 title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
-                actions: [
-                  CircleAvatar(
-                    backgroundColor: Colors.blueAccent,
-                    child: IconButton(
-                      icon: Icon(Icons.person_outline, color: Colors.white),
-                      onPressed: () {
-                        _box!.delete('appUser');
-                        setState(() {
-                          if (user != null) {
-                            AuthServices().signOut().then((_) {
-                              navigatorKey.currentContext!.go(Routes.login);
-                            });
-                          }
-                          _appUser.value = null;
-                        });
-                      },
-                    ),
-                  ),
-                ],
+                actions: [CircleAvatar(backgroundColor: Colors.blueAccent, child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: signOut))],
               ),
       body: ValueListenableBuilder(
         valueListenable: _appUser,
@@ -210,19 +212,7 @@ class _RoomPageState extends State<RoomPage> {
                 _isLoading
                     ? Center(child: CircularProgressIndicator())
                     : (_appUser.value == null)
-                    ? RoomLogin(
-                      isModerator: user != null,
-                      login: (username) async {
-                        if (user != null) {
-                          await user!.updateDisplayName(username);
-                        }
-                        final appUser = user == null ? AppUser(name: username, id: Uuid().v4()) : AppUser.fromUser(user!);
-
-                        _box!.put('appUser', appUser.toJson());
-
-                        _appUser.value = appUser;
-                      },
-                    )
+                    ? RoomLogin(isModerator: user != null, login: logIn)
                     : StreamBuilder(
                       stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
                       builder: (context, snapshot) {
@@ -266,15 +256,8 @@ class _RoomPageState extends State<RoomPage> {
                                       currentStory: currentStory,
                                       currentUsers: currentUsers,
                                       appUser: _appUser.value!,
-                                      onUserRemoved: (appUser) async {
-                                        room.currentUsers?.removeWhere((t) => t.name == appUser.name);
-                                        final json = room.toJson();
-                                        await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
-                                      },
-                                      onObserverChanged: (appUser) async {
-                                        final json = room.toJson();
-                                        await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
-                                      },
+                                      onUserRemoved: (appUser) => removeUser(appUser, room),
+                                      onObserverChanged: (appUser) => saveRoom(room),
                                     ),
                                   ],
                                 ),

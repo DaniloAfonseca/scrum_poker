@@ -82,6 +82,82 @@ class _UserRoomPageState extends State<UserRoomPage> {
     cardsToUse.addAll(VoteEnum.values.map((v) => allCards ? false : room!.cardsToUse.contains(v)));
   }
 
+  void signOut() {
+    AuthServices().signOut().then((_) {
+      navigatorKey.currentContext!.go(Routes.login);
+    });
+  }
+
+  void roomDeleteToggle(bool value) {
+    setState(() {
+      deleted = value;
+      room!.dateDeleted = deleted ? DateTime.now() : null;
+    });
+  }
+
+  Future<void> saveRoom() async {
+    if (_formKey.currentState!.validate()) {
+      room!.name = _nameController.value.text;
+      room!.cardsToUse.clear();
+      for (var index = 0; index < VoteEnum.values.length; index++) {
+        if (cardsToUse[index] || allCards) {
+          room!.cardsToUse.add(VoteEnum.values[index]);
+        }
+      }
+      final json = room!.toJson();
+      await FirebaseFirestore.instance.collection('rooms').doc(room!.id).set(json);
+
+      final userRoom = UserRoom.fromRoom(room!);
+
+      final userRoomsMap = userRoom.toJson();
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('rooms').doc(room!.id).set(userRoomsMap);
+
+      navigatorKey.currentContext!.go(Routes.home);
+    }
+  }
+
+  void useAllCardsToggle(value) {
+    setState(() {
+      allCards = value == true;
+      for (var index = 0; index < VoteEnum.values.length; index++) {
+        cardsToUse[index] = false;
+      }
+    });
+  }
+
+  void cardInUse(int index, bool? value) {
+    setState(() {
+      allCards = false;
+      cardsToUse[index] = value == true;
+    });
+  }
+
+  void addStory() {
+    room!.stories.add(Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true));
+    setState(() {
+      newStory = true;
+    });
+  }
+
+  void removeStory(Story story) {
+    room!.stories.remove(story);
+    setState(() {});
+  }
+
+  void moveStoryUp(int index, Story story) {
+    final previousStory = room!.stories[index - 1];
+    room!.stories[index - 1] = story;
+    room!.stories[index] = previousStory;
+    setState(() {});
+  }
+
+  void moveStoryDown(int index, Story story) {
+    final nextStory = room!.stories[index + 1];
+    room!.stories[index + 1] = story;
+    room!.stories[index] = nextStory;
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -91,19 +167,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
           appBar: AppBar(
             actionsPadding: const EdgeInsets.only(right: 16.0),
             title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
-            actions: [
-              CircleAvatar(
-                backgroundColor: Colors.blueAccent,
-                child: IconButton(
-                  icon: Icon(Icons.person_outline, color: Colors.white),
-                  onPressed: () {
-                    AuthServices().signOut().then((_) {
-                      navigatorKey.currentContext!.go(Routes.login);
-                    });
-                  },
-                ),
-              ),
-            ],
+            actions: [CircleAvatar(backgroundColor: Colors.blueAccent, child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: signOut))],
           ),
           body:
               room == null
@@ -153,12 +217,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                     activeColor: Colors.blue[600],
                                     inactiveThumbColor: Colors.grey[500],
                                     trackOutlineColor: borderColor,
-                                    onChanged: (bool value) {
-                                      setState(() {
-                                        deleted = value;
-                                        room!.dateDeleted = deleted ? DateTime.now() : null;
-                                      });
-                                    },
+                                    onChanged: roomDeleteToggle,
                                   ),
                                 ],
                               ),
@@ -170,26 +229,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                   elevation: 5,
                                 ),
-                                onPressed: () async {
-                                  if (_formKey.currentState!.validate()) {
-                                    room!.name = _nameController.value.text;
-                                    room!.cardsToUse.clear();
-                                    for (var index = 0; index < VoteEnum.values.length; index++) {
-                                      if (cardsToUse[index] || allCards) {
-                                        room!.cardsToUse.add(VoteEnum.values[index]);
-                                      }
-                                    }
-                                    final json = room!.toJson();
-                                    await FirebaseFirestore.instance.collection('rooms').doc(room!.id).set(json);
-
-                                    final userRoom = UserRoom.fromRoom(room!);
-
-                                    final userRoomsMap = userRoom.toJson();
-                                    await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('rooms').doc(room!.id).set(userRoomsMap);
-
-                                    navigatorKey.currentContext!.go(Routes.home);
-                                  }
-                                },
+                                onPressed: saveRoom,
                                 child: Text('Save'),
                               ),
                             ],
@@ -217,14 +257,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                       tristate: false,
                                       checkboxSemanticLabel: 'Use all cards',
                                       visualDensity: VisualDensity(horizontal: -4, vertical: -4),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          allCards = value == true;
-                                          for (var index = 0; index < VoteEnum.values.length; index++) {
-                                            cardsToUse[index] = false;
-                                          }
-                                        });
-                                      },
+                                      onChanged: useAllCardsToggle,
                                     ),
                                   ),
                                   SizedBox(
@@ -249,12 +282,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                                     tristate: false,
                                                     visualDensity: VisualDensity(horizontal: -4, vertical: -4),
                                                     value: cardsToUse[index],
-                                                    onChanged: (v) {
-                                                      setState(() {
-                                                        allCards = false;
-                                                        cardsToUse[index] = v == true;
-                                                      });
-                                                    },
+                                                    onChanged: (v) => cardInUse(index, v),
                                                     title: Text(value.label),
                                                   ),
                                                 ),
@@ -276,12 +304,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                   elevation: 5,
                                 ),
-                                onPressed: () {
-                                  room!.stories.add(Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true));
-                                  setState(() {
-                                    newStory = true;
-                                  });
-                                },
+                                onPressed: addStory,
                                 child: Text('Add Story'),
                               ),
                             ],
@@ -295,28 +318,9 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                         (index, story) => RoomStory(
                                           key: ValueKey(story),
                                           story: story,
-                                          deletedChanged: () {
-                                            room!.stories.remove(story);
-                                            setState(() {});
-                                          },
-                                          moveUp:
-                                              index == 0
-                                                  ? null
-                                                  : () {
-                                                    final previousStory = room!.stories[index - 1];
-                                                    room!.stories[index - 1] = story;
-                                                    room!.stories[index] = previousStory;
-                                                    setState(() {});
-                                                  },
-                                          moveDown:
-                                              index >= room!.stories.length - 1
-                                                  ? null
-                                                  : () {
-                                                    final nextStory = room!.stories[index + 1];
-                                                    room!.stories[index + 1] = story;
-                                                    room!.stories[index] = nextStory;
-                                                    setState(() {});
-                                                  },
+                                          onDelete: () => removeStory(story),
+                                          onMoveUp: index == 0 ? null : () => moveStoryUp(index, story),
+                                          onMoveDown: index >= room!.stories.length - 1 ? null : () => moveStoryDown(index, story),
                                         ),
                                       )
                                       .toList(),

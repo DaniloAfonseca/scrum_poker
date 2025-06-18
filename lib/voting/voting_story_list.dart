@@ -38,6 +38,24 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
     await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
   }
 
+  void moveStoryUp(Story story) {
+    
+  }
+
+  void moveStoryDown(Story story) {}
+
+  void deleteStory(Story story) {}
+
+  void skipStory(Story story) {
+    story.status = StatusEnum.skipped;
+    saveRoom();
+  }
+
+  void moveToActive(Story story) {
+    story.status = StatusEnum.notStarted;
+    saveRoom();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -106,12 +124,9 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                               currentStory: widget.currentStory,
                               onDelete: () {},
                               story: t,
-                              onMoveDown: index < activeStories.length - 1 ? () {} : null,
-                              onMoveUp: index == 0 ? null : () {},
-                              onSkip: () {
-                                t.status = StatusEnum.skipped;
-                                saveRoom();
-                              },
+                              onMoveDown: index < activeStories.length - 1 ? () => moveStoryDown(t) : null,
+                              onMoveUp: index == 0 ? null : () => moveStoryUp(t),
+                              onSkip: () => skipStory(t) ,
                             ),
                           )
                           .toList(),
@@ -131,10 +146,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                         story: t,
                         onMoveToActive:
                             t.status == StatusEnum.skipped
-                                ? () {
-                                  t.status = StatusEnum.notStarted;
-                                  saveRoom();
-                                }
+                                ? () => moveToActive(t) 
                                 : null,
                       ),
                     ),
@@ -155,10 +167,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                         story: t,
                         onMoveToActive:
                             t.status == StatusEnum.skipped
-                                ? () {
-                                  t.status = StatusEnum.notStarted;
-                                  saveRoom();
-                                }
+                                ? () => moveToActive(t) 
                                 : null,
                       ),
                     ),

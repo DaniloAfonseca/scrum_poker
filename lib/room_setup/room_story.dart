@@ -8,10 +8,10 @@ import 'package:uuid/uuid.dart';
 
 class RoomStory extends StatefulWidget {
   final Story? story;
-  final Function() deletedChanged;
-  final Function()? moveUp;
-  final Function()? moveDown;
-  const RoomStory({super.key, this.story, required this.deletedChanged, this.moveUp, this.moveDown});
+  final Function() onDelete;
+  final Function()? onMoveUp;
+  final Function()? onMoveDown;
+  const RoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown});
 
   @override
   State<RoomStory> createState() => _RoomStoryState();
@@ -52,6 +52,14 @@ class _RoomStoryState extends State<RoomStory> {
     _descriptionController.dispose();
     _urlController.dispose();
     super.dispose();
+  }
+
+  void edit() {
+    _descriptionController.text = story.description;
+    _urlController.text = story.url ?? '';
+    setState(() {
+      isEditing = true;
+    });
   }
 
   @override
@@ -233,36 +241,12 @@ class _RoomStoryState extends State<RoomStory> {
                 showMenu(
                   context: context,
                   items: [
-                    PopupMenuItem(
-                      child: Row(spacing: 5, children: [Icon(Icons.edit), Text('Edit')]),
-                      onTap: () {
-                        _descriptionController.text = story.description;
-                        _urlController.text = story.url ?? '';
-                        setState(() {
-                          isEditing = true;
-                        });
-                      },
-                    ),
-                    PopupMenuItem(
-                      child: Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')]),
-                      onTap: () async {
-                        widget.deletedChanged();
-                      },
-                    ),
-                    if (widget.moveUp != null)
-                      PopupMenuItem(
-                        child: Row(spacing: 5, children: [Icon(Icons.move_up_outlined, color: Colors.blueAccent), Text('Move up')]),
-                        onTap: () async {
-                          widget.moveUp!();
-                        },
-                      ),
-                    if (widget.moveDown != null)
-                      PopupMenuItem(
-                        child: Row(spacing: 5, children: [Icon(Icons.move_down_outlined, color: Colors.blueAccent), Text('Move down')]),
-                        onTap: () async {
-                          widget.moveDown!();
-                        },
-                      ),
+                    PopupMenuItem(onTap: edit, child: Row(spacing: 5, children: [Icon(Icons.edit), Text('Edit')])),
+                    PopupMenuItem(onTap: widget.onDelete, child: Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')])),
+                    if (widget.onMoveUp != null)
+                      PopupMenuItem(onTap: widget.onMoveUp, child: Row(spacing: 5, children: [Icon(Icons.move_up_outlined, color: Colors.blueAccent), Text('Move up')])),
+                    if (widget.onMoveDown != null)
+                      PopupMenuItem(onTap: widget.onMoveDown, child: Row(spacing: 5, children: [Icon(Icons.move_down_outlined, color: Colors.blueAccent), Text('Move down')])),
                   ],
                   position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
                 );
