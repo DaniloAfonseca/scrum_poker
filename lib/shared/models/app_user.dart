@@ -12,6 +12,7 @@ class AppUser {
   final String name;
   bool moderator;
   bool observer;
+  DateTime? joinedRoomDate;
   final String? picture;
   @JsonKey(name: 'account_type')
   final String? accountType;
@@ -24,15 +25,15 @@ class AppUser {
   Map<String, dynamic> toJson() => _$AppUserToJson(this);
 
   Map<String, dynamic> _$AppUserToJson(AppUser instance) => <String, dynamic>{
-    'accountId': instance.accountId,
-    'email': instance.email,
-    'id': instance.id,
+    if (instance.accountId case final value?) 'accountId': value,
+    if (instance.email case final value?) 'email': value,
+    if (instance.id case final value?) 'id': value,
     'name': instance.name,
     'moderator': instance.moderator,
     'observer': instance.observer,
-    'picture': instance.picture,
-    'account_type': instance.accountType,
-    'cloud_id': instance.cloudId,
+    if (instance.picture case final value?) 'picture': value,
+    if (instance.accountType case final value?) 'account_type': value,
+    if (instance.cloudId case final value?) 'cloud_id': value,
   };
 
   factory AppUser.fromAppUser(AppUser user, bool moderator) {

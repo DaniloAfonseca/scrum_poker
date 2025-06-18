@@ -34,28 +34,9 @@ class _MainPageState extends State<MainPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (user == null) {
         context.go(Routes.login);
-      } //else {
-      //loadRooms();
-      //}
+      } 
     });
   }
-
-  // Future<void> loadRooms() async {
-  //   final roomsExists = await FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots().isEmpty;
-  //   if (roomsExists) {
-  //     setState(() {
-  //       loadingRooms = false;
-  //     });
-  //     return;
-  //   }
-  //   final dbUserRooms = await FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots();
-  //   final userRooms = (dbUserRooms.map((t) => UserRoom.fromJson(mergeAllDocs(t))));
-
-  //   setState(() {
-  //     //rooms.addAll(userRooms.map((t) => UserRoom.fromJson(t as Map<String, dynamic>)));
-  //     loadingRooms = false;
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +63,17 @@ class _MainPageState extends State<MainPage> {
         stream: FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-          final rooms = snapshot.data!.docs.map((t) => UserRoom.fromJson(t.data())).toList();
+          var rooms = snapshot.data!.docs.map((t) => UserRoom.fromJson(t.data())).toList();
+
+          if (!showDeleted) {
+            rooms = rooms.where((t) => t.dateDeleted == null).toList();
+          }
+
+          if (_selectedOrder[0]) {
+            rooms.sort((a, b) => a.dateAdded!.compareTo(b.dateAdded!));
+          } else {
+            rooms.sort((a, b) => b.dateAdded!.compareTo(a.dateAdded!));
+          }
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             child: Column(
@@ -98,11 +89,6 @@ class _MainPageState extends State<MainPage> {
                       borderRadius: BorderRadius.circular(6),
                       //constraints: BoxConstraints(minWidth: 32, minHeight: 32),
                       onPressed: (index) {
-                        if (index == 1) {
-                          rooms.sort((a, b) => b.dateAdded!.compareTo(a.dateAdded!));
-                        } else {
-                          rooms.sort((a, b) => a.dateAdded!.compareTo(b.dateAdded!));
-                        }
                         setState(() {
                           // The button that is tapped is set to true, and the others to false.
                           for (int i = 0; i < _selectedOrder.length; i++) {
@@ -170,11 +156,8 @@ class _MainPageState extends State<MainPage> {
                 ),
                 if (user != null)
                   SingleChildScrollView(
-                    child: Column(
-                      spacing: 10,
-                      children:
-                          rooms.where((t) => showDeleted ? true : t.dateDeleted == null).map((room) => UserRoomWidget(room: room, deletedChanged: () => setState(() {}))).toList(),
-                    ),
+                    key: ValueKey(_selectedOrder[0]),
+                    child: Column(spacing: 10, children: rooms.map((room) => UserRoomWidget(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList()),
                   ),
               ],
             ),

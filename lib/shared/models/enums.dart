@@ -1,4 +1,4 @@
-enum StatusEnum { notStarted, started, ended }
+enum StatusEnum { notStarted, started, skipped, ended }
 
 enum VoteEnum {
   zero('0', 0),

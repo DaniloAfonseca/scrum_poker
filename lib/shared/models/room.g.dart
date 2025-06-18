@@ -69,5 +69,6 @@ const _$VoteEnumEnumMap = {
 const _$StatusEnumEnumMap = {
   StatusEnum.notStarted: 'notStarted',
   StatusEnum.started: 'started',
+  StatusEnum.skipped: 'skipped',
   StatusEnum.ended: 'ended',
 };

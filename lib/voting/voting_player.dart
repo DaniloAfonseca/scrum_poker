@@ -80,7 +80,7 @@ class _VotingPlayerState extends State<VotingPlayer> {
                   if (!widget.appUser.moderator)
                     PopupMenuItem(
                       onTap: widget.onRemoveTap,
-                      child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.delete, color: Colors.red), Text('Remove')]),
+                      child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Remove')]),
                     ),
                 ],
                 position: RelativeRect.fromLTRB(position.dx, position.dy + 40, position.dx, position.dy),

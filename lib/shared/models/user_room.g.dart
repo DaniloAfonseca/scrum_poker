@@ -31,5 +31,6 @@ UserRoom _$UserRoomFromJson(Map<String, dynamic> json) =>
 const _$StatusEnumEnumMap = {
   StatusEnum.notStarted: 'notStarted',
   StatusEnum.started: 'started',
+  StatusEnum.skipped: 'skipped',
   StatusEnum.ended: 'ended',
 };

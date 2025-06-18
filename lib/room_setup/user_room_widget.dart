@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
@@ -10,9 +11,9 @@ import 'package:scrum_poker/text_tag.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UserRoomWidget extends StatefulWidget {
-  final UserRoom room;
+  final UserRoom userRoom;
   final Function() deletedChanged;
-  const UserRoomWidget({super.key, required this.room, required this.deletedChanged});
+  const UserRoomWidget({super.key, required this.userRoom, required this.deletedChanged});
 
   @override
   State<UserRoomWidget> createState() => _UserRoomWidgetState();
@@ -21,11 +22,11 @@ class UserRoomWidget extends StatefulWidget {
 class _UserRoomWidgetState extends State<UserRoomWidget> {
   final _menuKey = GlobalKey();
   final user = FirebaseAuth.instance.currentUser;
-  late UserRoom room;
+  late UserRoom userRoom;
 
   @override
   void initState() {
-    room = widget.room;
+    userRoom = widget.userRoom;
     super.initState();
   }
 
@@ -50,17 +51,17 @@ class _UserRoomWidgetState extends State<UserRoomWidget> {
               Row(
                 spacing: 10,
                 children: [
-                  Text(room.name!, style: theme.textTheme.headlineLarge!.copyWith(color: Colors.white)),
+                  Text(userRoom.name, style: theme.textTheme.headlineLarge!.copyWith(color: Colors.white)),
                   TextTag(
                     text: 'DELETED',
                     backgroundColor: Colors.red,
                     foreColor: Colors.white,
-                    display: room.dateDeleted != null,
-                    toolTipText: room.dateDeleted != null ? 'Delete on ${DateFormat('yyyy-MM-dd - kk:mm').format(room.dateDeleted!)}' : null,
+                    display: userRoom.dateDeleted != null,
+                    toolTipText: userRoom.dateDeleted != null ? 'Delete on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateDeleted!)}' : null,
                   ),
                 ],
               ),
-              Text('Added on ${DateFormat('yyyy-MM-dd - kk:mm').format(room.dateAdded!)}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+              Text('Added on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateAdded!)}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
             ],
           ),
 
@@ -73,23 +74,30 @@ class _UserRoomWidgetState extends State<UserRoomWidget> {
                 context: context,
                 items: [
                   PopupMenuItem(
-                    child: Row(spacing: 5, children: [Icon(Icons.edit), Text('Edit')]),
+                    child: Row(spacing: 5, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Edit')]),
                     onTap: () {
-                      context.go(Routes.editRoom, extra: room.roomId);
+                      context.go(Routes.editRoom, extra: userRoom.roomId);
                     },
                   ),
                   PopupMenuItem(
-                    child: Row(spacing: 5, children: [Icon(FontAwesomeIcons.doorOpen), Text('Open')]),
+                    child: Row(spacing: 5, children: [Icon(FontAwesomeIcons.doorOpen, color: Colors.blueAccent), Text('Open')]),
                     onTap: () async {
-                      navigatorKey.currentContext!.go('${Routes.room}/${room.roomId}');
+                      navigatorKey.currentContext!.go('${Routes.room}/${userRoom.roomId}');
                     },
                   ),
                   PopupMenuItem(
-                    child: Row(spacing: 5, children: [Icon(Icons.delete_outline), Text('Delete')]),
+                    child: Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')]),
                     onTap: () async {
-                      widget.room.dateDeleted = DateTime.now();
-                      final json = room.toJson();
-                      await FirebaseFirestore.instance.collection('rooms').doc(room.roomId).set(json);
+                      userRoom.dateDeleted = DateTime.now();
+                      final json = userRoom.toJson();
+                      await FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').doc(userRoom.roomId).set(json);
+                      final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(userRoom.roomId).snapshots().first;
+
+                      final room = Room.fromJson(dbRoom.data()!);
+                      room.dateDeleted = userRoom.dateDeleted;
+                      final roomMap = room.toJson();
+                      await FirebaseFirestore.instance.collection('rooms').doc(userRoom.roomId).set(roomMap);
+
                       widget.deletedChanged();
                     },
                   ),

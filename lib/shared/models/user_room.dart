@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:json_annotation/json_annotation.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';

@@ -21,6 +21,11 @@ AppUser _$AppUserFromJson(Map<String, dynamic> json) => $checkedCreate(
       moderator: $checkedConvert('moderator', (v) => v as bool? ?? false),
       observer: $checkedConvert('observer', (v) => v as bool? ?? false),
     );
+    $checkedConvert(
+      'joinedRoomDate',
+      (v) =>
+          val.joinedRoomDate = v == null ? null : DateTime.parse(v as String),
+    );
     return val;
   },
   fieldKeyMap: const {

@@ -243,21 +243,21 @@ class _RoomStoryState extends State<RoomStory> {
                       },
                     ),
                     PopupMenuItem(
-                      child: Row(spacing: 5, children: [Icon(Icons.delete_outline), Text('Delete')]),
+                      child: Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')]),
                       onTap: () async {
                         widget.deletedChanged();
                       },
                     ),
                     if (widget.moveUp != null)
                       PopupMenuItem(
-                        child: Row(spacing: 5, children: [Icon(Icons.move_up_outlined), Text('Move up')]),
+                        child: Row(spacing: 5, children: [Icon(Icons.move_up_outlined, color: Colors.blueAccent), Text('Move up')]),
                         onTap: () async {
                           widget.moveUp!();
                         },
                       ),
                     if (widget.moveDown != null)
                       PopupMenuItem(
-                        child: Row(spacing: 5, children: [Icon(Icons.move_down_outlined), Text('Move down')]),
+                        child: Row(spacing: 5, children: [Icon(Icons.move_down_outlined, color: Colors.blueAccent), Text('Move down')]),
                         onTap: () async {
                           widget.moveDown!();
                         },

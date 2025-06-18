@@ -13,17 +13,19 @@ class Story {
   final List<Vote> votes;
   @JsonKey(includeFromJson: false)
   bool added;
+  int? revisedVote;
 
-  Story({required this.description, this.url, this.vote, required this.status, required this.votes, this.added = false});
+  Story({required this.description, this.url, this.vote, required this.status, required this.votes, this.added = false, this.revisedVote});
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
   Map<String, dynamic> toJson() => _$StoryToJson(this);
 
   Map<String, dynamic> _$StoryToJson(Story instance) => <String, dynamic>{
     'description': instance.description,
-    'url': instance.url,
-    'vote': instance.vote,
+    if (instance.url case final value?) 'url': value,
+    if (instance.vote case final value?) 'vote': value,
     'status': _$StatusEnumEnumMap[instance.status],
-    'votes': votes.map((vote) => vote.toJson()).toList()
+    'votes': votes.map((vote) => vote.toJson()).toList(),
+    if (instance.revisedVote case final value?) 'revisedVote': value,
   };
 }

@@ -13,7 +13,7 @@ import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/voting/room_login.dart';
 import 'package:scrum_poker/voting/voting_players.dart';
-import 'package:scrum_poker/voting/voting_stories.dart';
+import 'package:scrum_poker/voting/voting_story_list.dart';
 import 'package:scrum_poker/voting/voting_story.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:uuid/uuid.dart';
@@ -35,6 +35,7 @@ class _RoomPageState extends State<RoomPage> {
   final currentStory = ValueNotifier<Story?>(null);
   final currentMessage = ValueNotifier<String>('');
   final currentUsers = ValueNotifier<List<AppUser>>([]);
+  bool firstLoad = true;
 
   @override
   void initState() {
@@ -54,10 +55,9 @@ class _RoomPageState extends State<RoomPage> {
 
     _box = await Hive.openBox('scrumPoker');
 
-    if (user?.displayName != null) {
+    if (user?.metadata != null) {
       final appUser = AppUser.fromUser(user!);
       _box!.put('appUser', appUser.toJson());
-      addUserToStory(appUser);
       currentMessage.value = 'Click "Start" to begin voting';
     } else {
       currentMessage.value = 'Waiting for moderator';
@@ -74,38 +74,39 @@ class _RoomPageState extends State<RoomPage> {
     });
   }
 
-  Future<void> addUserToStory(AppUser appUser) async {
-    final room = await getRoom();
-    if (room == null) {
-      invalidRoom = true;
+  Future<void> addUserToStory(Room room) async {
+    if (_appUser.value == null) {
       return;
     }
 
     // add user to room
-    if (room.currentUsers?.any((t) => t.id == appUser.id) != true) {
+    if (room.currentUsers?.any((t) => t.id == _appUser.value!.id) != true) {
       room.currentUsers ??= [];
-      room.currentUsers!.add(appUser);
+      room.currentUsers!.add(_appUser.value!);
       final roomMap = room.toJson();
       await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
     }
+  }
 
+  void setCurrentStory(Room room) {
     final notStartedStories = room.stories.where((t) => t.status == StatusEnum.notStarted).toList();
     if (notStartedStories.isNotEmpty) {
       currentStory.value = notStartedStories.first;
     }
   }
 
-  Future<Room?> getRoom() async {
-    final roomDoesNotExists = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().isEmpty;
-    if (!roomDoesNotExists) {
-      final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().first;
-      final map = dbRoom.data()!;
-      return Room.fromJson(map);
-    }
-    return null;
-  }
+  // Future<Room?> getRoom() async {
+  //   final roomDoesNotExists = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().isEmpty;
+  //   if (!roomDoesNotExists) {
+  //     final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().first;
+  //     final map = dbRoom.data()!;
+  //     return Room.fromJson(map);
+  //   }
+  //   return null;
+  // }
 
   Future<void> checkChanges(Room room) async {
+    if (firstLoad) return;
     final messages = <String>[];
     // check if user entered
     if (currentUsers.value.isNotEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
@@ -209,7 +210,6 @@ class _RoomPageState extends State<RoomPage> {
 
                         _box!.put('appUser', appUser.toJson());
 
-                        addUserToStory(appUser);
                         _appUser.value = appUser;
                       },
                     )
@@ -220,7 +220,13 @@ class _RoomPageState extends State<RoomPage> {
                         final map = snapshot.data!.data()!;
                         final room = Room.fromJson(map);
 
+                        addUserToStory(room);
+                        if (_appUser.value!.moderator) {
+                          setCurrentStory(room);
+                        }
+
                         checkChanges(room);
+                        firstLoad = false;
 
                         currentUsers.value = room.currentUsers ?? [];
                         return SingleChildScrollView(
@@ -237,7 +243,10 @@ class _RoomPageState extends State<RoomPage> {
                                     Expanded(
                                       child: Column(
                                         spacing: 20,
-                                        children: [VotingStory(roomId: widget.roomId!, cards: room.cardsToUse, story: currentStory), VotingStories(room: room)],
+                                        children: [
+                                          VotingStory(roomId: widget.roomId!, cards: room.cardsToUse, story: currentStory),
+                                          VotingStoryList(room: room, currentStory: currentStory),
+                                        ],
                                       ),
                                     ),
                                     VotingPlayers(

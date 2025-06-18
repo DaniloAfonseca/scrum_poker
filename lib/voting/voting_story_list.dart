@@ -1,20 +1,27 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
+import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/voting/voting_story_item.dart';
 
-class VotingStories extends StatefulWidget {
+class VotingStoryList extends StatefulWidget {
   final Room room;
-  const VotingStories({super.key, required this.room});
+  final ValueNotifier<Story?> currentStory;
+  const VotingStoryList({super.key, required this.room, required this.currentStory});
 
   @override
-  State<VotingStories> createState() => _VotingStoriesState();
+  State<VotingStoryList> createState() => _VotingStoryListState();
 }
 
-class _VotingStoriesState extends State<VotingStories> with SingleTickerProviderStateMixin {
+class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late Room room;
 
   @override
   void initState() {
+    room = widget.room;
     _tabController = TabController(length: 3, vsync: this);
 
     super.initState();
@@ -26,11 +33,16 @@ class _VotingStoriesState extends State<VotingStories> with SingleTickerProvider
     super.dispose();
   }
 
+  Future<void> saveRoom() async {
+    final roomMap = room.toJson();
+    await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final activeStories = widget.room.stories.where((t) => [StatusEnum.notStarted, StatusEnum.started].contains(t.status)).toList();
-    final completedStories = widget.room.stories.where((t) => t.status == StatusEnum.ended).toList();
+    final activeStories = room.stories.where((t) => [StatusEnum.notStarted, StatusEnum.started].contains(t.status)).toList();
+    final completedStories = room.stories.where((t) => [StatusEnum.skipped, StatusEnum.ended].contains(t.status)).toList();
     return Container(
       decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)),
       child: Column(
@@ -74,7 +86,7 @@ class _VotingStoriesState extends State<VotingStories> with SingleTickerProvider
                     CircleAvatar(
                       backgroundColor: Colors.blueAccent,
                       radius: 15,
-                      child: Text(widget.room.stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                      child: Text(room.stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
                     ),
                   ],
                 ),
@@ -82,36 +94,26 @@ class _VotingStoriesState extends State<VotingStories> with SingleTickerProvider
             ],
           ),
           SizedBox(
-            height: widget.room.stories.length * 50 + 101,
+            height: room.stories.length * 50 + 101,
             child: TabBarView(
               controller: _tabController,
               children: <Widget>[
                 Column(
                   children:
                       activeStories
-                          .map(
-                            (t) => Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Flexible(
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                    alignment: Alignment.centerLeft,
-                                    height: 50,
-                                    child: Text(t.description),
-                                  ),
-                                ),
-                                IconButton(onPressed: () {}, icon: Icon(Icons.more_vert)),
-                              ],
+                          .mapIndexed(
+                            (index, t) => VotingStoryItem(
+                              currentStory: widget.currentStory,
+                              canEdit: true,
+                              deletedChanged: () {},
+                              story: t,
+                              moveDown: index < activeStories.length ? () {} : null,
+                              moveUp: index == 0 ? null : () {},
+                              skipped: () {
+                                widget.currentStory.value!.status = StatusEnum.skipped;
+                                saveRoom();
+                              },
                             ),
-                          )
-                          .toList(),
-                ),
-                Column(
-                  children:
-                      completedStories
-                          .map(
-                            (t) => Container(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10), alignment: Alignment.centerLeft, height: 50, child: Text(t.description)),
                           )
                           .toList(),
                 ),
@@ -124,9 +126,19 @@ class _VotingStoriesState extends State<VotingStories> with SingleTickerProvider
                         Container(padding: EdgeInsets.only(right: 16), width: 136, child: Text('Real Est.', style: theme.textTheme.headlineSmall)),
                       ],
                     ),
-                    ...widget.room.stories.map(
-                      (t) => Container(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10), alignment: Alignment.centerLeft, height: 50, child: Text(t.description)),
+                    ...completedStories.map((t) => VotingStoryItem(currentStory: widget.currentStory, story: t)),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Padding(padding: const EdgeInsets.only(left: 16.0), child: Text('Title', style: theme.textTheme.headlineSmall))),
+                        SizedBox(width: 120, child: Text('Calc. Est.', style: theme.textTheme.headlineSmall)),
+                        Container(padding: EdgeInsets.only(right: 16), width: 136, child: Text('Real Est.', style: theme.textTheme.headlineSmall)),
+                      ],
                     ),
+                    ...room.stories.map((t) => VotingStoryItem(currentStory: widget.currentStory, story: t)),
                   ],
                 ),
               ],
