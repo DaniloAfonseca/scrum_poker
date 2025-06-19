@@ -3,9 +3,11 @@ import 'package:scrum_poker/shared/models/app_user.dart';
 
 class VotingPlayer extends StatefulWidget {
   final AppUser appUser;
-  final Function() onObserverTap;
-  final Function() onRemoveTap;
-  const VotingPlayer({super.key, required this.appUser, required this.onObserverTap, required this.onRemoveTap});
+  final AppUser currentAppUser;
+  final Function() onObserverChanged;
+  final Function() onUserRemoved;
+  final Function() onUserRenamed;
+  const VotingPlayer({super.key, required this.appUser, required this.currentAppUser, required this.onObserverChanged, required this.onUserRemoved, required this.onUserRenamed});
 
   @override
   State<VotingPlayer> createState() => _VotingPlayerState();
@@ -13,6 +15,13 @@ class VotingPlayer extends StatefulWidget {
 
 class _VotingPlayerState extends State<VotingPlayer> {
   final _menuKey = GlobalKey();
+
+  void changeUserStatus(bool isObserver) {
+    widget.appUser.observer = isObserver;
+    setState(() {});
+    widget.onObserverChanged();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -47,41 +56,34 @@ class _VotingPlayerState extends State<VotingPlayer> {
               showMenu(
                 context: context,
                 items: [
+                  if (widget.appUser.id == widget.currentAppUser.id)
+                  PopupMenuItem(
+                    onTap: widget.onUserRenamed,
+                    child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Rename')]),
+                  ),
                   PopupMenuItem<bool>(
                     value: !widget.appUser.observer,
                     enabled: widget.appUser.observer,
-                    onTap:
-                        !widget.appUser.observer
-                            ? null
-                            : () {
-                              widget.appUser.observer = false;
-                              setState(() {});
-                              widget.onObserverTap();
-                            },
+                    onTap: !widget.appUser.observer ? null : () => changeUserStatus(false),
                     child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.play_arrow, color: Colors.blueAccent), Text('Player')]),
                   ),
                   PopupMenuItem<bool>(
                     value: widget.appUser.observer,
                     enabled: !widget.appUser.observer,
-                    onTap:
-                        widget.appUser.observer
-                            ? null
-                            : () {
-                              widget.appUser.observer = true;
-                              setState(() {});
-                              widget.onObserverTap();
-                            },
+                    onTap: widget.appUser.observer ? null : () => changeUserStatus(true),
                     child: Row(
                       spacing: 5,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [Icon(Icons.remove_red_eye_outlined, color: Colors.blueAccent), Text('Observer')],
                     ),
                   ),
-                  if (!widget.appUser.moderator)
+                  if (!widget.appUser.moderator) ...[
+                    PopupMenuItem(height: 1, enabled: false, child: Divider()),
                     PopupMenuItem(
-                      onTap: widget.onRemoveTap,
+                      onTap: widget.onUserRemoved,
                       child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Remove')]),
                     ),
+                  ],
                 ],
                 position: RelativeRect.fromLTRB(position.dx, position.dy + 40, position.dx, position.dy),
               );

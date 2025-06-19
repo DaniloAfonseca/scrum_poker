@@ -9,14 +9,25 @@ class Story {
   String id;
   String description;
   String? url;
-  int? vote;
+  int? estimate;
   StatusEnum status;
   final List<Vote> votes;
   @JsonKey(includeFromJson: false)
   bool added;
-  int? revisedVote;
+  int? revisedEstimate;
+  int order;
 
-  Story({required this.id, required this.description, this.url, this.vote, required this.status, required this.votes, this.added = false, this.revisedVote});
+  Story({
+    required this.id,
+    required this.description,
+    this.url,
+    this.estimate,
+    required this.status,
+    required this.votes,
+    this.added = false,
+    this.revisedEstimate,
+    required this.order,
+  });
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
   Map<String, dynamic> toJson() => _$StoryToJson(this);
@@ -25,9 +36,10 @@ class Story {
     'id': instance.id,
     'description': instance.description,
     if (instance.url case final value?) 'url': value,
-    if (instance.vote case final value?) 'vote': value,
+    if (instance.estimate case final value?) 'estimate': value,
     'status': _$StatusEnumEnumMap[instance.status],
     'votes': votes.map((vote) => vote.toJson()).toList(),
-    if (instance.revisedVote case final value?) 'revisedVote': value,
+    if (instance.revisedEstimate case final value?) 'revisedEstimate': value,
+    'order': instance.order,
   };
 }

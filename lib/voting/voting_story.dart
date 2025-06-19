@@ -26,7 +26,7 @@ class VotingStory extends StatelessWidget {
                   Text(story.value?.description ?? '', style: theme.textTheme.headlineMedium),
                   Container(
                     width: constraint.maxWidth,
-                    height: user == null ? 400 : null,
+                    height: user == null || story.value == null ? 400 : null,
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                     decoration:
                         user == null || story.value == null ? BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)) : null,

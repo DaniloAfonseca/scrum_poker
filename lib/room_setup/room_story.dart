@@ -11,7 +11,8 @@ class RoomStory extends StatefulWidget {
   final Function() onDelete;
   final Function()? onMoveUp;
   final Function()? onMoveDown;
-  const RoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown});
+  final int nextOrder;
+  const RoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown, required this.nextOrder});
 
   @override
   State<RoomStory> createState() => _RoomStoryState();
@@ -36,7 +37,7 @@ class _RoomStoryState extends State<RoomStory> {
 
   @override
   void initState() {
-    story = widget.story ?? Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true);
+    story = widget.story ?? Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true, order: widget.nextOrder);
     isEditing = (widget.story?.added ?? false) || widget.story == null;
 
     _descriptionController.text = story.description;

@@ -38,16 +38,81 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
     await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
   }
 
-  void moveStoryUp(Story story) {
-    
+  void moveStoryUp(int index, Story story) {
+    final previousStory = room.stories[index - 1];
+    room.stories[index - 1] = story;
+    room.stories[index] = previousStory;
+    setStoriesOrder();
+    saveRoom();
   }
 
-  void moveStoryDown(Story story) {}
+  void moveStoryDown(int index, Story story) {
+    final nextStory = room.stories[index + 1];
+    room.stories[index + 1] = story;
+    room.stories[index] = nextStory;
+    setStoriesOrder();
+    saveRoom();
+  }
 
-  void deleteStory(Story story) {}
+  Future<void> removeStory(Story story) async {
+    var canDelete = false;
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete story'),
+          content: Text('You are about to delete story "${story.description}", are you sure?'),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                canDelete = true;
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                elevation: 5,
+              ),
+              child: const Text('Yes'),
+            ),
+            SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: () {
+                canDelete = false;
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                elevation: 5,
+              ),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (canDelete) {
+      room.stories.remove(story);
+      for (var i = 0; i < room.stories.length; i++) {
+        room.stories[i].order = i;
+      }
+      saveRoom();
+    }
+  }
+
+  void setStoriesOrder() {
+    for (var i = 0; i < room.stories.length; i++) {
+      room.stories[i].order = i;
+    }
+  }
 
   void skipStory(Story story) {
     story.status = StatusEnum.skipped;
+    widget.currentStory.value = null;
     saveRoom();
   }
 
@@ -122,11 +187,11 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                           .mapIndexed(
                             (index, t) => VotingStoryItem(
                               currentStory: widget.currentStory,
-                              onDelete: () {},
+                              onDelete: () => removeStory(t),
                               story: t,
-                              onMoveDown: index < activeStories.length - 1 ? () => moveStoryDown(t) : null,
-                              onMoveUp: index == 0 ? null : () => moveStoryUp(t),
-                              onSkip: () => skipStory(t) ,
+                              onMoveDown: index < activeStories.length - 1 ? () => moveStoryDown(index, t) : null,
+                              onMoveUp: index == 0 ? null : () => moveStoryUp(index, t),
+                              onSkip: () => skipStory(t),
                             ),
                           )
                           .toList(),
@@ -141,14 +206,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                       ],
                     ),
                     ...completedStories.map(
-                      (t) => VotingStoryItem(
-                        currentStory: widget.currentStory,
-                        story: t,
-                        onMoveToActive:
-                            t.status == StatusEnum.skipped
-                                ? () => moveToActive(t) 
-                                : null,
-                      ),
+                      (t) => VotingStoryItem(currentStory: widget.currentStory, story: t, onMoveToActive: t.status == StatusEnum.skipped ? () => moveToActive(t) : null),
                     ),
                   ],
                 ),
@@ -162,14 +220,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                       ],
                     ),
                     ...room.stories.map(
-                      (t) => VotingStoryItem(
-                        currentStory: widget.currentStory,
-                        story: t,
-                        onMoveToActive:
-                            t.status == StatusEnum.skipped
-                                ? () => moveToActive(t) 
-                                : null,
-                      ),
+                      (t) => VotingStoryItem(currentStory: widget.currentStory, story: t, onMoveToActive: t.status == StatusEnum.skipped ? () => moveToActive(t) : null),
                     ),
                   ],
                 ),

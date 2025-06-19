@@ -133,7 +133,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
   }
 
   void addStory() {
-    room!.stories.add(Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true));
+    room!.stories.add(Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true, order: room!.stories.length));
     setState(() {
       newStory = true;
     });
@@ -148,6 +148,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
     final previousStory = room!.stories[index - 1];
     room!.stories[index - 1] = story;
     room!.stories[index] = previousStory;
+    setStoriesOrder();
     setState(() {});
   }
 
@@ -155,7 +156,14 @@ class _UserRoomPageState extends State<UserRoomPage> {
     final nextStory = room!.stories[index + 1];
     room!.stories[index + 1] = story;
     room!.stories[index] = nextStory;
+    setStoriesOrder();
     setState(() {});
+  }
+
+  void setStoriesOrder() {
+    for (var i = 0; i < room!.stories.length; i++) {
+      room!.stories[i].order = i;
+    }
   }
 
   @override
@@ -321,6 +329,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
                                           onDelete: () => removeStory(story),
                                           onMoveUp: index == 0 ? null : () => moveStoryUp(index, story),
                                           onMoveDown: index >= room!.stories.length - 1 ? null : () => moveStoryDown(index, story),
+                                          nextOrder: room!.stories.length,
                                         ),
                                       )
                                       .toList(),

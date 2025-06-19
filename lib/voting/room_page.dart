@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -113,9 +114,10 @@ class _RoomPageState extends State<RoomPage> {
   }
 
   void setCurrentStory(Room room) {
-    final notStartedStories = room.stories.where((t) => t.status == StatusEnum.notStarted).toList();
-    if (notStartedStories.isNotEmpty) {
-      currentStory.value = notStartedStories.first;
+    if (currentStory.value != null) return;
+    final activeStories = room.stories.where((t) => [StatusEnum.notStarted, StatusEnum.started].contains(t.status)).toList();
+    if (activeStories.isNotEmpty) {
+      currentStory.value = activeStories.first;
     }
   }
 
@@ -127,6 +129,9 @@ class _RoomPageState extends State<RoomPage> {
     if (currentUsers.value.isNotEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
       // check if there is a new user
       for (final user in room.currentUsers!) {
+        if (user.id != _appUser.value?.id) {
+          continue;
+        }
         if (!currentUsers.value.any((t) => t.id == user.id)) {
           // new user
           messages.add('${user.name} joined the room.');
@@ -143,6 +148,9 @@ class _RoomPageState extends State<RoomPage> {
         }
       }
       for (final user in currentUsers.value) {
+        if (user.id != _appUser.value?.id) {
+          continue;
+        }
         if (!room.currentUsers!.any((t) => t.id == user.id)) {
           // user left
           messages.add('${user.name} left the room.');
@@ -151,13 +159,40 @@ class _RoomPageState extends State<RoomPage> {
     } else if (currentUsers.value.isEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
       // new users joined
       for (final user in room.currentUsers!) {
+        if (user.id != _appUser.value?.id) {
+          continue;
+        }
         messages.add('${user.name} joined the room.');
       }
     }
 
     // check stories
     if (oldStories.isNotEmpty) {
-      for (final story in room.stories) {}
+      for (final story in room.stories) {
+        final oldStory = oldStories.firstWhereOrNull((t) => t.id == story.id);
+        if (oldStory != null) {
+          // check status
+          if (oldStory.status != story.status) {
+            if (story.status == StatusEnum.notStarted) {
+              messages.add('Story "${story.description}" moved to active.');
+            }
+            if (story.status == StatusEnum.skipped) {
+              messages.add('Story "${story.description}" skipped.');
+            }
+            if (story.status == StatusEnum.ended) {
+              messages.add('Story "${story.description}" ended.');
+            }
+          }
+        }
+      }
+
+      // check deleted
+      for (final oldStory in oldStories) {
+        final story = room.stories.firstWhereOrNull((t) => t.id == oldStory.id);
+        if (story == null) {
+          messages.add('Story "${oldStory.description}" deleted.');
+        }
+      }
     }
 
     ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? controller;
@@ -191,6 +226,15 @@ class _RoomPageState extends State<RoomPage> {
   Future<void> saveRoom(Room room) async {
     final json = room.toJson();
     await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
+  }
+
+  Future<void> renameUser(AppUser appUser, Room room) async {
+    _appUser.value = null;
+    await removeUser(appUser, room);
+  }
+
+  Future<void> storyStarted(Room room) async {
+    saveRoom(room);
   }
 
   @override
@@ -258,6 +302,8 @@ class _RoomPageState extends State<RoomPage> {
                                       appUser: _appUser.value!,
                                       onUserRemoved: (appUser) => removeUser(appUser, room),
                                       onObserverChanged: (appUser) => saveRoom(room),
+                                      onUserRenamed: (appUser) => renameUser(appUser, room),
+                                      onStart: () => storyStarted(room),
                                     ),
                                   ],
                                 ),
