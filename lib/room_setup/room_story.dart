@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_work_item.dart';
@@ -8,9 +10,9 @@ import 'package:uuid/uuid.dart';
 
 class RoomStory extends StatefulWidget {
   final Story? story;
-  final Function() onDelete;
-  final Function()? onMoveUp;
-  final Function()? onMoveDown;
+  final FutureOr<void> Function() onDelete;
+  final FutureOr<void> Function()? onMoveUp;
+  final FutureOr<void> Function()? onMoveDown;
   final int nextOrder;
   const RoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown, required this.nextOrder});
 

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
@@ -5,23 +8,24 @@ import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/text_tag.dart';
 
 class VotingStoryItem extends StatelessWidget {
-  final ValueNotifier<Story?> currentStory;
+  final Story? currentStory;
   final Story story;
-  final Function()? onDelete;
-  final Function()? onMoveUp;
-  final Function()? onMoveDown;
-  final Function()? onSkip;
-  final Function()? onMoveToActive;
+  final FutureOr<void> Function()? onDelete;
+  final FutureOr<void> Function()? onMoveUp;
+  final FutureOr<void> Function()? onMoveDown;
+  final FutureOr<void> Function()? onSkip;
+  final FutureOr<void> Function()? onMoveToActive;
   const VotingStoryItem({super.key, required this.currentStory, required this.story, this.onDelete, this.onMoveUp, this.onMoveDown, this.onSkip, this.onMoveToActive});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
     final menuKey = GlobalKey();
-    final hasMenuItems = onMoveToActive != null || onSkip != null || onMoveUp != null || onMoveDown != null || onDelete != null;
+    final hasMenuItems = (onMoveToActive != null || onSkip != null || onMoveUp != null || onMoveDown != null || onDelete != null) && user != null;
     final theme = Theme.of(context);
     return Container(
       decoration:
-          currentStory.value?.description == story.description ? BoxDecoration(color: Colors.grey[100], border: Border(left: BorderSide(color: Colors.red, width: 2))) : null,
+          currentStory?.description == story.description ? BoxDecoration(color: Colors.grey[100], border: Border(left: BorderSide(color: Colors.red, width: 2))) : null,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

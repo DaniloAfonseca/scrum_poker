@@ -31,14 +31,20 @@ Room _$RoomFromJson(Map<String, dynamic> json) => $checkedCreate(
               'currentUsers',
               (v) => (v as List<dynamic>?)
                   ?.map((e) => AppUser.fromJson(e as Map<String, dynamic>))
-                  .toList()),
-          userId: $checkedConvert('userId', (v) => v as String),
-          status: $checkedConvert(
-              'status', (v) => $enumDecode(_$StatusEnumEnumMap, v)),
-        );
-        return val;
-      },
-    );
+                  .toList(),
+        ),
+        userId: $checkedConvert('userId', (v) => v as String),
+        status: $checkedConvert(
+          'status',
+          (v) => $enumDecode(_$StatusEnumEnumMap, v),
+        ),
+        currentStory: $checkedConvert(
+          'currentStory',
+          (v) => v == null ? null : Story.fromJson(v as Map<String, dynamic>),
+        ),
+      );
+      return val;
+    });
 
 const _$VoteEnumEnumMap = {
   VoteEnum.zero: 'zero',
