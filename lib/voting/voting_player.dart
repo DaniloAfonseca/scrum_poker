@@ -1,12 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 
 class VotingPlayer extends StatefulWidget {
   final AppUser appUser;
   final AppUser currentAppUser;
-  final Function() onObserverChanged;
-  final Function() onUserRemoved;
-  final Function() onUserRenamed;
+  final FutureOr<void> Function() onObserverChanged;
+  final FutureOr<void> Function() onUserRemoved;
+  final FutureOr<void> Function() onUserRenamed;
   const VotingPlayer({super.key, required this.appUser, required this.currentAppUser, required this.onObserverChanged, required this.onUserRemoved, required this.onUserRenamed});
 
   @override

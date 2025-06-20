@@ -45,6 +45,10 @@ Room _$RoomFromJson(Map<String, dynamic> json) =>
           'status',
           (v) => $enumDecode(_$StatusEnumEnumMap, v),
         ),
+        currentStory: $checkedConvert(
+          'currentStory',
+          (v) => v == null ? null : Story.fromJson(v as Map<String, dynamic>),
+        ),
       );
       return val;
     });

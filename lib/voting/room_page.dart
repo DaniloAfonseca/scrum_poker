@@ -12,6 +12,7 @@ import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
+import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/voting/room_login.dart';
 import 'package:scrum_poker/voting/voting_players.dart';
 import 'package:scrum_poker/voting/voting_story_list.dart';
@@ -33,11 +34,9 @@ class _RoomPageState extends State<RoomPage> {
   bool _isLoading = true;
   Box? _box;
   bool invalidRoom = false;
-  final currentStory = ValueNotifier<Story?>(null);
-  final currentMessage = ValueNotifier<String>('');
-  final currentUsers = ValueNotifier<List<AppUser>>([]);
   final oldStories = <Story>[];
   bool firstLoad = true;
+  final currentUsers = <AppUser>[];
 
   @override
   void initState() {
@@ -72,9 +71,6 @@ class _RoomPageState extends State<RoomPage> {
     if (user?.metadata != null) {
       final appUser = AppUser.fromUser(user!);
       _box!.put('appUser', appUser.toJson());
-      currentMessage.value = 'Click "Start" to begin voting';
-    } else {
-      currentMessage.value = 'Waiting for moderator';
     }
 
     final appUserMap = _box!.get('appUser');
@@ -99,25 +95,13 @@ class _RoomPageState extends State<RoomPage> {
     _appUser.value = appUser;
   }
 
-  Future<void> addUserToStory(Room room) async {
-    if (_appUser.value == null) {
-      return;
-    }
-
-    // add user to room
-    if (room.currentUsers?.any((t) => t.id == _appUser.value!.id) != true) {
-      room.currentUsers ??= [];
-      room.currentUsers!.add(_appUser.value!);
-      final roomMap = room.toJson();
-      await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
-    }
-  }
-
   void setCurrentStory(Room room) {
-    if (currentStory.value != null) return;
+    if (room.currentStory != null) return;
+    room.stories.sort((a, b) => a.order.compareTo(b.order));
     final activeStories = room.stories.where((t) => [StatusEnum.notStarted, StatusEnum.started].contains(t.status)).toList();
     if (activeStories.isNotEmpty) {
-      currentStory.value = activeStories.first;
+      room.currentStory = activeStories.first;
+      room_services.saveRoom(room);
     }
   }
 
@@ -126,18 +110,18 @@ class _RoomPageState extends State<RoomPage> {
     final messages = <String>[];
 
     // check users
-    if (currentUsers.value.isNotEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
+    if (currentUsers.isNotEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
       // check if there is a new user
       for (final user in room.currentUsers!) {
         if (user.id != _appUser.value?.id) {
           continue;
         }
-        if (!currentUsers.value.any((t) => t.id == user.id)) {
+        if (!currentUsers.any((t) => t.id == user.id)) {
           // new user
           messages.add('${user.name} joined the room.');
         } else {
           // check user changes
-          final currentUser = currentUsers.value.firstWhere((t) => t.id == user.id);
+          final currentUser = currentUsers.firstWhere((t) => t.id == user.id);
           if (currentUser.observer != user.observer) {
             if (user.observer) {
               messages.add('${user.name} is now an observer.');
@@ -147,7 +131,7 @@ class _RoomPageState extends State<RoomPage> {
           }
         }
       }
-      for (final user in currentUsers.value) {
+      for (final user in currentUsers) {
         if (user.id != _appUser.value?.id) {
           continue;
         }
@@ -156,7 +140,7 @@ class _RoomPageState extends State<RoomPage> {
           messages.add('${user.name} left the room.');
         }
       }
-    } else if (currentUsers.value.isEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
+    } else if (currentUsers.isEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
       // new users joined
       for (final user in room.currentUsers!) {
         if (user.id != _appUser.value?.id) {
@@ -218,23 +202,9 @@ class _RoomPageState extends State<RoomPage> {
     }
   }
 
-  Future<void> removeUser(AppUser appUser, Room room) async {
-    room.currentUsers?.removeWhere((t) => t.name == appUser.name);
-    await saveRoom(room);
-  }
-
-  Future<void> saveRoom(Room room) async {
-    final json = room.toJson();
-    await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
-  }
-
   Future<void> renameUser(AppUser appUser, Room room) async {
     _appUser.value = null;
-    await removeUser(appUser, room);
-  }
-
-  Future<void> storyStarted(Room room) async {
-    saveRoom(room);
+    await room_services.removeUser(appUser, room);
   }
 
   @override
@@ -264,17 +234,15 @@ class _RoomPageState extends State<RoomPage> {
                         final map = snapshot.data!.data()!;
                         final room = Room.fromJson(map);
 
-                        addUserToStory(room);
-                        if (_appUser.value!.moderator) {
-                          setCurrentStory(room);
-                        }
+                        room_services.addUserToStory(_appUser.value, room);
+                        setCurrentStory(room);
 
                         checkChanges(room);
                         oldStories.clear();
                         oldStories.addAll(room.stories);
                         firstLoad = false;
 
-                        currentUsers.value = room.currentUsers ?? [];
+                        currentUsers.addAll(room.currentUsers ?? []);
                         return SingleChildScrollView(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -286,25 +254,8 @@ class _RoomPageState extends State<RoomPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   spacing: 20,
                                   children: [
-                                    Expanded(
-                                      child: Column(
-                                        spacing: 20,
-                                        children: [
-                                          VotingStory(roomId: widget.roomId!, cards: room.cardsToUse, story: currentStory),
-                                          VotingStoryList(room: room, currentStory: currentStory),
-                                        ],
-                                      ),
-                                    ),
-                                    VotingPlayers(
-                                      currentMessage: currentMessage,
-                                      currentStory: currentStory,
-                                      currentUsers: currentUsers,
-                                      appUser: _appUser.value!,
-                                      onUserRemoved: (appUser) => removeUser(appUser, room),
-                                      onObserverChanged: (appUser) => saveRoom(room),
-                                      onUserRenamed: (appUser) => renameUser(appUser, room),
-                                      onStart: () => storyStarted(room),
-                                    ),
+                                    Expanded(child: Column(spacing: 20, children: [VotingStory(appUser: _appUser.value, roomId: room.id!), VotingStoryList(roomId: room.id!)])),
+                                    VotingPlayers(roomId: room.id!, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser, room)),
                                   ],
                                 ),
                               ],
@@ -313,47 +264,7 @@ class _RoomPageState extends State<RoomPage> {
                         );
                       },
                     ),
-        //Column(children: [Expanded(child: TextField(decoration: InputDecoration(labelText: 'Jira Issue Key'))), Expanded(child: VoteBoard()), VotingCards()]),
       ),
     );
   }
 }
-
-
-//functions/index.js (Firebase Cloud Function for Jira integration)
-// const functions = require("firebase-functions");
-// const axios = require("axios");
-
-// exports.updateStoryPoints = functions.https.onCall(async (data, context) => {
-//   const { issueKey, points, userToken } = data;
-//   const JIRA_DOMAIN = "your-domain.atlassian.net";
-//   const SHARED_API_TOKEN = "base64_encoded_email:token";
-
-//   const authHeader = userToken
-//     ? `Bearer ${userToken}`
-//     : `Basic ${SHARED_API_TOKEN}`;
-
-//   const url = `https://${JIRA_DOMAIN}/rest/api/3/issue/${issueKey}`;
-
-//   try {
-//     const response = await axios.put(
-//       url,
-//       {
-//         fields: {
-//           customfield_10016: points,
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: authHeader,
-//           Accept: "application/json",
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-//     return { status: "success", data: response.data };
-//   } catch (error) {
-//     console.error("Jira Update Failed", error.response?.data || error.message);
-//     throw new functions.https.HttpsError('unknown', 'Jira update failed');
-//   }
-// });

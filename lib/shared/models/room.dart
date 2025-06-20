@@ -16,8 +16,20 @@ class Room {
   List<AppUser>? currentUsers;
   String userId;
   StatusEnum status;
+  Story? currentStory;
 
-  Room({this.name, this.id, this.dateAdded, this.dateDeleted, required this.stories, required this.cardsToUse, this.currentUsers, required this.userId, required this.status});
+  Room({
+    this.name,
+    this.id,
+    this.dateAdded,
+    this.dateDeleted,
+    required this.stories,
+    required this.cardsToUse,
+    this.currentUsers,
+    required this.userId,
+    required this.status,
+    this.currentStory,
+  });
 
   factory Room.fromJson(Map<String, dynamic> json) => _$RoomFromJson(json);
   Map<String, dynamic> toJson() => _$RoomToJson(this);
@@ -32,5 +44,6 @@ class Room {
     if (instance.currentUsers?.map((user) => user.toJson()).toList() case final value?) 'currentUsers': value,
     'userId': instance.userId,
     'status': _$StatusEnumEnumMap[instance.status],
+    if (instance.currentStory?.toJson() case final value?) 'currentStory': value,
   };
 }

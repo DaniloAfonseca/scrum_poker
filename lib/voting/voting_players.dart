@@ -1,52 +1,50 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
+import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/voting/voting_player.dart';
 import 'package:web/web.dart' as web;
 import 'package:scrum_poker/shared/models/app_user.dart';
 
-class VotingPlayers extends StatefulWidget {
-  final ValueNotifier<String> currentMessage;
-  final ValueNotifier<Story?> currentStory;
-  final ValueNotifier<List<AppUser>> currentUsers;
-  final Function(AppUser appUser) onUserRemoved;
-  final Function(AppUser appUser) onObserverChanged;
-  final Function(AppUser appUser) onUserRenamed;
-  final Function() onStart;
+class VotingPlayers extends StatelessWidget {
+  final String roomId;
+  final FutureOr<void> Function(AppUser appUser) onUserRenamed;
   final AppUser appUser;
-  const VotingPlayers({
-    super.key,
-    required this.currentMessage,
-    required this.currentStory,
-    required this.currentUsers,
-    required this.appUser,
-    required this.onUserRemoved,
-    required this.onObserverChanged,
-    required this.onUserRenamed,
-    required this.onStart,
-  });
+  const VotingPlayers({super.key, required this.roomId, required this.appUser, required this.onUserRenamed});
 
-  @override
-  State<VotingPlayers> createState() => _VotingPlayersState();
-}
-
-class _VotingPlayersState extends State<VotingPlayers> {
-  void start(Story story) {
+  void start(Room room, Story story) {
     story.status = StatusEnum.started;
-    widget.onStart();
-    setState(() {});
+    room_services.saveRoom(room);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final firebaseUser = FirebaseAuth.instance.currentUser;
-    return ValueListenableBuilder(
-      valueListenable: widget.currentUsers,
-      builder: (context, currentUsersValue, _) {
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+        final map = snapshot.data!.data()!;
+        final room = Room.fromJson(map);
+        final numPlayers = room.currentUsers?.where((t) => !t.observer).length ?? 0;
+
+        final currentMessage =
+            room.currentStory == null
+                ? 'Waiting'
+                : room.currentStory!.status == StatusEnum.notStarted
+                ? firebaseUser != null
+                    ? 'Click "Start" to begin voting'
+                    : 'Waiting for moderator'
+                : 'Waiting for $numPlayers players to vote';
+        ;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -59,12 +57,7 @@ class _VotingPlayersState extends State<VotingPlayers> {
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
               ),
               alignment: Alignment.center,
-              child: ValueListenableBuilder(
-                valueListenable: widget.currentMessage,
-                builder: (context, value, _) {
-                  return Text(value, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white));
-                },
-              ),
+              child: Text(currentMessage, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
             ),
             if (firebaseUser != null)
               Container(
@@ -76,10 +69,8 @@ class _VotingPlayersState extends State<VotingPlayers> {
                   border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                 ),
                 alignment: Alignment.center,
-                child: ValueListenableBuilder(
-                  valueListenable: widget.currentStory,
-                  builder: (context, value, _) {
-                    return value?.status == StatusEnum.notStarted
+                child:
+                    room.currentStory?.status == StatusEnum.notStarted
                         ? ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
@@ -87,7 +78,7 @@ class _VotingPlayersState extends State<VotingPlayers> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
                           ),
-                          onPressed: value != null ? () => start(value) : null,
+                          onPressed: room.currentStory != null ? () => start(room, room.currentStory!) : null,
                           child: Text('Start'),
                         )
                         : Column(
@@ -105,7 +96,7 @@ class _VotingPlayersState extends State<VotingPlayers> {
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
                                   ),
-                                  onPressed: value != null ? () {} : null,
+                                  onPressed: room.currentStory != null ? () {} : null,
                                   child: Text('Flip cards'),
                                 ),
                                 ElevatedButton(
@@ -115,7 +106,7 @@ class _VotingPlayersState extends State<VotingPlayers> {
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
                                   ),
-                                  onPressed: value != null ? () {} : null,
+                                  onPressed: room.currentStory != null ? () {} : null,
                                   child: Text('Clear votes'),
                                 ),
                               ],
@@ -127,13 +118,11 @@ class _VotingPlayersState extends State<VotingPlayers> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                 elevation: 5,
                               ),
-                              onPressed: value != null ? () {} : null,
+                              onPressed: room.currentStory != null ? () {} : null,
                               child: Text('Skip story'),
                             ),
                           ],
-                        );
-                  },
-                ),
+                        ),
               ),
             Container(
               height: 50,
@@ -146,8 +135,8 @@ class _VotingPlayersState extends State<VotingPlayers> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text('Players:', style: theme.textTheme.headlineSmall),
             ),
-            if (currentUsersValue.isNotEmpty)
-              ...currentUsersValue.mapIndexed(
+            if (room.currentUsers != null && (room.currentUsers!.isNotEmpty))
+              ...room.currentUsers!.mapIndexed(
                 (index, u) => Container(
                   height: 50,
                   width: 400,
@@ -155,20 +144,20 @@ class _VotingPlayersState extends State<VotingPlayers> {
                     color: Colors.grey[100],
                     border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                     borderRadius:
-                        index == currentUsersValue.length - 1 && firebaseUser == null ? BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)) : null,
+                        index == room.currentUsers!.length - 1 && firebaseUser == null ? BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)) : null,
                   ),
                   alignment: Alignment.centerLeft,
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: VotingPlayer(
-                    currentAppUser: widget.appUser,
+                    currentAppUser: appUser,
                     appUser: u,
-                    onObserverChanged: () => widget.onObserverChanged(u),
-                    onUserRemoved: () => widget.onUserRemoved(u),
-                    onUserRenamed: () => widget.onUserRenamed(u),
+                    onObserverChanged: () => room_services.saveRoom(room),
+                    onUserRemoved: () => room_services.removeUser(u, room),
+                    onUserRenamed: () => onUserRenamed(u),
                   ),
                 ),
               ),
-            if (widget.appUser.moderator)
+            if (appUser.moderator)
               Container(
                 width: 400,
                 decoration: BoxDecoration(
