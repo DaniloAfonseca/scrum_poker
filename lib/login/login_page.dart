@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
@@ -20,8 +20,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  Box? _box;
-
   bool _isLoading = false;
 
   @override
@@ -32,25 +30,49 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> signInByJira() async {
-    _box = await Hive.openBox('ScrumPoker');
-    if (_box != null) {
-      final token = _box!.get('jiraToken');
+    Box? box = await Hive.openBox('authCodeScrumPoker');
 
-      if (token != null) {
-        setState(() => _isLoading = true);
+    final authCode = await box.get('auth-code');
 
-        final response = await JiraServices().getJiraUser(token);
-        final user = response.data;
-
-        await AuthServices().signInWithCredentials(user!);
-
-        final firebaseUser = FirebaseAuth.instance.currentUser!;
-
-        FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).set(user.toJson());
-
-        navigatorKey.currentContext!.go(Routes.home);
-      }
+    if (authCode == null && JiraCredentialsManager().currentCredentials == null) {
+      box.close();
+      return;
     }
+
+    final accessTokenResponse = await JiraServices().accessToken(authCode);
+    final data = accessTokenResponse.data;
+
+    final userResponse = await JiraServices().getJiraUser(data['access_token']);
+    final userData = userResponse.data!;
+
+    final resourcesResponse = await JiraServices().getResources(data['access_token']);
+    final resourcesData = resourcesResponse.data;
+
+    final expireDate = DateTime.now().add(Duration(seconds: data['expires_in'] - 300)).toString();
+
+    JiraCredentialsManager().setCredentials(
+      JiraCredentials.fromMap({
+        'refresh-token': data['refresh_token'],
+        'access-token': data['access_token'],
+        'expire-date': expireDate,
+        'account-id': userData.accountId,
+        'email': userData.email,
+        'cloud-id': resourcesData['id'],
+      }),
+    );
+
+    if (JiraCredentialsManager().currentCredentials == null) return;
+
+    setState(() => _isLoading = true);
+
+    await AuthServices().signInWithCredentials(JiraCredentialsManager().currentCredentials!.email, userData.picture ?? '');
+
+    if (FirebaseAuth.instance.currentUser != null) {
+      navigatorKey.currentContext!.go(Routes.home);
+    }
+
+    box.delete('auth-code');
+
     setState(() => _isLoading = false);
   }
 
