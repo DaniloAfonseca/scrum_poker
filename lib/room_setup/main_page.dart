@@ -34,7 +34,7 @@ class _MainPageState extends State<MainPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (user == null) {
         context.go(Routes.login);
-      } 
+      }
     });
   }
 
@@ -62,11 +62,8 @@ class _MainPageState extends State<MainPage> {
         title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
         actions: [
           CircleAvatar(
-            backgroundColor: Colors.blueAccent,
-            child: IconButton(
-              icon: Icon(Icons.person_outline, color: Colors.white),
-              onPressed: signOut,
-            ),
+            backgroundImage: user!.photoURL != null ? NetworkImage(user!.photoURL!, headers: {'Access-Control-Allow-Origin': '*'}) : null,
+            child: user!.photoURL == null ? IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: signOut) : InkWell(onTap: signOut),
           ),
         ],
       ),

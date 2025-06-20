@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/user_room_page.dart';
-import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/voting/room_page.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 
@@ -15,9 +15,9 @@ Future<String?> authGuard(BuildContext context, GoRouterState state) async {
   final auth = FirebaseAuth.instance;
 
   // If we receive the token we need to save in Session Storage.
-  final token = state.uri.queryParameters['code'];
-  if (token != null && token.isNotEmpty) {
-    await _saveTokenToSessionStorage(token);
+  final authCode = state.uri.queryParameters['code'];
+  if (authCode != null && authCode.isNotEmpty) {
+    await _saveSessionStorage(authCode);
   }
 
   if (auth.currentUser == null && !state.matchedLocation.startsWith(Routes.room)) {
@@ -27,14 +27,20 @@ Future<String?> authGuard(BuildContext context, GoRouterState state) async {
   return null;
 }
 
-Future<void> _saveTokenToSessionStorage(String token) async {
-  if (token.isEmpty) return;
+Future<void> _saveSessionStorage(String authCode) async {
+  if (authCode.isEmpty) return;
 
-  final response = await JiraServices().accessToken(token);
+  try {
+    Box box = await Hive.openBox('authCodeScrumPoker');
 
-  final box = await Hive.openBox('ScrumPoker');
+    await box.put('auth-code', authCode);
 
-  await box.put('jiraToken', response.data['access_token']);
+    box.close();
+  } catch (e) {
+    if (kDebugMode) {
+      print('There was an error: $e');
+    }
+  }
 }
 
 class ManagerRouter {

@@ -6,10 +6,11 @@ import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:scrum_poker/jira_authentication.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
+import 'package:scrum_poker/shared/models/jira_credentials.dart';
+import 'package:scrum_poker/shared/services/base_services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class AuthServices {
-  final String baseUrl = 'https://generatetokefromemail-fvxqqvi45a-uc.a.run.app';
+class AuthServices extends BaseServices {
   final auth = FirebaseAuth.instance;
 
   Future<User?> signInWithEmailAndPassword(String email, String password) async {
@@ -25,9 +26,13 @@ class AuthServices {
     }
   }
 
-  Future<void> signInWithCredentials(AppUser user) async {
+  Future<void> signInWithCredentials(String email, String photoUrl) async {
     try {
-      final response = await http.post(Uri.parse('$baseUrl/generateTokeFromEmail'), body: json.encode({'email': user.email}), headers: {'Content-Type': 'application/json'});
+      final response = await http.post(
+        Uri.parse('$firebaseApiUrl/generateTokeFromEmail'),
+        body: json.encode({'email': email, 'photoUrl': photoUrl}),
+        headers: {'Content-Type': 'application/json'},
+      );
 
       if (response.statusCode != 200) {
         return;
@@ -45,7 +50,7 @@ class AuthServices {
     //final clientSecret = JiraAuthentication.secret2;
     final redirectUri = Uri.encodeComponent('http://localhost:1010/redirect');
     final scope = Uri.encodeComponent(
-      'offline_access read:me read:account read:jira-work manage:jira-project manage:jira-configuration read:jira-user write:jira-work manage:jira-webhook manage:jira-data-provider read:servicedesk-request manage:servicedesk-customer write:servicedesk-request read:servicemanagement-insight-objects',
+      'offline_access read:me read:account read:jira-work manage:jira-project manage:jira-configuration read:jira-user write:jira-work manage:jira-webhook manage:jira-data-provider',
     );
     final state = 'random_string_to_protect_against_csrf';
 
@@ -62,8 +67,7 @@ class AuthServices {
   Future<void> signOut() async {
     try {
       await FirebaseAuth.instance.signOut();
-      final box = await Hive.openBox('ScrumPoker');
-      await box.delete('jiraToken');
+      JiraCredentialsManager().clearCredentials();
     } catch (e) {
       if (kDebugMode) {
         print('Error signing out: $e');

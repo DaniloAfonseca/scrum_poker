@@ -85,9 +85,10 @@ class _RoomPageState extends State<RoomPage> {
   }
 
   Future<void> logIn(username) async {
-    if (user != null) {
-      await user!.updateDisplayName(username);
-    }
+    if (user == null) return;
+
+    await user!.updateDisplayName(username);
+
     final appUser = user == null ? AppUser(name: username, id: Uuid().v4()) : AppUser.fromUser(user!);
 
     _box!.put('appUser', appUser.toJson());
