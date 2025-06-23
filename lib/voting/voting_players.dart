@@ -44,7 +44,7 @@ class VotingPlayers extends StatelessWidget {
                     ? 'Click "Start" to begin voting'
                     : 'Waiting for moderator'
                 : 'Waiting for $numPlayers players to vote';
-        ;
+        
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

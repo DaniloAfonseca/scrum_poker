@@ -8,7 +8,6 @@ import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/text_tag.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UserRoomWidget extends StatefulWidget {
   final UserRoom userRoom;

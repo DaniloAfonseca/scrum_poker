@@ -107,8 +107,8 @@ class JiraServices extends BaseServices {
     final accessToken = await accessJiraToken;
     final account = await accountId;
 
-    final String credentials = '$email:$accessToken';
-    final String encodeCredentials = base64Encode(utf8.encode(credentials));
+    //final String credentials = '$email:$accessToken';
+    //final String encodeCredentials = base64Encode(utf8.encode(credentials));
 
     try {
       Uri uri = Uri.parse('$jiraApiUrl/rest/api/3/search/jql').replace(
