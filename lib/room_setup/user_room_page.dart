@@ -59,7 +59,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
   Future<void> loadRoom() async {
     if (widget.roomId == null) {
       setState(() {
-        room = Room(stories: [], dateAdded: DateTime.now(), id: Uuid().v4(), cardsToUse: [...VoteEnum.values], userId: user.uid, status: StatusEnum.notStarted);
+        room = Room(stories: [], dateAdded: DateTime.now(), id: Uuid().v4(), cardsToUse: [...VoteEnum.values], userId: user.uid, status: RoomStatus.notStarted);
       });
     } else {
       final dbUserRooms = await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('rooms').doc(widget.roomId).snapshots().first;
@@ -115,7 +115,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
     }
   }
 
-  void useAllCardsToggle(value) {
+  void useAllCardsToggle(bool? value) {
     setState(() {
       allCards = value == true;
       for (var index = 0; index < VoteEnum.values.length; index++) {
@@ -132,7 +132,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
   }
 
   void addStory() {
-    room!.stories.add(Story(id: Uuid().v4(), description: '', status: StatusEnum.notStarted, votes: [], added: true, order: room!.stories.length));
+    room!.stories.add(Story(id: Uuid().v4(), description: '', status: StoryStatus.notStarted, votes: [], added: true, order: room!.stories.length));
     setState(() {
       newStory = true;
     });

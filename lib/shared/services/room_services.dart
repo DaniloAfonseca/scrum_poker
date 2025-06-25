@@ -19,7 +19,7 @@ Future<void> addUserToStory(AppUser? appUser, Room room) async {
 }
 
 Future<void> removeUser(AppUser appUser, Room room) async {
-  room.currentUsers?.removeWhere((t) => t.name == appUser.name);
+  room.currentUsers?.removeWhere((t) => t.id == appUser.id);
   await saveRoom(room);
 }
 
@@ -67,13 +67,30 @@ Future<void> skipStory(Room room, Story story) async {
   story.votes.clear();
   story.estimate = null;
   story.revisedEstimate = null;
-  story.status = StatusEnum.skipped;
+  story.status = StoryStatus.skipped;
   room.currentStory = null;
   await saveRoom(room);
 }
 
+Future<void> clearStoryVotes(Room room, Story story) async {
+  story.votes.clear();
+  story.estimate = null;
+  story.revisedEstimate = null;
+  await saveRoom(room);
+}
+
 Future<void> moveStoryToActive(Room room, Story story) async {
-  story.status = StatusEnum.notStarted;
+  story.status = StoryStatus.notStarted;
+  room.currentStory = null;
+  await saveRoom(room);
+}
+
+Future<void> swapStories(Room room, Story story1, Story story2) async {
+  final index1 = room.stories.indexOf(story1);
+  final index2 = room.stories.indexOf(story2);
+  room.stories[index1] = story2;
+  room.stories[index2] = story1;
+  _setStoriesOrder(room);
   room.currentStory = null;
   await saveRoom(room);
 }

@@ -10,7 +10,7 @@ class Story {
   String description;
   String? url;
   int? estimate;
-  StatusEnum status;
+  StoryStatus status;
   final List<Vote> votes;
   @JsonKey(includeFromJson: false)
   bool added;
@@ -37,7 +37,7 @@ class Story {
     'description': instance.description,
     if (instance.url case final value?) 'url': value,
     if (instance.estimate case final value?) 'estimate': value,
-    'status': _$StatusEnumEnumMap[instance.status],
+    'status': _$StoryStatusEnumMap[instance.status],
     'votes': votes.map((vote) => vote.toJson()).toList(),
     if (instance.revisedEstimate case final value?) 'revisedEstimate': value,
     'order': instance.order,

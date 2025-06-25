@@ -1,4 +1,6 @@
-enum StatusEnum { notStarted, started, skipped, ended }
+enum RoomStatus { notStarted, started, ended }
+
+enum StoryStatus { notStarted, started, skipped, voted, ended }
 
 enum VoteEnum {
   zero('0', 0),

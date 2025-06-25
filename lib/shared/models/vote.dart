@@ -5,10 +5,11 @@ part 'vote.g.dart';
 
 @JsonSerializable(includeIfNull: false)
 class Vote {
+  String userName;
   String userId;
   VoteEnum value;
 
-  Vote({required this.userId, required this.value});
+  Vote({required this.userName, required this.userId, required this.value});
   factory Vote.fromJson(Map<String, dynamic> json) => _$VoteFromJson(json);
   Map<String, dynamic> toJson() => _$VoteToJson(this);
 }

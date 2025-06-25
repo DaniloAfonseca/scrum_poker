@@ -15,7 +15,7 @@ class Room {
   final List<VoteEnum> cardsToUse;
   List<AppUser>? currentUsers;
   String userId;
-  StatusEnum status;
+  RoomStatus status;
   Story? currentStory;
 
   Room({
@@ -43,7 +43,7 @@ class Room {
     'cardsToUse': instance.cardsToUse.map((card) => _$VoteEnumEnumMap[card]!),
     if (instance.currentUsers?.map((user) => user.toJson()).toList() case final value?) 'currentUsers': value,
     'userId': instance.userId,
-    'status': _$StatusEnumEnumMap[instance.status],
+    'status': _$RoomStatusEnumMap[instance.status],
     if (instance.currentStory?.toJson() case final value?) 'currentStory': value,
   };
 }

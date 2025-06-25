@@ -44,7 +44,7 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void sortToggle(index) {
+  void sortToggle(int index) {
     setState(() {
       // The button that is tapped is set to true, and the others to false.
       for (int i = 0; i < _selectedOrder.length; i++) {

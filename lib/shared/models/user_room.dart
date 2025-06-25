@@ -11,7 +11,7 @@ class UserRoom {
   String name;
   DateTime? dateAdded;
   DateTime? dateDeleted;
-  StatusEnum status;
+  RoomStatus status;
 
   UserRoom({required this.userId, required this.roomId, required this.name, this.dateAdded, this.dateDeleted, required this.status});
 
@@ -24,7 +24,7 @@ class UserRoom {
     'name': instance.name,
     if (instance.dateAdded?.toIso8601String() case final value?) 'dateAdded': value,
     if (instance.dateDeleted?.toIso8601String() case final value?) 'dateDeleted': value,
-    'status': _$StatusEnumEnumMap[instance.status],
+    'status': _$RoomStatusEnumMap[instance.status],
   };
 
   factory UserRoom.fromRoom(Room room) {

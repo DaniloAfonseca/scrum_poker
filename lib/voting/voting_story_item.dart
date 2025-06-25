@@ -24,8 +24,7 @@ class VotingStoryItem extends StatelessWidget {
     final hasMenuItems = (onMoveToActive != null || onSkip != null || onMoveUp != null || onMoveDown != null || onDelete != null) && user != null;
     final theme = Theme.of(context);
     return Container(
-      decoration:
-          currentStory?.description == story.description ? BoxDecoration(color: Colors.grey[100], border: Border(left: BorderSide(color: Colors.red, width: 2))) : null,
+      decoration: currentStory?.id == story.id ? BoxDecoration(color: Colors.grey[100]) : null,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -33,7 +32,7 @@ class VotingStoryItem extends StatelessWidget {
             child: Row(
               children: [
                 Container(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10), alignment: Alignment.centerLeft, height: 50, child: Text(story.description)),
-                TextTag(text: 'Skipped', backgroundColor: Colors.red, foreColor: Colors.white, display: story.status == StatusEnum.skipped),
+                TextTag(text: 'Skipped', backgroundColor: Colors.red, foreColor: Colors.white, display: story.status == StoryStatus.skipped),
               ],
             ),
           ),

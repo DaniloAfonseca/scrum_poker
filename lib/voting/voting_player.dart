@@ -6,10 +6,19 @@ import 'package:scrum_poker/shared/models/app_user.dart';
 class VotingPlayer extends StatefulWidget {
   final AppUser appUser;
   final AppUser currentAppUser;
+  final bool hasVoted;
   final FutureOr<void> Function() onObserverChanged;
   final FutureOr<void> Function() onUserRemoved;
   final FutureOr<void> Function() onUserRenamed;
-  const VotingPlayer({super.key, required this.appUser, required this.currentAppUser, required this.onObserverChanged, required this.onUserRemoved, required this.onUserRenamed});
+  const VotingPlayer({
+    super.key,
+    required this.appUser,
+    required this.currentAppUser,
+    this.hasVoted = false,
+    required this.onObserverChanged,
+    required this.onUserRemoved,
+    required this.onUserRenamed,
+  });
 
   @override
   State<VotingPlayer> createState() => _VotingPlayerState();
@@ -59,10 +68,10 @@ class _VotingPlayerState extends State<VotingPlayer> {
                 context: context,
                 items: [
                   if (widget.appUser.id == widget.currentAppUser.id)
-                  PopupMenuItem(
-                    onTap: widget.onUserRenamed,
-                    child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Rename')]),
-                  ),
+                    PopupMenuItem(
+                      onTap: widget.onUserRenamed,
+                      child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Rename')]),
+                    ),
                   PopupMenuItem<bool>(
                     value: !widget.appUser.observer,
                     enabled: widget.appUser.observer,
@@ -93,6 +102,7 @@ class _VotingPlayerState extends State<VotingPlayer> {
           ),
         ),
         Text(widget.appUser.name, style: theme.textTheme.bodyLarge),
+        if (widget.hasVoted) Icon(Icons.check),
       ],
     );
   }

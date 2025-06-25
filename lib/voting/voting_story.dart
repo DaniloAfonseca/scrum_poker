@@ -22,7 +22,7 @@ class VotingStory extends StatelessWidget {
     }
     var localUserVote = room.currentStory!.votes.firstWhereOrNull((t) => t.userId == appUser!.id);
     if (localUserVote == null) {
-      localUserVote = Vote(userId: appUser!.id!, value: vote);
+      localUserVote = Vote(userId: appUser!.id!, value: vote, userName: appUser!.name);
       room.currentStory!.votes.add(localUserVote);
     } else {
       localUserVote.value = vote;
@@ -51,11 +51,11 @@ class VotingStory extends StatelessWidget {
                   Text(room.currentStory?.description ?? '', style: theme.textTheme.headlineMedium),
                   Container(
                     width: constraint.maxWidth,
-                    height: room.currentStory == null ? 400 : null,
+                    constraints: BoxConstraints(minHeight: 420),
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                     decoration: room.currentStory == null ? BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)) : null,
                     child:
-                        room.currentStory == null || (user == null && room.currentStory?.status == StatusEnum.notStarted)
+                        room.currentStory == null || (user == null && room.currentStory?.status == StoryStatus.notStarted)
                             ? Center(child: Text('Waiting', style: theme.textTheme.displayLarge))
                             : Wrap(
                               alignment: WrapAlignment.center,
@@ -65,7 +65,7 @@ class VotingStory extends StatelessWidget {
                                   room.cardsToUse
                                       .map(
                                         (e) => InkWell(
-                                          onTap: appUser == null || room.currentStory?.status == StatusEnum.notStarted ? null : () => vote(room, e),
+                                          onTap: appUser == null || room.currentStory?.status == StoryStatus.notStarted ? null : () => vote(room, e),
                                           child: Container(
                                             height: 200,
                                             width: 150,
@@ -78,7 +78,7 @@ class VotingStory extends StatelessWidget {
                                               child: Text(
                                                 e.label,
                                                 style: theme.textTheme.displayLarge!.copyWith(
-                                                  color: room.currentStory?.status == StatusEnum.notStarted ? Colors.grey : Colors.black,
+                                                  color: room.currentStory?.status == StoryStatus.notStarted ? Colors.grey : Colors.black,
                                                 ),
                                               ),
                                             ),

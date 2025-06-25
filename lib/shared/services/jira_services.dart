@@ -66,7 +66,7 @@ class JiraServices extends BaseServices {
     }
   }
 
-  Future<BaseResponse> accessToken(token) async {
+  Future<BaseResponse> accessToken(String token) async {
     if (token.isEmpty) {
       return BaseResponse(success: false, message: 'Token is empty');
     }

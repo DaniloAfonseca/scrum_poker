@@ -9,6 +9,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/shared/models/vote.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
@@ -34,9 +35,7 @@ class _RoomPageState extends State<RoomPage> {
   bool _isLoading = true;
   Box? _box;
   bool invalidRoom = false;
-  final oldStories = <Story>[];
-  bool firstLoad = true;
-  final currentUsers = <AppUser>[];
+  Room? _oldRoom;
 
   @override
   void initState() {
@@ -84,10 +83,10 @@ class _RoomPageState extends State<RoomPage> {
     });
   }
 
-  Future<void> logIn(username) async {
-    if (user == null) return;
-
-    await user!.updateDisplayName(username);
+  Future<void> logIn(String username) async {
+    if (user != null && user!.displayName != username) {
+      await user!.updateDisplayName(username);
+    }
 
     final appUser = user == null ? AppUser(name: username, id: Uuid().v4()) : AppUser.fromUser(user!);
 
@@ -99,7 +98,7 @@ class _RoomPageState extends State<RoomPage> {
   void setCurrentStory(Room room) {
     if (room.currentStory != null) return;
     room.stories.sort((a, b) => a.order.compareTo(b.order));
-    final activeStories = room.stories.where((t) => [StatusEnum.notStarted, StatusEnum.started].contains(t.status)).toList();
+    final activeStories = room.stories.where((t) => [StoryStatus.notStarted, StoryStatus.started].contains(t.status)).toList();
     if (activeStories.isNotEmpty) {
       room.currentStory = activeStories.first;
       room_services.saveRoom(room);
@@ -107,78 +106,26 @@ class _RoomPageState extends State<RoomPage> {
   }
 
   Future<void> checkChanges(Room room) async {
-    if (firstLoad) return;
+    if (_oldRoom == null) {
+      _oldRoom = room;
+      return;
+    }
+
     final messages = <String>[];
 
     // check users
-    if (currentUsers.isNotEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
-      // check if there is a new user
-      for (final user in room.currentUsers!) {
-        if (user.id != _appUser.value?.id) {
-          continue;
-        }
-        if (!currentUsers.any((t) => t.id == user.id)) {
-          // new user
-          messages.add('${user.name} joined the room.');
-        } else {
-          // check user changes
-          final currentUser = currentUsers.firstWhere((t) => t.id == user.id);
-          if (currentUser.observer != user.observer) {
-            if (user.observer) {
-              messages.add('${user.name} is now an observer.');
-            } else {
-              messages.add('${user.name} is now a player.');
-            }
-          }
-        }
-      }
-      for (final user in currentUsers) {
-        if (user.id != _appUser.value?.id) {
-          continue;
-        }
-        if (!room.currentUsers!.any((t) => t.id == user.id)) {
-          // user left
-          messages.add('${user.name} left the room.');
-        }
-      }
-    } else if (currentUsers.isEmpty && room.currentUsers != null && room.currentUsers!.isNotEmpty) {
-      // new users joined
-      for (final user in room.currentUsers!) {
-        if (user.id != _appUser.value?.id) {
-          continue;
-        }
-        messages.add('${user.name} joined the room.');
-      }
+    messages.addAll(getUserChanges(_oldRoom!.currentUsers ?? <AppUser>[], room.currentUsers ?? <AppUser>[]));
+
+    // check stories
+    messages.addAll(getStoryChanges(_oldRoom!.stories, room.stories));
+
+    // current story change
+    if (room.currentStory != null && _oldRoom!.currentStory?.id != room.currentStory!.id) {
+      messages.add('Current story as changed. ${room.currentStory!.description} is now the current story.');
     }
 
     // check stories
-    if (oldStories.isNotEmpty) {
-      for (final story in room.stories) {
-        final oldStory = oldStories.firstWhereOrNull((t) => t.id == story.id);
-        if (oldStory != null) {
-          // check status
-          if (oldStory.status != story.status) {
-            if (story.status == StatusEnum.notStarted) {
-              messages.add('Story "${story.description}" moved to active.');
-            }
-            if (story.status == StatusEnum.skipped) {
-              messages.add('Story "${story.description}" skipped.');
-            }
-            if (story.status == StatusEnum.ended) {
-              messages.add('Story "${story.description}" ended.');
-            }
-          }
-        }
-      }
-
-      // check deleted
-      for (final oldStory in oldStories) {
-        final story = room.stories.firstWhereOrNull((t) => t.id == oldStory.id);
-        if (story == null) {
-          messages.add('Story "${oldStory.description}" deleted.');
-        }
-      }
-    }
+    messages.addAll(getVoteChanges(_oldRoom!.currentStory?.votes ?? [], room.currentStory?.votes ?? []));
 
     ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? controller;
 
@@ -201,6 +148,92 @@ class _RoomPageState extends State<RoomPage> {
         );
       });
     }
+  }
+
+  /// check users
+  List<String> getUserChanges(List<AppUser> oldUsers, List<AppUser> newUsers) {
+    final messages = <String>[];
+
+    // check if there is a new user
+    for (final user in newUsers) {
+      if (user.id != _appUser.value?.id) {
+        continue;
+      }
+      if (!oldUsers.any((t) => t.id == user.id)) {
+        // new user
+        messages.add('${user.name} joined the room.');
+      } else {
+        // check user changes
+        final currentUser = oldUsers.firstWhere((t) => t.id == user.id);
+        if (currentUser.observer != user.observer) {
+          if (user.observer) {
+            messages.add('${user.name} is now an observer.');
+          } else {
+            messages.add('${user.name} is now a player.');
+          }
+        }
+      }
+    }
+    for (final user in oldUsers) {
+      if (user.id != _appUser.value?.id) {
+        continue;
+      }
+      if (!newUsers.any((t) => t.id == user.id)) {
+        // user left
+        messages.add('${user.name} left the room.');
+      }
+    }
+
+    return messages;
+  }
+
+  /// check stories
+  List<String> getStoryChanges(List<Story> oldStories, List<Story> newStories) {
+    final messages = <String>[];
+    for (final story in newStories) {
+      final oldStory = oldStories.firstWhereOrNull((t) => t.id == story.id);
+      if (oldStory != null) {
+        // check status
+        if (oldStory.status != story.status) {
+          if (story.status == StoryStatus.notStarted) {
+            messages.add('Story "${story.description}" was moved to active.');
+          }
+          if (story.status == StoryStatus.skipped) {
+            messages.add('Story "${story.description}" was skipped.');
+          }
+          if (story.status == StoryStatus.voted) {
+            messages.add('Story "${story.description}" cards were flipped.');
+          }
+          if (story.status == StoryStatus.ended) {
+            messages.add('Story "${story.description}" has ended.');
+          }
+        }
+      }
+    }
+
+    // check deleted stories
+    for (final oldStory in oldStories) {
+      final story = newStories.firstWhereOrNull((t) => t.id == oldStory.id);
+      if (story == null) {
+        messages.add('Story "${oldStory.description}" deleted.');
+      }
+    }
+
+    return messages;
+  }
+
+  List<String> getVoteChanges(List<Vote> oldVotes, List<Vote> newVotes) {
+    final messages = <String>[];
+    for (final newVote in newVotes) {
+      final oldVote = oldVotes.firstWhereOrNull((t) => t.userId == newVote.userId);
+      if (oldVote == null) {
+        messages.add('${newVote.userName} just voted.');
+      } else {
+        messages.add('${newVote.userName} changed his/her vote.');
+      }
+    }
+
+    return messages;
   }
 
   Future<void> renameUser(AppUser appUser, Room room) async {
@@ -239,11 +272,7 @@ class _RoomPageState extends State<RoomPage> {
                         setCurrentStory(room);
 
                         checkChanges(room);
-                        oldStories.clear();
-                        oldStories.addAll(room.stories);
-                        firstLoad = false;
 
-                        currentUsers.addAll(room.currentUsers ?? []);
                         return SingleChildScrollView(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),

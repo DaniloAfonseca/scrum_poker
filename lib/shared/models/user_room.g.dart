@@ -19,15 +19,14 @@ UserRoom _$UserRoomFromJson(Map<String, dynamic> json) => $checkedCreate(
           dateDeleted: $checkedConvert('dateDeleted',
               (v) => v == null ? null : DateTime.parse(v as String)),
           status: $checkedConvert(
-              'status', (v) => $enumDecode(_$StatusEnumEnumMap, v)),
+              'status', (v) => $enumDecode(_$RoomStatusEnumMap, v)),
         );
         return val;
       },
     );
 
-const _$StatusEnumEnumMap = {
-  StatusEnum.notStarted: 'notStarted',
-  StatusEnum.started: 'started',
-  StatusEnum.skipped: 'skipped',
-  StatusEnum.ended: 'ended',
+const _$RoomStatusEnumMap = {
+  RoomStatus.notStarted: 'notStarted',
+  RoomStatus.started: 'started',
+  RoomStatus.ended: 'ended',
 };
