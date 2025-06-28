@@ -35,10 +35,6 @@ Room _$RoomFromJson(Map<String, dynamic> json) => $checkedCreate(
           userId: $checkedConvert('userId', (v) => v as String),
           status: $checkedConvert(
               'status', (v) => $enumDecode(_$RoomStatusEnumMap, v)),
-          currentStory: $checkedConvert(
-              'currentStory',
-              (v) =>
-                  v == null ? null : Story.fromJson(v as Map<String, dynamic>)),
         );
         return val;
       },

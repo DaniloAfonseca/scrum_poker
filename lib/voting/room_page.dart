@@ -99,10 +99,14 @@ class _RoomPageState extends State<RoomPage> {
     if (room.currentStory != null) return;
     room.stories.sort((a, b) => a.order.compareTo(b.order));
     final activeStories = room.stories.where((t) => [StoryStatus.notStarted, StoryStatus.started].contains(t.status)).toList();
-    if (activeStories.isNotEmpty) {
-      room.currentStory = activeStories.first;
-      room_services.saveRoom(room);
+    for (var i = 0; i < activeStories.length; i++) {
+      if (i == 0) {
+        activeStories[i].currentStory = true;
+      } else {
+        activeStories[i].currentStory = false;
+      }
     }
+    room_services.saveRoom(room);
   }
 
   Future<void> checkChanges(Room room) async {
@@ -127,6 +131,12 @@ class _RoomPageState extends State<RoomPage> {
     // check stories
     messages.addAll(getVoteChanges(_oldRoom!.currentStory?.votes ?? [], room.currentStory?.votes ?? []));
 
+    _oldRoom = room;
+
+    showSnackBar(messages);
+  }
+
+  void showSnackBar(List<String> messages) {
     ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? controller;
 
     // show messages
@@ -137,6 +147,7 @@ class _RoomPageState extends State<RoomPage> {
           SnackBar(
             backgroundColor: Colors.blueAccent[200],
             behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
             content: Text(message),
             action: SnackBarAction(
               label: 'Dismiss',
@@ -228,7 +239,7 @@ class _RoomPageState extends State<RoomPage> {
       final oldVote = oldVotes.firstWhereOrNull((t) => t.userId == newVote.userId);
       if (oldVote == null) {
         messages.add('${newVote.userName} just voted.');
-      } else {
+      } else if (oldVote.value != newVote.value) {
         messages.add('${newVote.userName} changed his/her vote.');
       }
     }

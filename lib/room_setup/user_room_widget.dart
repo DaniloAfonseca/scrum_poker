@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
@@ -58,6 +59,7 @@ class _UserRoomWidgetState extends State<UserRoomWidget> {
                     display: userRoom.dateDeleted != null,
                     toolTipText: userRoom.dateDeleted != null ? 'Delete on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateDeleted!)}' : null,
                   ),
+                  TextTag(text: 'Started', backgroundColor: Colors.green, foreColor: Colors.white, display: userRoom.status == RoomStatus.started),
                 ],
               ),
               Text('Added on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateAdded!)}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
@@ -101,7 +103,7 @@ class _UserRoomWidgetState extends State<UserRoomWidget> {
                     },
                   ),
                 ],
-                position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
+                position: RelativeRect.fromLTRB(position.dx - 110, position.dy, position.dx, position.dy),
               );
             },
             icon: Icon(Icons.more_vert, color: Colors.white),

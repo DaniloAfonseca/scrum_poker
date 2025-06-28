@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
-import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/voting/voting_player.dart';
 import 'package:web/web.dart' as web;
@@ -18,11 +17,6 @@ class VotingPlayers extends StatelessWidget {
   final FutureOr<void> Function(AppUser appUser) onUserRenamed;
   final AppUser appUser;
   const VotingPlayers({super.key, required this.roomId, required this.appUser, required this.onUserRenamed});
-
-  void start(Room room, Story story) {
-    story.status = StoryStatus.started;
-    room_services.saveRoom(room);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +35,8 @@ class VotingPlayers extends StatelessWidget {
         final currentMessage =
             room.currentStory == null
                 ? 'Waiting'
+                : room.currentStory!.status == StoryStatus.voted
+                ? 'Story voting completed'
                 : room.currentStory!.status == StoryStatus.notStarted
                 ? firebaseUser != null
                     ? 'Click "Start" to begin voting'
@@ -65,13 +61,13 @@ class VotingPlayers extends StatelessWidget {
               alignment: Alignment.center,
               child: Text(currentMessage, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
             ),
-            if (firebaseUser != null)
+            if (firebaseUser != null && room.status != RoomStatus.ended)
               Container(
                 height: 95,
                 width: 400,
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Colors.white60,
                   border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                 ),
                 alignment: Alignment.center,
@@ -84,8 +80,19 @@ class VotingPlayers extends StatelessWidget {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
                           ),
-                          onPressed: room.currentStory != null ? () => start(room, room.currentStory!) : null,
+                          onPressed: room.currentStory != null ? () => room_services.storyStart(room, room.currentStory!) : null,
                           child: Text('Start'),
+                        )
+                        : room.currentStory?.status == StoryStatus.voted
+                        ? ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                            elevation: 5,
+                          ),
+                          onPressed: room.currentStory != null ? () => room_services.nextStory(room, room.currentStory!) : null,
+                          child: Text('Next story'),
                         )
                         : Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -102,7 +109,7 @@ class VotingPlayers extends StatelessWidget {
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
                                   ),
-                                  onPressed: room.currentStory != null ? () {} : null,
+                                  onPressed: room.currentStory != null ? () => room_services.flipCards(room, room.currentStory!) : null,
                                   child: Text('Flip cards'),
                                 ),
                                 ElevatedButton(
@@ -153,7 +160,6 @@ class VotingPlayers extends StatelessWidget {
                         index == room.currentUsers!.length - 1 && firebaseUser == null ? BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)) : null,
                   ),
                   alignment: Alignment.centerLeft,
-                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: VotingPlayer(
                     hasVoted: room.currentStory?.votes.any((t) => t.userId == u.id) ?? false,
                     currentAppUser: appUser,

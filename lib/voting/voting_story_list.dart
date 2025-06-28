@@ -106,7 +106,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
         if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
         final map = snapshot.data!.data()!;
         final room = Room.fromJson(map);
-        final activeStories = room.stories.where((t) => [StoryStatus.notStarted, StoryStatus.started].contains(t.status)).toList();
+        final activeStories = room.stories.where((t) => [StoryStatus.notStarted, StoryStatus.started, StoryStatus.voted].contains(t.status)).toList();
         final completedStories = room.stories.where((t) => [StoryStatus.skipped, StoryStatus.ended].contains(t.status)).toList();
 
         return Container(
@@ -168,27 +168,15 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                       buildDefaultDragHandles: false,
                       itemBuilder: (context, index) {
                         final t = activeStories[index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.all(0),
-                          minVerticalPadding: 0,
+                        return VotingStoryItem(
                           key: Key('$index'),
-                          leading:
-                              user == null
-                                  ? null
-                                  : Container(
-                                    padding: EdgeInsets.only(left: 10),
-                                    height: 30,
-                                    decoration: room.currentStory?.id == t.id ? BoxDecoration(border: Border(left: BorderSide(color: Colors.red, width: 2))) : null,
-                                    child: ReorderableDragStartListener(index: index, child: const Icon(Icons.drag_handle_outlined)),
-                                  ),
-                          title: VotingStoryItem(
-                            currentStory: room.currentStory,
-                            onDelete: () => removeStory(room, t),
-                            story: t,
-                            onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(room, index, t) : null,
-                            onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(room, index, t),
-                            onSkip: () => skipStory(room, t),
-                          ),
+                          currentStory: room.currentStory,
+                          onDelete: () => removeStory(room, t),
+                          story: t,
+                          onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(room, index, t) : null,
+                          onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(room, index, t),
+                          onSkip: () => skipStory(room, t),
+                          reorderIndex: index,
                         );
                       },
                       itemCount: activeStories.length,
@@ -198,53 +186,28 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                       },
                     ),
                     Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(child: Padding(padding: const EdgeInsets.only(left: 16.0), child: Text('Title', style: theme.textTheme.headlineSmall))),
-                            SizedBox(width: 120, child: Text('Calc. Est.', style: theme.textTheme.headlineSmall)),
-                            Container(padding: EdgeInsets.only(right: 16), width: 136, child: Text('Real Est.', style: theme.textTheme.headlineSmall)),
-                          ],
-                        ),
-                        ...completedStories.map(
-                          (t) => VotingStoryItem(
-                            currentStory: room.currentStory,
-                            story: t,
-                            onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t) : null,
-                          ),
-                        ),
-                      ],
+                      children:
+                          completedStories
+                              .map(
+                                (t) => VotingStoryItem(
+                                  currentStory: room.currentStory,
+                                  story: t,
+                                  onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t) : null,
+                                ),
+                              )
+                              .toList(),
                     ),
 
                     ReorderableListView.builder(
-                      header: Row(
-                        children: [
-                          Expanded(child: Padding(padding: EdgeInsets.only(left: user == null ? 16.0 : 60.0), child: Text('Title', style: theme.textTheme.headlineSmall))),
-                          SizedBox(width: 120, child: Text('Calc. Est.', style: theme.textTheme.headlineSmall)),
-                          Container(padding: EdgeInsets.only(right: 16), width: 136, child: Text('Real Est.', style: theme.textTheme.headlineSmall)),
-                        ],
-                      ),
                       buildDefaultDragHandles: false,
                       itemBuilder: (context, index) {
-                        final t = activeStories[index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.all(0),
-                          minVerticalPadding: 0,
+                        final t = room.stories[index];
+                        return VotingStoryItem(
                           key: Key('$index'),
-                          leading:
-                              user == null
-                                  ? null
-                                  : Container(
-                                    padding: EdgeInsets.only(left: 10),
-                                    height: 30,
-                                    decoration: room.currentStory?.id == t.id ? BoxDecoration(border: Border(left: BorderSide(color: Colors.red, width: 2))) : null,
-                                    child: ReorderableDragStartListener(index: index, child: const Icon(Icons.drag_handle_outlined)),
-                                  ),
-                          title: VotingStoryItem(
-                            currentStory: room.currentStory,
-                            story: t,
-                            onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t) : null,
-                          ),
+                          currentStory: room.currentStory,
+                          story: t,
+                          onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t) : null,
+                          reorderIndex: index,
                         );
                       },
                       itemCount: room.stories.length,

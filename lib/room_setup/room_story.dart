@@ -100,7 +100,7 @@ class _RoomStoryState extends State<RoomStory> {
                         widget.story!.url!,
                         style: TextStyle(
                           color: Colors.transparent,
-                          shadows: [Shadow(color: Colors.white, offset: Offset(0, -5))],
+                          shadows: [Shadow(color: Colors.white, offset: Offset(0, -3))],
 
                           decoration: TextDecoration.underline,
                           decorationColor: Colors.white,

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -16,7 +17,7 @@ class Room {
   List<AppUser>? currentUsers;
   String userId;
   RoomStatus status;
-  Story? currentStory;
+  Story? get currentStory => stories.firstWhereOrNull((t) => t.currentStory);
 
   Room({
     this.name,
@@ -28,7 +29,6 @@ class Room {
     this.currentUsers,
     required this.userId,
     required this.status,
-    this.currentStory,
   });
 
   factory Room.fromJson(Map<String, dynamic> json) => _$RoomFromJson(json);

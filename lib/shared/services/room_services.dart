@@ -28,7 +28,10 @@ Future<void> saveRoom(Room room) async {
   await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
 }
 
-Future<void> storyStart(Room room) async {
+Future<void> storyStart(Room room, Story story) async {
+  room.status = RoomStatus.started;
+  story.status = StoryStatus.started;
+  setRoomStatus(room);
   await saveRoom(room);
 }
 
@@ -59,7 +62,8 @@ Future<void> removeStory(Room room, Story story) async {
   for (var i = 0; i < room.stories.length; i++) {
     room.stories[i].order = i;
   }
-  room.currentStory = null;
+  story.currentStory = false;
+  setRoomStatus(room);
   await saveRoom(room);
 }
 
@@ -68,11 +72,26 @@ Future<void> skipStory(Room room, Story story) async {
   story.estimate = null;
   story.revisedEstimate = null;
   story.status = StoryStatus.skipped;
-  room.currentStory = null;
+  story.currentStory = false;
+  setRoomStatus(room);
+  await saveRoom(room);
+}
+
+Future<void> flipCards(Room room, Story story) async {
+  final validVotes = story.votes.where((e) => e.value.value != null);
+  final validVotesSum = validVotes.map((e) => e.value.value).reduce((e, t) => e! + t!)!;
+  story.estimate = double.parse((validVotesSum / validVotes.length).toStringAsFixed(2));
+  story.revisedEstimate = null;
+  story.status = StoryStatus.voted;
+  setRoomStatus(room);
+
   await saveRoom(room);
 }
 
 Future<void> clearStoryVotes(Room room, Story story) async {
+  if (story.status != StoryStatus.started) {
+    return;
+  }
   story.votes.clear();
   story.estimate = null;
   story.revisedEstimate = null;
@@ -81,7 +100,15 @@ Future<void> clearStoryVotes(Room room, Story story) async {
 
 Future<void> moveStoryToActive(Room room, Story story) async {
   story.status = StoryStatus.notStarted;
-  room.currentStory = null;
+  story.currentStory = false;
+  setRoomStatus(room);
+  await saveRoom(room);
+}
+
+Future<void> nextStory(Room room, Story story) async {
+  story.status = StoryStatus.ended;
+  story.currentStory = false;
+  setRoomStatus(room);
   await saveRoom(room);
 }
 
@@ -91,6 +118,20 @@ Future<void> swapStories(Room room, Story story1, Story story2) async {
   room.stories[index1] = story2;
   room.stories[index2] = story1;
   _setStoriesOrder(room);
-  room.currentStory = null;
+  story1.currentStory = false;
+  story2.currentStory = false;
   await saveRoom(room);
+}
+
+void setRoomStatus(Room room) {
+  final anyStarted = room.stories.any((t) => [StoryStatus.started, StoryStatus.skipped, StoryStatus.voted, StoryStatus.ended].contains(t.status));
+  final allEnded = room.stories.every((t) => [StoryStatus.ended, StoryStatus.skipped].contains(t.status));
+
+  if (allEnded) {
+    room.status = RoomStatus.ended;
+  } else if (anyStarted) {
+    room.status = RoomStatus.started;
+  } else {
+    room.status = RoomStatus.notStarted;
+  }
 }
