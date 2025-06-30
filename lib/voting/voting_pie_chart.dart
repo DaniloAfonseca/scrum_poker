@@ -25,7 +25,7 @@ class VotingPieChart extends StatelessWidget {
           child: PieChart(
             PieChartData(
               sectionsSpace: 2,
-              centerSpaceRadius: 40,
+              centerSpaceRadius: results.length == 1 ? 0 : 40,
               sections:
                   results.map((result) {
                     return PieChartSectionData(color: result.color, value: result.count.toDouble(), showTitle: false, radius: result.percentage);

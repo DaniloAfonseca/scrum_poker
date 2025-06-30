@@ -34,7 +34,7 @@ class _UserRoomWidgetState extends State<UserRoomWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.all(20.0),
+      padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
       decoration: BoxDecoration(
         color: Colors.blueAccent,
         borderRadius: BorderRadius.circular(15.0),

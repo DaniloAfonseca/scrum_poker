@@ -10,7 +10,8 @@ import 'package:scrum_poker/voting/voting_story_item.dart';
 
 class VotingStoryList extends StatefulWidget {
   final String roomId;
-  const VotingStoryList({super.key, required this.roomId});
+  final String userId;
+  const VotingStoryList({super.key, required this.roomId, required this.userId});
 
   @override
   State<VotingStoryList> createState() => _VotingStoryListState();
@@ -33,11 +34,11 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
     super.dispose();
   }
 
-  Future<void> removeStory(Room room, Story story) async {
+  Future<void> removeStory(Room room, Story story, String userId) async {
     final canDelete = await showConfirm('Delete story', 'You are about to delete story "${story.description}".\nAre you sure?');
 
     if (canDelete) {
-      await room_services.removeStory(room, story);
+      await room_services.removeStory(room, story, userId);
     }
   }
 
@@ -85,7 +86,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
     return result;
   }
 
-  Future<void> skipStory(Room room, Story story) async {
+  Future<void> skipStory(Room room, Story story, String userId) async {
     if (room.currentStory?.status == StoryStatus.started) {
       final canSkip = await showConfirm('Move story to active', 'You are about to skip story "${story.description}" that was started, this will remove the votes.\nAre you sure?');
       if (!canSkip) {
@@ -93,7 +94,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
       }
     }
 
-    await room_services.skipStory(room, story);
+    await room_services.skipStory(room, story, userId);
   }
 
   @override
@@ -171,11 +172,11 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                         return VotingStoryItem(
                           key: Key('$index'),
                           currentStory: room.currentStory,
-                          onDelete: () => removeStory(room, t),
+                          onDelete: () => removeStory(room, t, widget.userId),
                           story: t,
                           onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(room, index, t) : null,
                           onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(room, index, t),
-                          onSkip: () => skipStory(room, t),
+                          onSkip: () => skipStory(room, t, widget.userId),
                           reorderIndex: index,
                         );
                       },
@@ -192,7 +193,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                                 (t) => VotingStoryItem(
                                   currentStory: room.currentStory,
                                   story: t,
-                                  onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t) : null,
+                                  onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t, widget.userId) : null,
                                 ),
                               )
                               .toList(),
@@ -206,7 +207,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                           key: Key('$index'),
                           currentStory: room.currentStory,
                           story: t,
-                          onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t) : null,
+                          onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t, widget.userId) : null,
                           reorderIndex: index,
                         );
                       },

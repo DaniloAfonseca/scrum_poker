@@ -80,7 +80,7 @@ class VotingPlayers extends StatelessWidget {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
                           ),
-                          onPressed: room.currentStory != null ? () => room_services.storyStart(room, room.currentStory!) : null,
+                          onPressed: room.currentStory != null ? () => room_services.storyStart(room, room.currentStory!, appUser.id!) : null,
                           child: Text('Start'),
                         )
                         : room.currentStory?.status == StoryStatus.voted
@@ -109,7 +109,7 @@ class VotingPlayers extends StatelessWidget {
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
                                   ),
-                                  onPressed: room.currentStory != null ? () => room_services.flipCards(room, room.currentStory!) : null,
+                                  onPressed: room.currentStory != null ? () => room_services.flipCards(room, room.currentStory!, appUser.id!) : null,
                                   child: Text('Flip cards'),
                                 ),
                                 ElevatedButton(
@@ -131,7 +131,7 @@ class VotingPlayers extends StatelessWidget {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                 elevation: 5,
                               ),
-                              onPressed: room.currentStory != null ? () => room_services.skipStory(room, room.currentStory!) : null,
+                              onPressed: room.currentStory != null ? () => room_services.skipStory(room, room.currentStory!, appUser.id!) : null,
                               child: Text('Skip story'),
                             ),
                           ],

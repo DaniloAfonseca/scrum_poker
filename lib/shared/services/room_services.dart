@@ -23,16 +23,24 @@ Future<void> removeUser(AppUser appUser, Room room) async {
   await saveRoom(room);
 }
 
-Future<void> saveRoom(Room room) async {
+Future<void> saveRoom(Room room, {String? userId}) async {
   final json = room.toJson();
   await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
+
+  if (userId != null) {
+    final dbRoom = await FirebaseFirestore.instance.collection('users').doc(userId).collection('rooms').doc(room.id).snapshots().first;
+    final userRoom = Room.fromJson(dbRoom.data()!);
+    room.status = userRoom.status;
+    final roomMap = room.toJson();
+    await FirebaseFirestore.instance.collection('users').doc(userId).collection('rooms').doc(room.id).update(roomMap);
+  }
 }
 
-Future<void> storyStart(Room room, Story story) async {
-  room.status = RoomStatus.started;
+Future<void> storyStart(Room room, Story story, String userId) async {
+  final roomStatus = room.status;
   story.status = StoryStatus.started;
-  setRoomStatus(room);
-  await saveRoom(room);
+  _setRoomStatus(room);
+  await saveRoom(room, userId: roomStatus != room.status ? userId : null);
 }
 
 Future<void> moveStoryUp(Room room, int index, Story story) async {
@@ -48,6 +56,7 @@ Future<void> moveStoryDown(Room room, int index, Story story) async {
   room.stories[index + 1] = story;
   room.stories[index] = nextStory;
   _setStoriesOrder(room);
+
   await saveRoom(room);
 }
 
@@ -57,35 +66,40 @@ void _setStoriesOrder(Room room) {
   }
 }
 
-Future<void> removeStory(Room room, Story story) async {
+Future<void> removeStory(Room room, Story story, String userId) async {
   room.stories.remove(story);
   for (var i = 0; i < room.stories.length; i++) {
     room.stories[i].order = i;
   }
   story.currentStory = false;
-  setRoomStatus(room);
-  await saveRoom(room);
+  final roomStatus = room.status;
+  _setRoomStatus(room);
+
+  await saveRoom(room, userId: roomStatus != room.status ? userId : null);
 }
 
-Future<void> skipStory(Room room, Story story) async {
+Future<void> skipStory(Room room, Story story, String userId) async {
   story.votes.clear();
   story.estimate = null;
   story.revisedEstimate = null;
   story.status = StoryStatus.skipped;
   story.currentStory = false;
-  setRoomStatus(room);
-  await saveRoom(room);
+  final roomStatus = room.status;
+  _setRoomStatus(room);
+
+  await saveRoom(room, userId: roomStatus != room.status ? userId : null);
 }
 
-Future<void> flipCards(Room room, Story story) async {
+Future<void> flipCards(Room room, Story story, String userId) async {
   final validVotes = story.votes.where((e) => e.value.value != null);
   final validVotesSum = validVotes.map((e) => e.value.value).reduce((e, t) => e! + t!)!;
   story.estimate = double.parse((validVotesSum / validVotes.length).toStringAsFixed(2));
   story.revisedEstimate = null;
   story.status = StoryStatus.voted;
-  setRoomStatus(room);
+  final roomStatus = room.status;
+  _setRoomStatus(room);
 
-  await saveRoom(room);
+  await saveRoom(room, userId: roomStatus != room.status ? userId : null);
 }
 
 Future<void> clearStoryVotes(Room room, Story story) async {
@@ -98,17 +112,19 @@ Future<void> clearStoryVotes(Room room, Story story) async {
   await saveRoom(room);
 }
 
-Future<void> moveStoryToActive(Room room, Story story) async {
+Future<void> moveStoryToActive(Room room, Story story, String userId) async {
   story.status = StoryStatus.notStarted;
   story.currentStory = false;
-  setRoomStatus(room);
-  await saveRoom(room);
+  final roomStatus = room.status;
+  _setRoomStatus(room);
+
+  await saveRoom(room, userId: roomStatus != room.status ? userId : null);
 }
 
 Future<void> nextStory(Room room, Story story) async {
   story.status = StoryStatus.ended;
   story.currentStory = false;
-  setRoomStatus(room);
+  _setRoomStatus(room);
   await saveRoom(room);
 }
 
@@ -123,7 +139,7 @@ Future<void> swapStories(Room room, Story story1, Story story2) async {
   await saveRoom(room);
 }
 
-void setRoomStatus(Room room) {
+void _setRoomStatus(Room room) {
   final anyStarted = room.stories.any((t) => [StoryStatus.started, StoryStatus.skipped, StoryStatus.voted, StoryStatus.ended].contains(t.status));
   final allEnded = room.stories.every((t) => [StoryStatus.ended, StoryStatus.skipped].contains(t.status));
 

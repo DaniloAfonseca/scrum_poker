@@ -295,7 +295,7 @@ class _RoomPageState extends State<RoomPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   spacing: 20,
                                   children: [
-                                    Expanded(child: Column(spacing: 20, children: [VotingStory(appUser: _appUser.value, roomId: room.id!), VotingStoryList(roomId: room.id!)])),
+                                    Expanded(child: Column(spacing: 20, children: [VotingStory(appUser: _appUser.value, roomId: room.id!), VotingStoryList(roomId: room.id!, userId: _appUser.value!.id!)])),
                                     VotingPlayers(roomId: room.id!, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser, room)),
                                   ],
                                 ),
