@@ -56,6 +56,7 @@ class VotingStoryItem extends StatelessWidget {
           Flexible(
             child: Row(
               children: [
+                if (user == null) SizedBox(width: 10),
                 if (story.url == null || story.url!.isEmpty) Text(story.description, style: theme.textTheme.bodyLarge),
                 if (story.url != null && story.url!.isNotEmpty)
                   InkWell(

@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:scrum_poker/shared/models/app_user.dart';
 
 part 'room.g.dart';
 
@@ -14,7 +13,7 @@ class Room {
   DateTime? dateDeleted;
   final List<Story> stories;
   final List<VoteEnum> cardsToUse;
-  List<AppUser>? currentUsers;
+  //List<AppUser>? currentUsers;
   String userId;
   RoomStatus status;
   Story? get currentStory => stories.firstWhereOrNull((t) => t.currentStory);
@@ -26,7 +25,7 @@ class Room {
     this.dateDeleted,
     required this.stories,
     required this.cardsToUse,
-    this.currentUsers,
+    //this.currentUsers,
     required this.userId,
     required this.status,
   });
@@ -41,7 +40,7 @@ class Room {
     if (instance.dateDeleted?.toIso8601String() case final value?) 'dateDeleted': value,
     'stories': instance.stories.map((story) => story.toJson()).toList(),
     'cardsToUse': instance.cardsToUse.map((card) => _$VoteEnumEnumMap[card]!),
-    if (instance.currentUsers?.map((user) => user.toJson()).toList() case final value?) 'currentUsers': value,
+    //if (instance.currentUsers?.map((user) => user.toJson()).toList() case final value?) 'currentUsers': value,
     'userId': instance.userId,
     'status': _$RoomStatusEnumMap[instance.status],
     if (instance.currentStory?.toJson() case final value?) 'currentStory': value,

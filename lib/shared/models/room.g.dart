@@ -27,11 +27,6 @@ Room _$RoomFromJson(Map<String, dynamic> json) => $checkedCreate(
               (v) => (v as List<dynamic>)
                   .map((e) => $enumDecode(_$VoteEnumEnumMap, e))
                   .toList()),
-          currentUsers: $checkedConvert(
-              'currentUsers',
-              (v) => (v as List<dynamic>?)
-                  ?.map((e) => AppUser.fromJson(e as Map<String, dynamic>))
-                  .toList()),
           userId: $checkedConvert('userId', (v) => v as String),
           status: $checkedConvert(
               'status', (v) => $enumDecode(_$RoomStatusEnumMap, v)),

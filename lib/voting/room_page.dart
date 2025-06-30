@@ -36,6 +36,7 @@ class _RoomPageState extends State<RoomPage> {
   Box? _box;
   bool invalidRoom = false;
   Room? _oldRoom;
+  List<AppUser>? _oldCurrentUsers;
 
   @override
   void initState() {
@@ -109,7 +110,7 @@ class _RoomPageState extends State<RoomPage> {
     room_services.saveRoom(room);
   }
 
-  Future<void> checkChanges(Room room) async {
+  Future<void> checkChanges(Room room, List<AppUser>? currentUsers) async {
     if (_oldRoom == null) {
       _oldRoom = room;
       return;
@@ -118,7 +119,7 @@ class _RoomPageState extends State<RoomPage> {
     final messages = <String>[];
 
     // check users
-    messages.addAll(getUserChanges(_oldRoom!.currentUsers ?? <AppUser>[], room.currentUsers ?? <AppUser>[]));
+    messages.addAll(getUserChanges(_oldCurrentUsers ?? <AppUser>[], currentUsers ?? <AppUser>[]));
 
     // check stories
     messages.addAll(getStoryChanges(_oldRoom!.stories, room.stories));
@@ -132,6 +133,7 @@ class _RoomPageState extends State<RoomPage> {
     messages.addAll(getVoteChanges(_oldRoom!.currentStory?.votes ?? [], room.currentStory?.votes ?? []));
 
     _oldRoom = room;
+    _oldCurrentUsers = currentUsers;
 
     showSnackBar(messages);
   }
@@ -282,26 +284,38 @@ class _RoomPageState extends State<RoomPage> {
                         room_services.addUserToStory(_appUser.value, room);
                         setCurrentStory(room);
 
-                        checkChanges(room);
+                        return StreamBuilder(
+                          stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('currentUsers').snapshots(),
+                          builder: (context, snapshot) {
+                            final maps = snapshot.data?.docs.map((t) => t.data());
+                            final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList();
 
-                        return SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(room.name!, style: theme.textTheme.headlineLarge),
-                                Row(
+                            checkChanges(room, currentUsers);
+                            return SingleChildScrollView(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: 20,
                                   children: [
-                                    Expanded(child: Column(spacing: 20, children: [VotingStory(appUser: _appUser.value, roomId: room.id!), VotingStoryList(roomId: room.id!, userId: _appUser.value!.id!)])),
-                                    VotingPlayers(roomId: room.id!, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser, room)),
+                                    Text(room.name!, style: theme.textTheme.headlineLarge),
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      spacing: 20,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            spacing: 20,
+                                            children: [VotingStory(appUser: _appUser.value, roomId: room.id!), VotingStoryList(roomId: room.id!, userId: _appUser.value!.id!)],
+                                          ),
+                                        ),
+                                        VotingPlayers(roomId: room.id!, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser, room)),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            );
+                          }
                         );
                       },
                     ),

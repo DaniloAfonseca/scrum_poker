@@ -10,17 +10,11 @@ Future<void> addUserToStory(AppUser? appUser, Room room) async {
   }
 
   // add user to room
-  if (room.currentUsers?.any((t) => t.id == appUser.id) != true) {
-    room.currentUsers ??= [];
-    room.currentUsers!.add(appUser);
-    final roomMap = room.toJson();
-    await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(roomMap);
-  }
+  await FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('currentUsers').doc(appUser.id).set(appUser.toJson(), SetOptions(merge: true));
 }
 
 Future<void> removeUser(AppUser appUser, Room room) async {
-  room.currentUsers?.removeWhere((t) => t.id == appUser.id);
-  await saveRoom(room);
+  await FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('currentUsers').doc(appUser.id).delete();
 }
 
 Future<void> saveRoom(Room room, {String? userId}) async {
