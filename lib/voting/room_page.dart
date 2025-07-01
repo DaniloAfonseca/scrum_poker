@@ -37,6 +37,7 @@ class _RoomPageState extends State<RoomPage> {
   bool invalidRoom = false;
   Room? _oldRoom;
   List<AppUser>? _oldCurrentUsers;
+  List<Story>? _oldStories;
 
   @override
   void initState() {
@@ -96,21 +97,19 @@ class _RoomPageState extends State<RoomPage> {
     _appUser.value = appUser;
   }
 
-  void setCurrentStory(Room room) {
-    if (room.currentStory != null) return;
-    room.stories.sort((a, b) => a.order.compareTo(b.order));
-    final activeStories = room.stories.where((t) => [StoryStatus.notStarted, StoryStatus.started].contains(t.status)).toList();
-    for (var i = 0; i < activeStories.length; i++) {
-      if (i == 0) {
-        activeStories[i].currentStory = true;
-      } else {
-        activeStories[i].currentStory = false;
-      }
-    }
-    room_services.saveRoom(room);
-  }
+  // void setCurrentStory(List<Story> stories) {
+  //   if (stories.any((t) => t.currentStory)) return;
+  //   stories.sort((a, b) => a.order.compareTo(b.order));
+  //   final activeStories = stories.where((t) => [StoryStatus.notStarted, StoryStatus.started].contains(t.status)).toList();
+  //   for (var i = 0; i < activeStories.length; i++) {
+  //     final story = activeStories[i];
+  //     story.currentStory = i == 0;
 
-  Future<void> checkChanges(Room room, List<AppUser>? currentUsers) async {
+  //     room_services.updateStory(widget.roomId!, story.id, {'currentStory': story.currentStory});
+  //   }
+  // }
+
+  Future<void> checkChanges(Room room, List<AppUser>? currentUsers, List<Story> stories) async {
     if (_oldRoom == null) {
       _oldRoom = room;
       return;
@@ -122,15 +121,17 @@ class _RoomPageState extends State<RoomPage> {
     messages.addAll(getUserChanges(_oldCurrentUsers ?? <AppUser>[], currentUsers ?? <AppUser>[]));
 
     // check stories
-    messages.addAll(getStoryChanges(_oldRoom!.stories, room.stories));
+    messages.addAll(getStoryChanges(_oldStories ?? <Story>[], stories));
 
     // current story change
-    if (room.currentStory != null && _oldRoom!.currentStory?.id != room.currentStory!.id) {
-      messages.add('Current story as changed. ${room.currentStory!.description} is now the current story.');
+    final oldCurrentStory = _oldStories?.firstWhereOrNull((t) => t.currentStory);
+    final currentStory = _oldStories?.firstWhereOrNull((t) => t.currentStory);
+    if (currentStory != null && oldCurrentStory?.id != currentStory.id) {
+      messages.add('Current story as changed. ${currentStory.description} is now the current story.');
     }
 
     // check stories
-    messages.addAll(getVoteChanges(_oldRoom!.currentStory?.votes ?? [], room.currentStory?.votes ?? []));
+    //messages.addAll(getVoteChanges(currentStory?.votes ?? [], currentStory?.votes ?? []));
 
     _oldRoom = room;
     _oldCurrentUsers = currentUsers;
@@ -251,7 +252,7 @@ class _RoomPageState extends State<RoomPage> {
 
   Future<void> renameUser(AppUser appUser, Room room) async {
     _appUser.value = null;
-    await room_services.removeUser(appUser, room);
+    await room_services.removeUser(appUser.id!, room.id!);
   }
 
   @override
@@ -281,41 +282,51 @@ class _RoomPageState extends State<RoomPage> {
                         final map = snapshot.data!.data()!;
                         final room = Room.fromJson(map);
 
-                        room_services.addUserToStory(_appUser.value, room);
-                        setCurrentStory(room);
+                        room_services.addUserToStory(_appUser.value, room.id!);
 
                         return StreamBuilder(
-                          stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('currentUsers').snapshots(),
+                          stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').snapshots(),
                           builder: (context, snapshot) {
                             final maps = snapshot.data?.docs.map((t) => t.data());
-                            final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList();
+                            final stories = maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[];
 
-                            checkChanges(room, currentUsers);
-                            return SingleChildScrollView(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(room.name!, style: theme.textTheme.headlineLarge),
-                                    Row(
+                            room_services.setCurrentStory(room.id!, stories);
+
+                            return StreamBuilder(
+                              stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('currentUsers').snapshots(),
+                              builder: (context, snapshot) {
+                                final maps = snapshot.data?.docs.map((t) => t.data());
+                                final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList();
+
+                                checkChanges(room, currentUsers, stories);
+                                return SingleChildScrollView(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                                    child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
-                                      spacing: 20,
                                       children: [
-                                        Expanded(
-                                          child: Column(
-                                            spacing: 20,
-                                            children: [VotingStory(appUser: _appUser.value, roomId: room.id!), VotingStoryList(roomId: room.id!, userId: _appUser.value!.id!)],
-                                          ),
+                                        Text(room.name!, style: theme.textTheme.headlineLarge),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          spacing: 20,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                spacing: 20,
+                                                children: [VotingStory(appUser: _appUser.value, roomId: room.id!), VotingStoryList(roomId: room.id!, roomStatus: room.status, userId: _appUser.value!.id!)],
+                                              ),
+                                            ),
+
+                                            VotingPlayers(roomId: room.id!, roomStatus: room.status, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser, room)),
+                                          ],
                                         ),
-                                        VotingPlayers(roomId: room.id!, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser, room)),
                                       ],
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                );
+                              },
                             );
-                          }
+                          },
                         );
                       },
                     ),

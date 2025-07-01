@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
-import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
@@ -10,8 +10,9 @@ import 'package:scrum_poker/voting/voting_story_item.dart';
 
 class VotingStoryList extends StatefulWidget {
   final String roomId;
+  final RoomStatus roomStatus;
   final String userId;
-  const VotingStoryList({super.key, required this.roomId, required this.userId});
+  const VotingStoryList({super.key, required this.roomId, required this.roomStatus, required this.userId});
 
   @override
   State<VotingStoryList> createState() => _VotingStoryListState();
@@ -34,11 +35,11 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
     super.dispose();
   }
 
-  Future<void> removeStory(Room room, Story story, String userId) async {
+  Future<void> removeStory(String roomId, RoomStatus roomStatus, List<Story> stories, Story story, String userId) async {
     final canDelete = await showConfirm('Delete story', 'You are about to delete story "${story.description}".\nAre you sure?');
 
     if (canDelete) {
-      await room_services.removeStory(room, story, userId);
+      await room_services.removeStory(roomId, roomStatus, stories, story, userId);
     }
   }
 
@@ -86,15 +87,15 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
     return result;
   }
 
-  Future<void> skipStory(Room room, Story story, String userId) async {
-    if (room.currentStory?.status == StoryStatus.started) {
+  Future<void> skipStory(String roomId, RoomStatus roomStatus, List<Story> stories, Story story, String userId) async {
+    if (story.status == StoryStatus.started) {
       final canSkip = await showConfirm('Move story to active', 'You are about to skip story "${story.description}" that was started, this will remove the votes.\nAre you sure?');
       if (!canSkip) {
         return;
       }
     }
 
-    await room_services.skipStory(room, story, userId);
+    await room_services.skipStory(roomId, roomStatus, stories, story, userId);
   }
 
   @override
@@ -102,13 +103,15 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
     final theme = Theme.of(context);
 
     return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
+      stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('stories').snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-        final map = snapshot.data!.data()!;
-        final room = Room.fromJson(map);
-        final activeStories = room.stories.where((t) => [StoryStatus.notStarted, StoryStatus.started, StoryStatus.voted].contains(t.status)).toList();
-        final completedStories = room.stories.where((t) => [StoryStatus.skipped, StoryStatus.ended].contains(t.status)).toList();
+        final maps = snapshot.data?.docs.map((t) => t.data());
+        final stories = maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[];
+
+        final activeStories = stories.where((t) => [StoryStatus.notStarted, StoryStatus.started, StoryStatus.voted].contains(t.status)).toList();
+        final completedStories = stories.where((t) => [StoryStatus.skipped, StoryStatus.ended].contains(t.status)).toList();
+
+        final currentStory = stories.firstWhereOrNull((t) => t.currentStory);
 
         return Container(
           decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)),
@@ -153,7 +156,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                         CircleAvatar(
                           backgroundColor: Colors.blueAccent,
                           radius: 15,
-                          child: Text(room.stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                          child: Text(stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -161,7 +164,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                 ],
               ),
               SizedBox(
-                height: room.stories.length * 50 + 101,
+                height: stories.length * 50 + 101,
                 child: TabBarView(
                   controller: _tabController,
                   children: <Widget>[
@@ -171,19 +174,19 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                         final t = activeStories[index];
                         return VotingStoryItem(
                           key: Key('$index'),
-                          currentStory: room.currentStory,
-                          onDelete: () => removeStory(room, t, widget.userId),
+                          currentStory: currentStory,
+                          onDelete: () => removeStory(widget.roomId, widget.roomStatus, stories, t, widget.userId),
                           story: t,
-                          onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(room, index, t) : null,
-                          onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(room, index, t),
-                          onSkip: () => skipStory(room, t, widget.userId),
+                          onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(widget.roomId, stories, index, t) : null,
+                          onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(widget.roomId, stories, index, t),
+                          onSkip: () => skipStory(widget.roomId, widget.roomStatus, stories, t, widget.userId),
                           reorderIndex: index,
                         );
                       },
                       itemCount: activeStories.length,
                       onReorder: (oldIndex, newIndex) {
                         if (newIndex > oldIndex) newIndex--;
-                        room_services.swapStories(room, room.stories[oldIndex], room.stories[newIndex]);
+                        room_services.swapStories(widget.roomId, stories, stories[oldIndex], stories[newIndex]);
                       },
                     ),
                     Column(
@@ -191,9 +194,9 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                           completedStories
                               .map(
                                 (t) => VotingStoryItem(
-                                  currentStory: room.currentStory,
+                                  currentStory: currentStory,
                                   story: t,
-                                  onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t, widget.userId) : null,
+                                  onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.roomId, widget.roomStatus, stories, t, widget.userId) : null,
                                 ),
                               )
                               .toList(),
@@ -202,19 +205,19 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                     ReorderableListView.builder(
                       buildDefaultDragHandles: false,
                       itemBuilder: (context, index) {
-                        final t = room.stories[index];
+                        final t = stories[index];
                         return VotingStoryItem(
                           key: Key('$index'),
-                          currentStory: room.currentStory,
+                          currentStory: currentStory,
                           story: t,
-                          onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(room, t, widget.userId) : null,
+                          onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.roomId, widget.roomStatus, stories, t, widget.userId) : null,
                           reorderIndex: index,
                         );
                       },
-                      itemCount: room.stories.length,
+                      itemCount: stories.length,
                       onReorder: (oldIndex, newIndex) {
                         if (newIndex > oldIndex) newIndex--;
-                        room_services.swapStories(room, room.stories[oldIndex], room.stories[newIndex]);
+                        room_services.swapStories(widget.roomId, stories, stories[oldIndex], stories[newIndex]);
                       },
                     ),
                   ],

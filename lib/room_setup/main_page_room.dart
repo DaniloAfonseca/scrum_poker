@@ -10,16 +10,16 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/text_tag.dart';
 
-class UserRoomWidget extends StatefulWidget {
+class MainPageRoom extends StatefulWidget {
   final UserRoom userRoom;
   final Function() deletedChanged;
-  const UserRoomWidget({super.key, required this.userRoom, required this.deletedChanged});
+  const MainPageRoom({super.key, required this.userRoom, required this.deletedChanged});
 
   @override
-  State<UserRoomWidget> createState() => _UserRoomWidgetState();
+  State<MainPageRoom> createState() => _MainPageRoomState();
 }
 
-class _UserRoomWidgetState extends State<UserRoomWidget> {
+class _MainPageRoomState extends State<MainPageRoom> {
   final _menuKey = GlobalKey();
   final user = FirebaseAuth.instance.currentUser;
   late UserRoom userRoom;

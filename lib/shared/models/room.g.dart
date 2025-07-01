@@ -17,11 +17,6 @@ Room _$RoomFromJson(Map<String, dynamic> json) => $checkedCreate(
               (v) => v == null ? null : DateTime.parse(v as String)),
           dateDeleted: $checkedConvert('dateDeleted',
               (v) => v == null ? null : DateTime.parse(v as String)),
-          stories: $checkedConvert(
-              'stories',
-              (v) => (v as List<dynamic>)
-                  .map((e) => Story.fromJson(e as Map<String, dynamic>))
-                  .toList()),
           cardsToUse: $checkedConvert(
               'cardsToUse',
               (v) => (v as List<dynamic>)

@@ -8,19 +8,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:uuid/uuid.dart';
 
-class RoomStory extends StatefulWidget {
+class UserRoomStory extends StatefulWidget {
   final Story? story;
   final FutureOr<void> Function() onDelete;
   final FutureOr<void> Function()? onMoveUp;
   final FutureOr<void> Function()? onMoveDown;
   final int nextOrder;
-  const RoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown, required this.nextOrder});
+  const UserRoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown, required this.nextOrder});
 
   @override
-  State<RoomStory> createState() => _RoomStoryState();
+  State<UserRoomStory> createState() => _UserRoomStoryState();
 }
 
-class _RoomStoryState extends State<RoomStory> {
+class _UserRoomStoryState extends State<UserRoomStory> {
   final _menuKey = GlobalKey();
   final _searchController = SearchController();
   final _descriptionController = TextEditingController();
@@ -39,7 +39,7 @@ class _RoomStoryState extends State<RoomStory> {
 
   @override
   void initState() {
-    story = widget.story ?? Story(id: Uuid().v4(), description: '', status: StoryStatus.notStarted, votes: [], added: true, order: widget.nextOrder);
+    story = widget.story ?? Story(id: Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: widget.nextOrder);
     isEditing = (widget.story?.added ?? false) || widget.story == null;
 
     _descriptionController.text = story.description;

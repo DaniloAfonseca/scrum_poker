@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/room_setup/user_room_widget.dart';
+import 'package:scrum_poker/room_setup/main_page_room.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
@@ -157,7 +157,7 @@ class _MainPageState extends State<MainPage> {
                 if (user != null)
                   SingleChildScrollView(
                     key: ValueKey(_selectedOrder[0]),
-                    child: Column(spacing: 10, children: rooms.map((room) => UserRoomWidget(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList()),
+                    child: Column(spacing: 10, children: rooms.map((room) => MainPageRoom(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList()),
                   ),
               ],
             ),

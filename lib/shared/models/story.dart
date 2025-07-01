@@ -13,7 +13,6 @@ class Story {
   String? url;
   double? estimate;
   StoryStatus status;
-  final List<Vote> votes;
   @JsonKey(includeFromJson: false)
   bool added;
   int? revisedEstimate;
@@ -26,7 +25,6 @@ class Story {
     this.url,
     this.estimate,
     required this.status,
-    required this.votes,
     this.added = false,
     this.revisedEstimate,
     required this.order,
@@ -42,14 +40,13 @@ class Story {
     if (instance.url case final value?) 'url': value,
     if (instance.estimate case final value?) 'estimate': value,
     'status': _$StoryStatusEnumMap[instance.status],
-    'votes': votes.map((vote) => vote.toJson()).toList(),
     if (instance.revisedEstimate case final value?) 'revisedEstimate': value,
     'order': instance.order,
     'currentStory': instance.currentStory
   };
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  List<VoteResult>? get voteResults {
+
+  List<VoteResult>? voteResults(List<Vote> votes) {
     if (status != StoryStatus.voted) return null;
     final ret = <VoteResult>[];
     for (final vote in votes) {

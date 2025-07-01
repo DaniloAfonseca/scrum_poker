@@ -6,7 +6,6 @@ import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/user_room_page.dart';
-import 'package:scrum_poker/voting/room_page.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -71,14 +70,14 @@ class ManagerRouter {
         path: Routes.room,
         builder: (context, state) {
           final roomId = state.uri.queryParameters['id'];
-          return RoomPage(roomId: roomId);
+          return UserRoomPage(roomId: roomId);
         },
       ),
       GoRoute(
         path: '${Routes.room}/:roomId',
         builder: (context, state) {
           final roomId = state.pathParameters['roomId'];
-          return RoomPage(roomId: roomId);
+          return UserRoomPage(roomId: roomId);
         },
       ),
       GoRoute(
