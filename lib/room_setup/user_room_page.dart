@@ -10,6 +10,7 @@ import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
+import 'package:scrum_poker/shared/widgets/app_bar.dart';
 import 'package:uuid/uuid.dart';
 import 'package:collection/collection.dart';
 
@@ -171,11 +172,7 @@ class _UserRoomPageState extends State<UserRoomPage> {
     return LayoutBuilder(
       builder: (context, constraint) {
         return Scaffold(
-          appBar: AppBar(
-            actionsPadding: const EdgeInsets.only(right: 16.0),
-            title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
-            actions: [CircleAvatar(backgroundColor: Colors.blueAccent, child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: signOut))],
-          ),
+          appBar: GiraffeAppBar(),
           body:
               room == null
                   ? Center(child: CircularProgressIndicator())

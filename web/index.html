@@ -30,9 +30,86 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>scrum_poker</title>
+  <style>
+   
+.loader {
+  width: 48px;
+  height: 40px;
+  margin-top: 30px;
+  display: inline-block;
+  position: relative;
+  background: #2962FF;
+  border-radius: 15% 15% 35% 35%;
+}
+.loader::after {
+  content: '';  
+  box-sizing: border-box;
+  position: absolute;
+  left: 45px;
+  top: 8px;
+  border: 4px solid #2962FF;
+  width: 16px;
+  height: 20px;
+  border-radius: 0 4px 4px 0;
+}
+.loader::before {
+  content: '';  
+  position: absolute;
+  width: 1px;
+  height: 10px;
+  color: #2962FF;
+  top: -15px;
+  left: 11px;
+  box-sizing: border-box;
+  animation: animloader 1s ease infinite;
+}
+
+@keyframes animloader {
+    0% {
+  box-shadow: 2px 0px #2962FF, 12px 0px #2979FF, 20px 0px #2962FF;
+}
+    50% {
+  box-shadow: 2px -5px #82B1FF, 12px -3px #82B1FF, 20px -2px #82B1FF;
+}
+    100% {
+  box-shadow: 2px -8px #448AFF, 12px -5px #448AFF, 20px -5px #448AFF;
+}
+  }
+@keyframes l2 {
+  to {rotate: 1turn}
+}
+     body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      flex-direction: column; 
+    }
+    #loading-container {
+      text-align: center;
+    }
+    #loading-image {
+      width: 150px; 
+      height: 150px;
+    }
+    #loading-text {
+      margin-top: 20px;
+      font-family: sans-serif;
+      color: #333;
+    }
+  </style>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  </script>
+  <div id="loading-container">
+    <span class="loader"></span>
+    <p id="loading-text">Loading application...</p>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

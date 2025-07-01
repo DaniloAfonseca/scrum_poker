@@ -7,9 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/room_setup/user_room_widget.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
-import 'package:scrum_poker/shared/services/auth_services.dart';
+import 'package:scrum_poker/shared/widgets/app_bar.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -22,6 +21,7 @@ enum SortOrder { ascending, descending }
 
 class _MainPageState extends State<MainPage> {
   final user = FirebaseAuth.instance.currentUser;
+
   bool showDeleted = false;
 
   final List<bool> _selectedOrder = <bool>[true, false];
@@ -38,12 +38,6 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void signOut() {
-    AuthServices().signOut().then((_) {
-      navigatorKey.currentContext!.go(Routes.login);
-    });
-  }
-
   void sortToggle(int index) {
     setState(() {
       // The button that is tapped is set to true, and the others to false.
@@ -57,16 +51,7 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        actionsPadding: const EdgeInsets.only(right: 16.0),
-        title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
-        actions: [
-          CircleAvatar(
-            backgroundImage: user!.photoURL != null ? NetworkImage(user!.photoURL!, headers: {'Access-Control-Allow-Origin': '*'}) : null,
-            child: user!.photoURL == null ? IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: signOut) : InkWell(onTap: signOut),
-          ),
-        ],
-      ),
+      appBar: GiraffeAppBar(),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots(),
         builder: (context, snapshot) {
