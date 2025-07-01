@@ -2,28 +2,38 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive.dart';
 
 class JiraCredentials {
-  String refreshToken;
-  String accessToken;
-  String accountId;
-  String cloudId;
-  String expireDate;
-  String email;
+  String? authCode;
+  String? refreshToken;
+  String? accessToken;
+  String? accountId;
+  String? cloudId;
+  String? expireDate;
+  String? email;
 
-  JiraCredentials({required this.refreshToken, required this.accessToken, required this.accountId, required this.cloudId, required this.expireDate, required this.email});
+  JiraCredentials({this.authCode, this.refreshToken, this.accessToken, this.accountId, this.cloudId, this.expireDate, this.email});
 
   factory JiraCredentials.fromMap(Map<String, dynamic> map) {
     return JiraCredentials(
-      refreshToken: map['refresh-token'] as String,
-      accessToken: map['access-token'] as String,
-      accountId: map['account-id'] as String,
-      email: map['email'] as String,
-      cloudId: map['cloud-id'] as String,
-      expireDate: map['expire-date'] as String,
+      authCode: map['auth-code'] as String?,
+      refreshToken: map['refresh-token'] as String?,
+      accessToken: map['access-token'] as String?,
+      accountId: map['account-id'] as String?,
+      email: map['email'] as String?,
+      cloudId: map['cloud-id'] as String?,
+      expireDate: map['expire-date'] as String?,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {'refresh-token': refreshToken, 'access-token': accessToken, 'email': email, 'account-id': accountId, 'cloud-id': cloudId, 'expire-date': expireDate};
+    return {
+      'auth-code': authCode,
+      'refresh-token': refreshToken,
+      'access-token': accessToken,
+      'email': email,
+      'account-id': accountId,
+      'cloud-id': cloudId,
+      'expire-date': expireDate,
+    };
   }
 }
 

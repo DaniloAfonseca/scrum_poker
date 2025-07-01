@@ -14,6 +14,7 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
+import 'package:scrum_poker/shared/widgets/app_bar.dart';
 import 'package:scrum_poker/voting/room_login.dart';
 import 'package:scrum_poker/voting/voting_players.dart';
 import 'package:scrum_poker/voting/voting_story_list.dart';
@@ -259,14 +260,7 @@ class _RoomPageState extends State<RoomPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar:
-          (_appUser.value == null)
-              ? null
-              : AppBar(
-                actionsPadding: const EdgeInsets.only(right: 16.0),
-                title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
-                actions: [CircleAvatar(backgroundColor: Colors.blueAccent, child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: signOut))],
-              ),
+      appBar: (_appUser.value == null) ? null : GiraffeAppBar(),
       body: ValueListenableBuilder(
         valueListenable: _appUser,
         builder:

@@ -8,6 +8,7 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   setUrlStrategy(PathUrlStrategy());
 
   await JiraCredentialsManager().initialise();
@@ -20,6 +21,6 @@ class ScrumPokerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(debugShowCheckedModeBanner: false, routerConfig: ManagerRouter.router);
+    return MaterialApp.router(debugShowCheckedModeBanner: false, routerConfig: ManagerRouter.goRouter);
   }
 }

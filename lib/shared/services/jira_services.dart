@@ -1,33 +1,16 @@
 import 'dart:convert';
 
-import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:scrum_poker/jira_authentication.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/base_response.dart';
+import 'package:scrum_poker/shared/models/access_token.dart';
 import 'package:scrum_poker/shared/services/base_services.dart';
 
 class JiraServices extends BaseServices {
   Uri jiraApiAuthUrl(String url) => Uri.parse('https://api.atlassian.com/$url');
 
   //String get jiraApiUrl => 'https://api.atlassian.com/ex/jira/e2969eda-f627-4429-ae2f-be8262224890';
-
-  Future<String> get accessJiraToken async {
-    final box = await Hive.openBox('ScrumPoker');
-
-    return box.get('jiraToken');
-  }
-
-  Future<String> get accountId async {
-    final box = await Hive.openBox('ScrumPoker');
-
-    return box.get('accountId');
-  }
-
-  Future<String> get email async {
-    final box = await Hive.openBox('ScrumPoker');
-    return box.get('email');
-  }
 
   Future<BaseResponse<AppUser>> getJiraUser(String token) async {
     if (token.isEmpty) {
@@ -66,7 +49,7 @@ class JiraServices extends BaseServices {
     }
   }
 
-  Future<BaseResponse> accessToken(String token) async {
+  Future<BaseResponse<AccessToken>> accessToken(String token) async {
     if (token.isEmpty) {
       return BaseResponse(success: false, message: 'Token is empty');
     }
@@ -80,61 +63,66 @@ class JiraServices extends BaseServices {
         "client_id": JiraAuthentication.clientId2,
         "client_secret": JiraAuthentication.secret2,
         "code": token,
-        "redirect_uri": "http://localhost:1010/redirect",
+        "redirect_uri": "${Uri.base.origin}/login",
       }),
     );
 
-    return BaseResponse(success: response.statusCode == 200, data: json.decode(response.body));
+    return BaseResponse<AccessToken>(success: response.statusCode == 200, data: AccessToken.fromJson(json.decode(response.body)));
   }
 
-  // Future<BaseResponse> searchIssues2() async {
+  Future<BaseResponse<AccessToken>> refreshToken(String token) async {
+    if (token.isEmpty) {
+      return BaseResponse(success: false, message: 'Refresh Token is empty');
+    }
+
+    final response = await http.post(
+      jiraApiAuthUrl('oauth/token'),
+      headers: {'Content-Type': 'application/json'},
+
+      body: json.encode({
+        "grant_type": "refresh_token",
+        "client_id": JiraAuthentication.clientId2,
+        "client_secret": JiraAuthentication.secret2,
+        "code": token,
+        "redirect_uri": "${Uri.base.origin}/redirect",
+      }),
+    );
+
+    return BaseResponse<AccessToken>(success: response.statusCode == 200, data: AccessToken.fromJson(json.decode(response.body)));
+  }
+
+  // Future<BaseResponse> searchIssues({required String query, int maxResults = 20, List<String>? fields, int startAt = 0}) async {
   //   final accessToken = await accessJiraToken;
-  //   final userEmail = await email;
+  //   final account = await accountId;
+
+  //   //final String credentials = '$email:$accessToken';
+  //   //final String encodeCredentials = base64Encode(utf8.encode(credentials));
 
   //   try {
-  //     final response = await http.get(Uri.parse('$baseUrl/jiraIssues').replace(queryParameters: {'access_token': accessToken, 'email': userEmail}));
+  //     Uri uri = Uri.parse('$jiraApiUrl/rest/api/3/search/jql').replace(
+  //       queryParameters: {
+  //         'jql': 'text ~ "NMS" AND issuetype in ("Story", "Bug") AND labels = "Refined"',
+  //         //'maxResults': maxResults.toString(),
+  //         //'startAt': startAt.toString(),
+  //         if (fields != null && fields.isNotEmpty) 'fields': fields.join(','),
+  //       },
+  //     );
+  //     final response = await http.get(
+  //       uri,
+  //       headers: {
+  //         'Authorization': 'Bearer $accessToken',
+  //         'X-Atlassian-Token': 'no-check',
+  //         'X-AAccountId': account,
+  //         'Accept': 'application/json',
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
 
-  //     final Map<String, dynamic> data = json.decode(response.body);
+  //     final data = json.encode(response.body);
 
-  //     return BaseResponse(success: true, data: data);
+  //     return BaseResponse(success: response.statusCode == 200, data: data);
   //   } catch (e) {
-  //     SnackBar(content: Text('error: $e'));
-  //     return BaseResponse(success: false);
+  //     return BaseResponse(success: false, message: 'There was an error: $e');
   //   }
   // }
-
-  Future<BaseResponse> searchIssues({required String query, int maxResults = 20, List<String>? fields, int startAt = 0}) async {
-    final accessToken = await accessJiraToken;
-    final account = await accountId;
-
-    //final String credentials = '$email:$accessToken';
-    //final String encodeCredentials = base64Encode(utf8.encode(credentials));
-
-    try {
-      Uri uri = Uri.parse('$jiraApiUrl/rest/api/3/search/jql').replace(
-        queryParameters: {
-          'jql': 'text ~ "NMS" AND issuetype in ("Story", "Bug") AND labels = "Refined"',
-          //'maxResults': maxResults.toString(),
-          //'startAt': startAt.toString(),
-          if (fields != null && fields.isNotEmpty) 'fields': fields.join(','),
-        },
-      );
-      final response = await http.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $accessToken',
-          'X-Atlassian-Token': 'no-check',
-          'X-AAccountId': account,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      final data = json.encode(response.body);
-
-      return BaseResponse(success: response.statusCode == 200, data: data);
-    } catch (e) {
-      return BaseResponse(success: false, message: 'There was an error: $e');
-    }
-  }
 }

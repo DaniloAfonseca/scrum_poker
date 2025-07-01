@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:scrum_poker/jira_authentication.dart';
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
@@ -43,10 +45,11 @@ class AuthServices extends BaseServices {
     }
   }
 
-  Future<void> signInWithJira() async {
+  Future<void> signInWithJira(BuildContext context) async {
     final clientId = JiraAuthentication.clientId2;
     //final clientSecret = JiraAuthentication.secret2;
-    final redirectUri = Uri.encodeComponent('http://localhost:1010/redirect');
+
+    final redirectUri = Uri.encodeComponent('${Uri.base.origin}/login');
     final scope = Uri.encodeComponent(
       'offline_access read:me read:account read:jira-work manage:jira-project manage:jira-configuration read:jira-user write:jira-work manage:jira-webhook manage:jira-data-provider',
     );
@@ -56,8 +59,6 @@ class AuthServices extends BaseServices {
         'https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=$clientId&scope=$scope&redirect_uri=$redirectUri&state=$state&response_type=code&prompt=consent';
 
     final uri = Uri.parse(authUrl);
-
-    // Open new tab/window
 
     await launchUrl(uri, webOnlyWindowName: '_self');
   }
