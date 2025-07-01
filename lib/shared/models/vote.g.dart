@@ -6,16 +6,25 @@ part of 'vote.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Vote _$VoteFromJson(Map<String, dynamic> json) => $checkedCreate('Vote', json, ($checkedConvert) {
-  final val = Vote(
-    userName: $checkedConvert('userName', (v) => v as String),
-    userId: $checkedConvert('userId', (v) => v as String),
-    value: $checkedConvert('value', (v) => $enumDecode(_$VoteEnumEnumMap, v)),
-  );
-  return val;
-});
+Vote _$VoteFromJson(Map<String, dynamic> json) => $checkedCreate(
+      'Vote',
+      json,
+      ($checkedConvert) {
+        final val = Vote(
+          userName: $checkedConvert('userName', (v) => v as String),
+          userId: $checkedConvert('userId', (v) => v as String),
+          value: $checkedConvert(
+              'value', (v) => $enumDecode(_$VoteEnumEnumMap, v)),
+        );
+        return val;
+      },
+    );
 
-Map<String, dynamic> _$VoteToJson(Vote instance) => <String, dynamic>{'userName': instance.userName, 'userId': instance.userId, 'value': _$VoteEnumEnumMap[instance.value]!};
+Map<String, dynamic> _$VoteToJson(Vote instance) => <String, dynamic>{
+      'userName': instance.userName,
+      'userId': instance.userId,
+      'value': _$VoteEnumEnumMap[instance.value]!,
+    };
 
 const _$VoteEnumEnumMap = {
   VoteEnum.zero: 'zero',

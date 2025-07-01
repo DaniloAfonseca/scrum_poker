@@ -47,4 +47,8 @@ const _$VoteEnumEnumMap = {
   VoteEnum.coffee: 'coffee',
 };
 
-const _$RoomStatusEnumMap = {RoomStatus.notStarted: 'notStarted', RoomStatus.started: 'started', RoomStatus.ended: 'ended'};
+const _$RoomStatusEnumMap = {
+  RoomStatus.notStarted: 'notStarted',
+  RoomStatus.started: 'started',
+  RoomStatus.ended: 'ended',
+};
