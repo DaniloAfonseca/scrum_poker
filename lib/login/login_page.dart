@@ -37,22 +37,12 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> signInByJira() async {
     if (widget.authCode == null) return;
-    // final credentials = jiraManager.currentCredentials;
-    // if (credentials == null) return;
     try {
       setState(() => _isLoading = true);
-      // if ((credentials.accessToken != null && credentials.accessToken!.isEmpty) && (credentials.expireDate != null && credentials.expireDate!.isNotEmpty)) {
-      //   // Checking if the token already expired, to refresh token or not.
-      //   if (!(DateTime.parse(credentials.expireDate!).isAfter(DateTime.now()))) {
-      //     return;
-      //   }
-      //   refreshToken(credentials);
-      //   return;
-      // }
 
       //If we don't have an access token we need to get a new one.
       //After that we are check
-      accessToken(widget.authCode!);
+      await accessToken(widget.authCode!);
 
       setState(() => _isLoading = false);
     } catch (e) {
@@ -61,26 +51,8 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // void refreshToken(JiraCredentials credentials) {
-  //   _jiraServices
-  //       .refreshToken(credentials.refreshToken!)
-  //       .then((response) async {
-  //         if (response.success && response.data != null) {
-  //           await getCredentials(response.data!);
-  //         }
-  //       })
-  //       .catchError((error) {
-  //         snackbarMessenger(context, message: 'There was an error trying to refresh token from Jira: $error', type: SnackBarType.error);
-  //         return;
-  //       })
-  //       .whenComplete(() async {
-  //         await AuthServices().signInWithCredentials(credentials.email!, avatarUser!);
-  //         navigatorKey.currentContext!.go(Routes.home);
-  //       });
-  // }
-
-  void accessToken(String authCode) {
-    _jiraServices
+  Future<void> accessToken(String authCode) async {
+    await _jiraServices
         .accessToken(authCode)
         .then((response) async {
           if (response.success && response.data != null) {
@@ -261,9 +233,7 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(
                         child: ElevatedButton(
                           onPressed: () async {
-                            setState(() => _isLoading = true);
                             await AuthServices().signInWithJira(context);
-                            setState(() => _isLoading = false);
                           },
                           child: Text('Login by JIRA'),
                         ),
