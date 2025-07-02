@@ -27,7 +27,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
   final TextEditingController _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  late String roomId;
+  late Room room;
 
   bool newStory = false;
   bool deleted = false;
@@ -47,7 +47,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
   @override
   void initState() {
-    roomId = widget.roomId ?? Uuid().v4();
+    loadRoom();
     super.initState();
   }
 
@@ -55,6 +55,37 @@ class _EditRoomPageState extends State<EditRoomPage> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> loadRoom() async {
+    if (widget.roomId == null) {
+      setState(() {
+        room = Room(dateAdded: DateTime.now(), id: Uuid().v4(), cardsToUse: [...VoteEnum.values], userId: _user.uid, status: RoomStatus.notStarted);
+      });
+    } else {
+      final dbUserRooms = await FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').doc(widget.roomId).snapshots().first;
+      if (dbUserRooms.data() == null) {
+        // room not found
+        return;
+      }
+
+      final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().first;
+      final json = dbRoom.data()!;
+      setState(() {
+        room = Room.fromJson(json);
+      });
+    }
+
+    deleted = room.dateDeleted != null;
+    _nameController.text = room.name ?? '';
+    allCards = widget.roomId == null || room.cardsToUse.length == VoteEnum.values.length;
+    cardsToUse.addAll(VoteEnum.values.map((v) => allCards ? false : room.cardsToUse.contains(v)));
+
+    final dbRef = FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('stories');
+    final dbStories = await dbRef.get();
+    final maps = dbStories.docs.map((t) => t.data());
+
+    stories.addAll(maps.map((t) => Story.fromJson(t)).toList());
   }
 
   void signOut() {
@@ -69,10 +100,9 @@ class _EditRoomPageState extends State<EditRoomPage> {
     });
   }
 
-  Future<void> saveRoom(Room? room) async {
+  Future<void> saveRoom() async {
     if (_formKey.currentState!.validate()) {
       // save room
-      room ??= Room(id: roomId, userId: _user.uid, cardsToUse: [], status: RoomStatus.notStarted);
       room.name = _nameController.value.text;
       room.cardsToUse.clear();
       room.dateDeleted = deleted ? DateTime.now() : null;
@@ -158,186 +188,160 @@ class _EditRoomPageState extends State<EditRoomPage> {
       builder: (context, constraint) {
         return Scaffold(
           appBar: GiraffeAppBar(),
-          body: StreamBuilder(
-            stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-              final map = snapshot.data?.data();
-
-              final room = map == null ? null : Room.fromJson(map);
-
-              if (room != null) {
-                deleted = room.dateDeleted != null;
-                _nameController.text = room.name ?? '';
-                allCards = room.cardsToUse.length == VoteEnum.values.length;
-                cardsToUse.addAll(VoteEnum.values.map((v) => allCards ? false : room.cardsToUse.contains(v)));
-              }
-
-              return Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    spacing: 20,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          body: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                spacing: 20,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    spacing: 10,
                     children: [
+                      Flexible(
+                        child: TextFormField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            hintStyle: theme.textTheme.bodyLarge!.copyWith(color: Colors.grey),
+                            labelText: 'Room description',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                          ),
+                          keyboardType: TextInputType.text,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Invalid room description';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
                       Row(
-                        spacing: 10,
                         children: [
-                          Flexible(
-                            child: TextFormField(
-                              controller: _nameController,
-                              decoration: InputDecoration(
-                                hintStyle: theme.textTheme.bodyLarge!.copyWith(color: Colors.grey),
-                                labelText: 'Room description',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
-                                filled: true,
-                                fillColor: Colors.grey.shade50,
-                              ),
-                              keyboardType: TextInputType.text,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Invalid room description';
+                          Text('Deleted'),
+                          Switch(
+                            thumbIcon: thumbIcon,
+                            value: deleted,
+                            activeColor: Colors.blue[600],
+                            inactiveThumbColor: Colors.grey[500],
+                            trackOutlineColor: borderColor,
+                            onChanged: roomDeleteToggle,
+                          ),
+                        ],
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                          elevation: 5,
+                        ),
+                        onPressed: () => saveRoom(),
+                        child: Text('Save'),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 150,
+                            child: CheckboxListTile(
+                              fillColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.blueAccent;
                                 }
-                                return null;
-                              },
+                                return Colors.white;
+                              }),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              value: allCards,
+                              title: Text('Use all cards'),
+                              contentPadding: EdgeInsets.all(0),
+                              splashRadius: 10,
+                              tristate: false,
+                              checkboxSemanticLabel: 'Use all cards',
+                              visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                              onChanged: useAllCardsToggle,
                             ),
                           ),
-                          Row(
-                            children: [
-                              Text('Deleted'),
-                              Switch(
-                                thumbIcon: thumbIcon,
-                                value: deleted,
-                                activeColor: Colors.blue[600],
-                                inactiveThumbColor: Colors.grey[500],
-                                trackOutlineColor: borderColor,
-                                onChanged: roomDeleteToggle,
-                              ),
-                            ],
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                              elevation: 5,
-                            ),
-                            onPressed: () => saveRoom(room),
-                            child: Text('Save'),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(
-                                width: 150,
-                                child: CheckboxListTile(
-                                  fillColor: WidgetStateProperty.resolveWith((states) {
-                                    if (states.contains(WidgetState.selected)) {
-                                      return Colors.blueAccent;
-                                    }
-                                    return Colors.white;
-                                  }),
-                                  controlAffinity: ListTileControlAffinity.leading,
-                                  value: allCards,
-                                  title: Text('Use all cards'),
-                                  contentPadding: EdgeInsets.all(0),
-                                  splashRadius: 10,
-                                  tristate: false,
-                                  checkboxSemanticLabel: 'Use all cards',
-                                  visualDensity: VisualDensity(horizontal: -4, vertical: -4),
-                                  onChanged: useAllCardsToggle,
-                                ),
-                              ),
-                              SizedBox(
-                                width: constraint.maxWidth - 40,
-                                child: Wrap(
-                                  crossAxisAlignment: WrapCrossAlignment.start,
-                                  children:
-                                      VoteEnum.values
-                                          .mapIndexed(
-                                            (index, value) => SizedBox(
-                                              width: 120,
-                                              child: CheckboxListTile(
-                                                fillColor: WidgetStateProperty.resolveWith((states) {
-                                                  if (states.contains(WidgetState.selected)) {
-                                                    return Colors.blueAccent;
-                                                  }
-                                                  return Colors.white;
-                                                }),
-                                                controlAffinity: ListTileControlAffinity.leading,
-                                                contentPadding: EdgeInsets.all(0),
-                                                splashRadius: 10,
-                                                tristate: false,
-                                                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
-                                                value: cardsToUse[index],
-                                                onChanged: (v) => cardInUse(index, v),
-                                                title: Text(value.label),
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                              elevation: 5,
-                            ),
-                            onPressed: () => addStory(roomId, stories),
-                            child: Text('Add Story'),
-                          ),
-                        ],
-                      ),
-                      StreamBuilder(
-                        stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('stories').snapshots(),
-                        builder: (context, snapshot) {
-                          final maps = snapshot.data?.docs.map((t) => t.data());
-
-                          stories.addAll(maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[]);
-
-                          return SingleChildScrollView(
-                            child: Column(
-                              spacing: 10,
+                          SizedBox(
+                            width: constraint.maxWidth - 40,
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.start,
                               children:
-                                  stories
+                                  VoteEnum.values
                                       .mapIndexed(
-                                        (index, story) => EditRoomStory(
-                                          story: story,
-                                          onDelete: () => removeStory(stories, story),
-                                          onMoveUp: index == 0 ? null : () => moveStoryUp(stories, index, story),
-                                          onMoveDown: index >= stories.length - 1 ? null : () => moveStoryDown(stories, index, story),
-                                          nextOrder: stories.length,
-                                          userId: _user.uid,
-                                          roomId: roomId,
+                                        (index, value) => SizedBox(
+                                          width: 120,
+                                          child: CheckboxListTile(
+                                            fillColor: WidgetStateProperty.resolveWith((states) {
+                                              if (states.contains(WidgetState.selected)) {
+                                                return Colors.blueAccent;
+                                              }
+                                              return Colors.white;
+                                            }),
+                                            controlAffinity: ListTileControlAffinity.leading,
+                                            contentPadding: EdgeInsets.all(0),
+                                            splashRadius: 10,
+                                            tristate: false,
+                                            visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                                            value: cardsToUse[index],
+                                            onChanged: (v) => cardInUse(index, v),
+                                            title: Text(value.label),
+                                          ),
                                         ),
                                       )
                                       .toList(),
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ),
-              );
-            },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                          elevation: 5,
+                        ),
+                        onPressed: () => addStory(room.id, stories),
+                        child: Text('Add Story'),
+                      ),
+                    ],
+                  ),
+                  SingleChildScrollView(
+                    child: Column(
+                      spacing: 10,
+                      children:
+                          stories
+                              .mapIndexed(
+                                (index, story) => EditRoomStory(
+                                  story: story,
+                                  onDelete: () => removeStory(stories, story),
+                                  onMoveUp: index == 0 ? null : () => moveStoryUp(stories, index, story),
+                                  onMoveDown: index >= stories.length - 1 ? null : () => moveStoryDown(stories, index, story),
+                                  nextOrder: stories.length,
+                                  userId: _user.uid,
+                                  roomId: room.id,
+                                ),
+                              )
+                              .toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
