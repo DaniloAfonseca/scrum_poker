@@ -2,15 +2,17 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:scrum_poker/jira_authentication.dart';
+import 'package:scrum_poker/shared/helpers/credentials_helper.dart' as credentials_helper;
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/base_response.dart';
 import 'package:scrum_poker/shared/models/access_token.dart';
+import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/services/base_services.dart';
 
 class JiraServices extends BaseServices {
-  Uri jiraApiAuthUrl(String url) => Uri.parse('https://api.atlassian.com/$url');
-
   //String get jiraApiUrl => 'https://api.atlassian.com/ex/jira/e2969eda-f627-4429-ae2f-be8262224890';
+
+  final credentials = JiraCredentialsManager().currentCredentials;
 
   Future<BaseResponse<AppUser>> getJiraUser(String token) async {
     if (token.isEmpty) {
@@ -18,7 +20,7 @@ class JiraServices extends BaseServices {
     }
 
     try {
-      final response = await http.get(jiraApiUrl('me'), headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'});
+      final response = await http.get(jiraApiAuthUrl('me'), headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'});
 
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
@@ -91,38 +93,45 @@ class JiraServices extends BaseServices {
     return BaseResponse<AccessToken>(success: response.statusCode == 200, data: AccessToken.fromJson(json.decode(response.body)));
   }
 
-  // Future<BaseResponse> searchIssues({required String query, int maxResults = 20, List<String>? fields, int startAt = 0}) async {
-  //   final accessToken = await accessJiraToken;
-  //   final account = await accountId;
+  Future<BaseResponse> searchIssues({required String query, int maxResults = 20, List<String>? fields, int startAt = 0}) async {
+    if (credentials == null) return BaseResponse(success: false, message: 'You don\'t have access token.');
 
-  //   //final String credentials = '$email:$accessToken';
-  //   //final String encodeCredentials = base64Encode(utf8.encode(credentials));
+    if (DateTime.parse(credentials!.expireDate!).isBefore(DateTime.now())) {
+      final response = await refreshToken(credentials!.refreshToken!);
+      if (!response.success) {
+        return BaseResponse(success: false, message: 'There was an error trying refresh token');
+      }
+      await credentials_helper.getCredentials(response.data!);
+    }
 
-  //   try {
-  //     Uri uri = Uri.parse('$jiraApiUrl/rest/api/3/search/jql').replace(
-  //       queryParameters: {
-  //         'jql': 'text ~ "NMS" AND issuetype in ("Story", "Bug") AND labels = "Refined"',
-  //         //'maxResults': maxResults.toString(),
-  //         //'startAt': startAt.toString(),
-  //         if (fields != null && fields.isNotEmpty) 'fields': fields.join(','),
-  //       },
-  //     );
-  //     final response = await http.get(
-  //       uri,
-  //       headers: {
-  //         'Authorization': 'Bearer $accessToken',
-  //         'X-Atlassian-Token': 'no-check',
-  //         'X-AAccountId': account,
-  //         'Accept': 'application/json',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
+    try {
+      final _headers = headers(credentials!.accessToken!, credentials!.accountId!);
 
-  //     final data = json.encode(response.body);
+      if (_headers == null) return BaseResponse(success: false, message: 'There is an error in headers');
 
-  //     return BaseResponse(success: response.statusCode == 200, data: data);
-  //   } catch (e) {
-  //     return BaseResponse(success: false, message: 'There was an error: $e');
-  //   }
-  // }
+      Uri uri = Uri.parse('${jiraApiUrl(credentials!.cloudId!, 'rest/api/3')}/search/jql').replace(
+        queryParameters: {
+          'jql': query,
+          //'maxResults': maxResults.toString(),
+          //'startAt': startAt.toString(),
+          if (fields != null && fields.isNotEmpty) 'fields': fields.join(','),
+        },
+      );
+      final response = await http.get(uri, headers: _headers);
+
+      final data = json.encode(response.body);
+
+      return BaseResponse(success: response.statusCode == 200, data: data);
+    } catch (e) {
+      return BaseResponse(success: false, message: 'There was an error: $e');
+    }
+  }
+
+  Map<String, String>? headers(String token, String accountId) => {
+    'Authorization': 'Bearer $token',
+    'X-Atlassian-Token': 'no-check',
+    'X-AAccountId': accountId,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
 }

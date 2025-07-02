@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_work_item.dart';
 import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
@@ -37,6 +38,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     JiraWorkItem(title: 'Pagination', id: 'AC-4', link: 'https://apotec.atlassian.net/browse/AC-4'),
   ];
 
+  Timer? _debounce;
+
   @override
   void initState() {
     story =
@@ -55,6 +58,9 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     _searchController.dispose();
     _descriptionController.dispose();
     _urlController.dispose();
+
+    _debounce?.cancel();
+
     super.dispose();
   }
 
@@ -158,7 +164,11 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                 ),
                               );
                             },
-                            onChanged: (value) {
+                            onChanged: (value) async {
+                              if (_debounce?.isActive ?? false) _debounce!.cancel();
+                              _debounce = Timer(const Duration(milliseconds: 500), () async {
+                                await JiraServices().searchIssues(query: 'text ~ "$value" AND issuetype in ("Story", "Bug") AND labels = "Refined"', fields: ['*all', '-comment']);
+                              });
                               _descriptionController.text = value;
                             },
                           ),

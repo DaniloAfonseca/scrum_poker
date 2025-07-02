@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/shared/models/access_token.dart';
+import 'package:scrum_poker/shared/helpers/credentials_helper.dart' as credentials_helper;
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
@@ -24,7 +24,6 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isLoading = false;
   late JiraCredentialsManager jiraManager;
-  String? avatarUser;
 
   @override
   void initState() {
@@ -56,8 +55,8 @@ class _LoginPageState extends State<LoginPage> {
         .accessToken(authCode)
         .then((response) async {
           if (response.success && response.data != null) {
-            await getCredentials(response.data!);
-            await AuthServices().signInWithCredentials(jiraManager.currentCredentials!.email!, avatarUser!);
+            await credentials_helper.getCredentials(response.data!);
+            await AuthServices().signInWithCredentials(jiraManager.currentCredentials!.email!, jiraManager.currentCredentials!.avatarUrl!);
             navigatorKey.currentContext!.go(Routes.home);
           }
         })
@@ -65,27 +64,6 @@ class _LoginPageState extends State<LoginPage> {
           snackbarMessenger(navigatorKey.currentContext!, message: 'There was an error trying connect by Jira: $error', type: SnackBarType.error);
           return;
         });
-  }
-
-  Future<void> getCredentials(AccessToken access) async {
-    final userResponse = await _jiraServices.getJiraUser(access.token!);
-    final userData = userResponse.data!;
-    final resourcesResponse = await _jiraServices.getResources(access.token!);
-    final resourcesData = resourcesResponse.data;
-
-    final expireDate = DateTime.now().add(Duration(seconds: access.expires! - 300)).toString();
-
-    await jiraManager.setCredentials(
-      JiraCredentials.fromMap({
-        'refresh-token': access.refreshToken,
-        'access-token': access.token,
-        'expire-date': expireDate,
-        'account-id': userData.accountId,
-        'email': userData.email,
-        'cloud-id': resourcesData['id'],
-      }),
-    );
-    avatarUser = userData.picture;
   }
 
   @override
