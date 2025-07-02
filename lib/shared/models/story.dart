@@ -8,6 +8,8 @@ part 'story.g.dart';
 
 @JsonSerializable(createToJson: false, includeIfNull: false)
 class Story {
+  String userId;
+  String roomId;
   String id;
   String description;
   String? url;
@@ -20,6 +22,8 @@ class Story {
   bool currentStory;
 
   Story({
+    required this.userId,
+    required this.roomId,
     required this.id,
     required this.description,
     this.url,
@@ -28,13 +32,15 @@ class Story {
     this.added = false,
     this.revisedEstimate,
     required this.order,
-    this.currentStory = false
+    this.currentStory = false,
   });
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
   Map<String, dynamic> toJson() => _$StoryToJson(this);
 
   Map<String, dynamic> _$StoryToJson(Story instance) => <String, dynamic>{
+    'userId': instance.userId,
+    'roomId': instance.roomId,
     'id': instance.id,
     'description': instance.description,
     if (instance.url case final value?) 'url': value,
@@ -42,9 +48,8 @@ class Story {
     'status': _$StoryStatusEnumMap[instance.status],
     if (instance.revisedEstimate case final value?) 'revisedEstimate': value,
     'order': instance.order,
-    'currentStory': instance.currentStory
+    'currentStory': instance.currentStory,
   };
-
 
   List<VoteResult>? voteResults(List<Vote> votes) {
     if (status != StoryStatus.voted) return null;

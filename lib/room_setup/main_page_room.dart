@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/text_tag.dart';
 
@@ -83,7 +82,7 @@ class _MainPageRoomState extends State<MainPageRoom> {
                   PopupMenuItem(
                     child: Row(spacing: 5, children: [Icon(Icons.play_arrow_outlined, color: Colors.blueAccent), Text('Open')]),
                     onTap: () async {
-                      navigatorKey.currentContext!.go('${Routes.room}/${userRoom.roomId}');
+                      context.go('${Routes.room}/${userRoom.roomId}');
                     },
                   ),
                   PopupMenuItem(

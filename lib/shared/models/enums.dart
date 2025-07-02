@@ -1,6 +1,20 @@
 enum RoomStatus { notStarted, started, ended }
 
+const $RoomStatusEnumMap = {
+  RoomStatus.notStarted: 'notStarted',
+  RoomStatus.started: 'started',
+  RoomStatus.ended: 'ended',
+};
+
 enum StoryStatus { notStarted, started, skipped, voted, ended }
+
+const $StoryStatusEnumMap = {
+  StoryStatus.notStarted: 'notStarted',
+  StoryStatus.started: 'started',
+  StoryStatus.skipped: 'skipped',
+  StoryStatus.voted: 'voted',
+  StoryStatus.ended: 'ended',
+};
 
 enum VoteEnum {
   zero('0', 0),

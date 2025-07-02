@@ -19,18 +19,18 @@ class VotingStory extends StatelessWidget {
 
   const VotingStory({super.key, required this.appUser, required this.roomId});
 
-  Future<void> vote(String roomId, String storyId, List<Vote> votes, VoteEnum vote) async {
+  Future<void> vote(String roomId, Story story, List<Vote> votes, VoteEnum vote) async {
     if (appUser == null) {
       return;
     }
     var localUserVote = votes.firstWhereOrNull((t) => t.userId == appUser!.id);
     if (localUserVote == null) {
-      localUserVote = Vote(userId: appUser!.id!, value: vote, userName: appUser!.name);
+      localUserVote = Vote(userId: appUser!.id, value: vote, userName: appUser!.name, roomId: roomId, storyId: story.id, storyStatus: story.status);
       votes.add(localUserVote);
     } else {
       localUserVote.value = vote;
     }
-    await room_services.saveVote(roomId, storyId, localUserVote);
+    await room_services.saveVote(localUserVote);
   }
 
   @override
@@ -89,12 +89,12 @@ class VotingStory extends StatelessWidget {
                                 ? BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6))
                                 : null,
                         child: StreamBuilder(
-                          stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('stories').doc(currentStory?.id ?? '').collection('votes').snapshots(),
+                          stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('stories').doc(currentStory?.id ?? '-1').collection('votes').snapshots(),
                           builder: (context, snapshot) {
                             final maps = snapshot.data?.docs.map((t) => t.data());
                             final votes = maps?.map((t) => Vote.fromJson(t)).toList() ?? <Vote>[];
                             final userVote = votes.firstWhereOrNull((t) => t.userId == appUser?.id);
-                            
+
                             return currentStory == null || (user == null && currentStory.status == StoryStatus.notStarted)
                                 ? Center(child: Text('Waiting', style: theme.textTheme.displayLarge))
                                 : currentStory.status == StoryStatus.voted
@@ -178,7 +178,7 @@ class VotingStory extends StatelessWidget {
                                       room.cardsToUse
                                           .map(
                                             (e) => InkWell(
-                                              onTap: appUser == null || currentStory.status == StoryStatus.notStarted ? null : () => vote(roomId, currentStory.id, votes, e),
+                                              onTap: appUser == null || currentStory.status == StoryStatus.notStarted ? null : () => vote(roomId, currentStory, votes, e),
                                               child: Container(
                                                 height: 200,
                                                 width: 150,

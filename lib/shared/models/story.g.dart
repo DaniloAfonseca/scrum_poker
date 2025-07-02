@@ -11,6 +11,8 @@ Story _$StoryFromJson(Map<String, dynamic> json) => $checkedCreate(
       json,
       ($checkedConvert) {
         final val = Story(
+          userId: $checkedConvert('userId', (v) => v as String),
+          roomId: $checkedConvert('roomId', (v) => v as String),
           id: $checkedConvert('id', (v) => v as String),
           description: $checkedConvert('description', (v) => v as String),
           url: $checkedConvert('url', (v) => v as String?),

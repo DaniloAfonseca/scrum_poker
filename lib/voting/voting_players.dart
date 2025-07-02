@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
+import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/models/vote.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
@@ -14,25 +15,24 @@ import 'package:web/web.dart' as web;
 import 'package:scrum_poker/shared/models/app_user.dart';
 
 class VotingPlayers extends StatelessWidget {
-  final String roomId;
-  final RoomStatus roomStatus;
+  final Room room;
   final FutureOr<void> Function(AppUser appUser) onUserRenamed;
   final AppUser appUser;
-  const VotingPlayers({super.key, required this.roomStatus, required this.roomId, required this.appUser, required this.onUserRenamed});
+  const VotingPlayers({super.key, required this.room, required this.appUser, required this.onUserRenamed});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final firebaseUser = FirebaseAuth.instance.currentUser;
     return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('stories').snapshots(),
+      stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').snapshots(),
       builder: (context, snapshot) {
         final maps = snapshot.data?.docs.map((t) => t.data());
         final stories = maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[];
         final currentStory = stories.firstWhereOrNull((t) => t.currentStory);
 
         return StreamBuilder(
-          stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('currentUsers').snapshots(),
+          stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('currentUsers').snapshots(),
           builder: (context, snapshot) {
             final maps = snapshot.data?.docs.map((t) => t.data());
             final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList();
@@ -40,7 +40,7 @@ class VotingPlayers extends StatelessWidget {
             final numPlayers = currentUsers?.where((t) => !t.observer).length ?? 0;
 
             return StreamBuilder(
-              stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('stories').doc(currentStory?.id ?? '').collection('votes').snapshots(),
+              stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').doc(currentStory?.id ?? '-1').collection('votes').snapshots(),
               builder: (context, snapshot) {
                 final maps = snapshot.data?.docs.map((t) => t.data());
                 final votes = maps?.map((t) => Vote.fromJson(t)).toList() ?? <Vote>[];
@@ -77,7 +77,7 @@ class VotingPlayers extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(currentMessage, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
                     ),
-                    if (firebaseUser != null && roomStatus != RoomStatus.ended)
+                    if (firebaseUser != null && room.status != RoomStatus.ended)
                       Container(
                         height: 95,
                         width: 400,
@@ -96,19 +96,35 @@ class VotingPlayers extends StatelessWidget {
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
                                   ),
-                                  onPressed: currentStory != null ? () => room_services.storyStart(roomId, roomStatus, stories, currentStory, appUser.id!) : null,
+                                  onPressed: currentStory != null ? () => room_services.storyStart(room, stories, currentStory) : null,
                                   child: Text('Start'),
                                 )
                                 : currentStory?.status == StoryStatus.voted
-                                ? ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blueAccent,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                    elevation: 5,
-                                  ),
-                                  onPressed: currentStory != null ? () => room_services.nextStory(roomId, roomStatus, stories, currentStory, appUser.id!) : null,
-                                  child: Text('Next story'),
+                                ? Row(
+                                  spacing: 10,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blueAccent,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                        elevation: 5,
+                                      ),
+                                      onPressed: currentStory != null ? () => room_services.nextStory(room, stories, currentStory) : null,
+                                      child: Text('Next story'),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blueAccent,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                        elevation: 5,
+                                      ),
+                                      onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
+                                      child: Text('Clear votes'),
+                                    ),
+                                  ],
                                 )
                                 : Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -125,7 +141,7 @@ class VotingPlayers extends StatelessWidget {
                                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                             elevation: 5,
                                           ),
-                                          onPressed: currentStory != null ? () => room_services.flipCards(roomId, roomStatus, stories, currentStory, appUser.id!, votes) : null,
+                                          onPressed: currentStory != null ? () => room_services.flipCards(room, stories, currentStory, votes) : null,
                                           child: Text('Flip cards'),
                                         ),
                                         ElevatedButton(
@@ -135,7 +151,7 @@ class VotingPlayers extends StatelessWidget {
                                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                             elevation: 5,
                                           ),
-                                          onPressed: currentStory != null ? () => room_services.clearStoryVotes(roomId, currentStory) : null,
+                                          onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
                                           child: Text('Clear votes'),
                                         ),
                                       ],
@@ -147,7 +163,7 @@ class VotingPlayers extends StatelessWidget {
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                         elevation: 5,
                                       ),
-                                      onPressed: currentStory != null ? () => room_services.skipStory(roomId, roomStatus, stories, currentStory, appUser.id!) : null,
+                                      onPressed: currentStory != null ? () => room_services.skipStory(room, stories, currentStory) : null,
                                       child: Text('Skip story'),
                                     ),
                                   ],
@@ -182,8 +198,8 @@ class VotingPlayers extends StatelessWidget {
                             hasVoted: votes.any((t) => t.userId == u.id),
                             currentAppUser: appUser,
                             appUser: u,
-                            onObserverChanged: () => room_services.updateCurrentUser(roomId, u.id!, {'observer': u.observer}),
-                            onUserRemoved: () => room_services.removeUser(roomId, u.id!),
+                            onObserverChanged: () => room_services.updateCurrentUser(room.id, u.id, {'observer': u.observer}),
+                            onUserRemoved: () => room_services.removeUser(room.id, u.id),
                             onUserRenamed: () => onUserRenamed(u),
                           ),
                         ),

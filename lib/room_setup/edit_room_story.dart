@@ -5,27 +5,27 @@ import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_work_item.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:uuid/uuid.dart';
 
-class UserRoomStory extends StatefulWidget {
+class EditRoomStory extends StatefulWidget {
   final Story? story;
   final FutureOr<void> Function() onDelete;
   final FutureOr<void> Function()? onMoveUp;
   final FutureOr<void> Function()? onMoveDown;
   final int nextOrder;
-  const UserRoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown, required this.nextOrder});
+  final String roomId;
+  final String userId;
+  const EditRoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown, required this.nextOrder, required this.userId, required this.roomId});
 
   @override
-  State<UserRoomStory> createState() => _UserRoomStoryState();
+  State<EditRoomStory> createState() => _EditRoomStoryState();
 }
 
-class _UserRoomStoryState extends State<UserRoomStory> {
+class _EditRoomStoryState extends State<EditRoomStory> {
   final _menuKey = GlobalKey();
   final _searchController = SearchController();
   final _descriptionController = TextEditingController();
   final _urlController = TextEditingController();
-  late AppUser user;
   late Story story;
   bool isEditing = false;
   bool integratedWithJira = true;
@@ -39,7 +39,8 @@ class _UserRoomStoryState extends State<UserRoomStory> {
 
   @override
   void initState() {
-    story = widget.story ?? Story(id: Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: widget.nextOrder);
+    story =
+        widget.story ?? Story(id: Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: widget.nextOrder, userId: widget.userId, roomId: widget.roomId);
     isEditing = (widget.story?.added ?? false) || widget.story == null;
 
     _descriptionController.text = story.description;

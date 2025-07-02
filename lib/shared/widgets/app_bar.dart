@@ -41,11 +41,24 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return CircleAvatar(key: _avatarKey, child: CircularProgressIndicator(color: Colors.blueAccent[200]));
             } else if (snapshot.hasError) {
-              return CircleAvatar(key: _avatarKey, child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)));
+              return CircleAvatar(
+                backgroundColor: Colors.blueAccent[200],
+                key: _avatarKey,
+                child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)),
+              );
             } else if (snapshot.hasData && snapshot.data != null) {
-              return CircleAvatar(key: _avatarKey, backgroundImage: NetworkImage(snapshot.data!), child: InkWell(onTap: () => _showMenu(context)));
+              return CircleAvatar(
+                backgroundColor: Colors.blueAccent[200],
+                key: _avatarKey,
+                backgroundImage: NetworkImage(snapshot.data!),
+                child: InkWell(onTap: () => _showMenu(context)),
+              );
             } else {
-              return CircleAvatar(key: _avatarKey, child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)));
+              return CircleAvatar(
+                backgroundColor: Colors.blueAccent[200],
+                key: _avatarKey,
+                child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)),
+              );
             }
           },
         ),

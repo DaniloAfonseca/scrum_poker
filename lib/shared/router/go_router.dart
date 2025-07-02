@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
-import 'package:scrum_poker/room_setup/user_room_page.dart';
+import 'package:scrum_poker/room_setup/edit_room_page.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
+import 'package:scrum_poker/voting/room_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -47,21 +48,21 @@ class ManagerRouter {
         path: Routes.room,
         builder: (context, state) {
           final roomId = state.uri.queryParameters['id'];
-          return UserRoomPage(roomId: roomId);
+          return EditRoomPage(roomId: roomId);
         },
       ),
       GoRoute(
         path: '${Routes.room}/:roomId',
         builder: (context, state) {
-          final roomId = state.pathParameters['roomId'];
-          return UserRoomPage(roomId: roomId);
+          final roomId = state.pathParameters['roomId']!;
+          return RoomPage(roomId: roomId);
         },
       ),
       GoRoute(
         path: Routes.editRoom,
         builder: (context, state) {
           final roomId = state.extra as String?;
-          return UserRoomPage(roomId: roomId);
+          return EditRoomPage(roomId: roomId);
         },
       ),
     ],

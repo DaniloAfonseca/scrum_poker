@@ -11,7 +11,7 @@ AppUser _$AppUserFromJson(Map<String, dynamic> json) => $checkedCreate(
       json,
       ($checkedConvert) {
         final val = AppUser(
-          id: $checkedConvert('id', (v) => v as String?),
+          id: $checkedConvert('id', (v) => v as String),
           name: $checkedConvert('name', (v) => v as String),
           accountId: $checkedConvert('account_id', (v) => v as String?),
           email: $checkedConvert('email', (v) => v as String?),
@@ -20,6 +20,7 @@ AppUser _$AppUserFromJson(Map<String, dynamic> json) => $checkedCreate(
           cloudId: $checkedConvert('cloud_id', (v) => v as String?),
           moderator: $checkedConvert('moderator', (v) => v as bool? ?? false),
           observer: $checkedConvert('observer', (v) => v as bool? ?? false),
+          roomId: $checkedConvert('roomId', (v) => v as String?),
         );
         $checkedConvert(
             'joinedRoomDate',

@@ -12,7 +12,7 @@ Room _$RoomFromJson(Map<String, dynamic> json) => $checkedCreate(
       ($checkedConvert) {
         final val = Room(
           name: $checkedConvert('name', (v) => v as String?),
-          id: $checkedConvert('id', (v) => v as String?),
+          id: $checkedConvert('id', (v) => v as String),
           dateAdded: $checkedConvert('dateAdded',
               (v) => v == null ? null : DateTime.parse(v as String)),
           dateDeleted: $checkedConvert('dateDeleted',

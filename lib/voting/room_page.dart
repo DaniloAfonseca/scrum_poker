@@ -23,8 +23,8 @@ import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:uuid/uuid.dart';
 
 class RoomPage extends StatefulWidget {
-  final String? roomId;
-  const RoomPage({super.key, this.roomId});
+  final String roomId;
+  const RoomPage({super.key, required this.roomId});
 
   @override
   State<RoomPage> createState() => _RoomPageState();
@@ -71,7 +71,7 @@ class _RoomPageState extends State<RoomPage> {
     _box = await Hive.openBox('scrumPoker');
 
     if (user?.metadata != null) {
-      final appUser = AppUser.fromUser(user!);
+      final appUser = AppUser.fromUser(user!, widget.roomId);
       _box!.put('appUser', appUser.toJson());
     }
 
@@ -91,24 +91,12 @@ class _RoomPageState extends State<RoomPage> {
       await user!.updateDisplayName(username);
     }
 
-    final appUser = user == null ? AppUser(name: username, id: Uuid().v4()) : AppUser.fromUser(user!);
+    final appUser = user == null ? AppUser(name: username, id: Uuid().v4()) : AppUser.fromUser(user!, widget.roomId);
 
     _box!.put('appUser', appUser.toJson());
 
     _appUser.value = appUser;
   }
-
-  // void setCurrentStory(List<Story> stories) {
-  //   if (stories.any((t) => t.currentStory)) return;
-  //   stories.sort((a, b) => a.order.compareTo(b.order));
-  //   final activeStories = stories.where((t) => [StoryStatus.notStarted, StoryStatus.started].contains(t.status)).toList();
-  //   for (var i = 0; i < activeStories.length; i++) {
-  //     final story = activeStories[i];
-  //     story.currentStory = i == 0;
-
-  //     room_services.updateStory(widget.roomId!, story.id, {'currentStory': story.currentStory});
-  //   }
-  // }
 
   Future<void> checkChanges(Room room, List<AppUser>? currentUsers, List<Story> stories) async {
     if (_oldRoom == null) {
@@ -253,7 +241,7 @@ class _RoomPageState extends State<RoomPage> {
 
   Future<void> renameUser(AppUser appUser, Room room) async {
     _appUser.value = null;
-    await room_services.removeUser(appUser.id!, room.id!);
+    await room_services.removeUser(appUser.id, room.id);
   }
 
   @override
@@ -276,15 +264,18 @@ class _RoomPageState extends State<RoomPage> {
                         final map = snapshot.data!.data()!;
                         final room = Room.fromJson(map);
 
-                        room_services.addUserToStory(_appUser.value, room.id!);
+                        _appUser.value!.roomId = room.id;
+
+                        room_services.addUserToRoom(_appUser.value);
 
                         return StreamBuilder(
                           stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').snapshots(),
                           builder: (context, snapshot) {
                             final maps = snapshot.data?.docs.map((t) => t.data());
                             final stories = maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[];
+                            stories.sortBy((t) => t.order);
 
-                            room_services.setCurrentStory(room.id!, stories);
+                            room_services.setCurrentStory(stories);
 
                             return StreamBuilder(
                               stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('currentUsers').snapshots(),
@@ -307,11 +298,18 @@ class _RoomPageState extends State<RoomPage> {
                                             Expanded(
                                               child: Column(
                                                 spacing: 20,
-                                                children: [VotingStory(appUser: _appUser.value, roomId: room.id!), VotingStoryList(roomId: room.id!, roomStatus: room.status, userId: _appUser.value!.id!)],
+                                                children: [
+                                                  VotingStory(appUser: _appUser.value, roomId: room.id),
+                                                  VotingStoryList(room: room),
+                                                ],
                                               ),
                                             ),
 
-                                            VotingPlayers(roomId: room.id!, roomStatus: room.status, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser, room)),
+                                            VotingPlayers(
+                                              room: room,
+                                              appUser: _appUser.value!,
+                                              onUserRenamed: (appUser) => renameUser(appUser, room),
+                                            ),
                                           ],
                                         ),
                                       ],

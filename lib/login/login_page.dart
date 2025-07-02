@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
 
       setState(() => _isLoading = false);
     } catch (e) {
-      snackbarMessenger(context, message: 'Error trying to connect to Jira: $e', type: SnackBarType.error);
+      snackbarMessenger(navigatorKey.currentContext!, message: 'Error trying to connect to Jira: $e', type: SnackBarType.error);
       setState(() => _isLoading = false);
     }
   }
@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
           }
         })
         .catchError((error) {
-          snackbarMessenger(context, message: 'There was an error trying connect by Jira: $error', type: SnackBarType.error);
+          snackbarMessenger(navigatorKey.currentContext!, message: 'There was an error trying connect by Jira: $error', type: SnackBarType.error);
           return;
         });
   }
