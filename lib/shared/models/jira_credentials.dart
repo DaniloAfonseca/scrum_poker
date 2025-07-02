@@ -9,8 +9,9 @@ class JiraCredentials {
   String? cloudId;
   String? expireDate;
   String? email;
+  String? avatarUrl;
 
-  JiraCredentials({this.authCode, this.refreshToken, this.accessToken, this.accountId, this.cloudId, this.expireDate, this.email});
+  JiraCredentials({this.authCode, this.refreshToken, this.accessToken, this.accountId, this.cloudId, this.expireDate, this.email, this.avatarUrl});
 
   factory JiraCredentials.fromMap(Map<String, dynamic> map) {
     return JiraCredentials(
@@ -21,6 +22,7 @@ class JiraCredentials {
       email: map['email'] as String?,
       cloudId: map['cloud-id'] as String?,
       expireDate: map['expire-date'] as String?,
+      avatarUrl: map['avatar-url'] as String?,
     );
   }
 
@@ -33,6 +35,7 @@ class JiraCredentials {
       'account-id': accountId,
       'cloud-id': cloudId,
       'expire-date': expireDate,
+      'avatar-url': avatarUrl,
     };
   }
 }
