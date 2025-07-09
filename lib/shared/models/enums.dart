@@ -1,10 +1,8 @@
+import 'package:flutter/material.dart';
+
 enum RoomStatus { notStarted, started, ended }
 
-const $RoomStatusEnumMap = {
-  RoomStatus.notStarted: 'notStarted',
-  RoomStatus.started: 'started',
-  RoomStatus.ended: 'ended',
-};
+const $RoomStatusEnumMap = {RoomStatus.notStarted: 'notStarted', RoomStatus.started: 'started', RoomStatus.ended: 'ended'};
 
 enum StoryStatus { notStarted, started, skipped, voted, ended }
 
@@ -15,6 +13,17 @@ const $StoryStatusEnumMap = {
   StoryStatus.voted: 'voted',
   StoryStatus.ended: 'ended',
 };
+
+enum StoryType {
+  workItem('Work item', Icons.work_outlined, Colors.blueAccent),
+  bug('Bug', Icons.bug_report_outlined, Colors.redAccent),
+  others('Others');
+
+  const StoryType(this.description, [this.icon, this.color]);
+  final String description;
+  final IconData? icon;
+  final Color? color;
+}
 
 enum VoteEnum {
   zero('0', 0),

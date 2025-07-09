@@ -62,8 +62,8 @@ class JiraServices extends BaseServices {
 
       body: json.encode({
         "grant_type": "authorization_code",
-        "client_id": JiraAuthentication.clientId2,
-        "client_secret": JiraAuthentication.secret2,
+        "client_id": JiraAuthentication.clientId,
+        "client_secret": JiraAuthentication.secret,
         "code": token,
         "redirect_uri": "${Uri.base.origin}/login",
       }),
@@ -83,8 +83,8 @@ class JiraServices extends BaseServices {
 
       body: json.encode({
         "grant_type": "refresh_token",
-        "client_id": JiraAuthentication.clientId2,
-        "client_secret": JiraAuthentication.secret2,
+        "client_id": JiraAuthentication.clientId,
+        "client_secret": JiraAuthentication.secret,
         "code": token,
         "redirect_uri": "${Uri.base.origin}/redirect",
       }),
@@ -105,9 +105,9 @@ class JiraServices extends BaseServices {
     }
 
     try {
-      final _headers = headers(credentials!.accessToken!, credentials!.accountId!);
+      final headers = getHeaders(credentials!.accessToken!, credentials!.accountId!);
 
-      if (_headers == null) return BaseResponse(success: false, message: 'There is an error in headers');
+      if (headers == null) return BaseResponse(success: false, message: 'There is an error in headers');
 
       Uri uri = Uri.parse('${jiraApiUrl(credentials!.cloudId!, 'rest/api/3')}/search/jql').replace(
         queryParameters: {
@@ -117,7 +117,7 @@ class JiraServices extends BaseServices {
           if (fields != null && fields.isNotEmpty) 'fields': fields.join(','),
         },
       );
-      final response = await http.get(uri, headers: _headers);
+      final response = await http.get(uri, headers: headers);
 
       final data = json.encode(response.body);
 
@@ -127,7 +127,7 @@ class JiraServices extends BaseServices {
     }
   }
 
-  Map<String, String>? headers(String token, String accountId) => {
+  Map<String, String>? getHeaders(String token, String accountId) => {
     'Authorization': 'Bearer $token',
     'X-Atlassian-Token': 'no-check',
     'X-AAccountId': accountId,

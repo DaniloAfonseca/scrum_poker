@@ -10,9 +10,12 @@ import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
+import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
+import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:uuid/uuid.dart';
 import 'package:collection/collection.dart';
+import 'package:web/web.dart' as web;
 
 class EditRoomPage extends StatefulWidget {
   final String? roomId;
@@ -81,11 +84,10 @@ class _EditRoomPageState extends State<EditRoomPage> {
     allCards = widget.roomId == null || room.cardsToUse.length == VoteEnum.values.length;
     cardsToUse.addAll(VoteEnum.values.map((v) => allCards ? false : room.cardsToUse.contains(v)));
 
-    final dbRef = FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('stories');
-    final dbStories = await dbRef.get();
-    final maps = dbStories.docs.map((t) => t.data());
+    final roomStories = await room_services.getStories(room.id);
 
-    stories.addAll(maps.map((t) => Story.fromJson(t)).toList());
+    stories.addAll(roomStories);
+    setState(() {});
   }
 
   void signOut() {
@@ -115,7 +117,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
       await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
 
       // save story
-      for (var story in stories!) {
+      for (var story in stories) {
         await FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').doc(story.id).set(story.toJson());
       }
 
@@ -196,6 +198,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                 spacing: 20,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Hyperlink(text: 'Back to list', textColor: Colors.blueAccent, onTap: () => web.window.history.back()),
                   Row(
                     spacing: 10,
                     children: [
@@ -276,29 +279,28 @@ class _EditRoomPageState extends State<EditRoomPage> {
                             child: Wrap(
                               crossAxisAlignment: WrapCrossAlignment.start,
                               children:
-                                  VoteEnum.values
-                                      .mapIndexed(
-                                        (index, value) => SizedBox(
-                                          width: 120,
-                                          child: CheckboxListTile(
-                                            fillColor: WidgetStateProperty.resolveWith((states) {
-                                              if (states.contains(WidgetState.selected)) {
-                                                return Colors.blueAccent;
-                                              }
-                                              return Colors.white;
-                                            }),
-                                            controlAffinity: ListTileControlAffinity.leading,
-                                            contentPadding: EdgeInsets.all(0),
-                                            splashRadius: 10,
-                                            tristate: false,
-                                            visualDensity: VisualDensity(horizontal: -4, vertical: -4),
-                                            value: cardsToUse[index],
-                                            onChanged: (v) => cardInUse(index, v),
-                                            title: Text(value.label),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
+                                  VoteEnum.values.mapIndexed((index, value) {
+                                    final selected = index < cardsToUse.length ? cardsToUse[index] : false;
+                                    return SizedBox(
+                                      width: 120,
+                                      child: CheckboxListTile(
+                                        fillColor: WidgetStateProperty.resolveWith((states) {
+                                          if (states.contains(WidgetState.selected)) {
+                                            return Colors.blueAccent;
+                                          }
+                                          return Colors.white;
+                                        }),
+                                        controlAffinity: ListTileControlAffinity.leading,
+                                        contentPadding: EdgeInsets.all(0),
+                                        splashRadius: 10,
+                                        tristate: false,
+                                        visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                                        value: selected,
+                                        onChanged: (v) => cardInUse(index, v),
+                                        title: Text(value.label),
+                                      ),
+                                    );
+                                  }).toList(),
                             ),
                           ),
                         ],

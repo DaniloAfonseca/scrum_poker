@@ -7,7 +7,10 @@ import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
+import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/voting/voting_story_item.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:web/web.dart' as web;
 
 class VotingStoryList extends StatefulWidget {
   final Room room;
@@ -94,7 +97,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
       }
     }
 
-    await room_services.skipStory(room, stories, story);
+    await room_services.skipStory(room, story);
   }
 
   @override
@@ -115,114 +118,138 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
 
         return Container(
           decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)),
-          child: Column(
+          child: Stack(
             children: [
-              TabBar(
-                controller: _tabController,
-                tabAlignment: TabAlignment.start,
-                isScrollable: true,
-                tabs: [
-                  Tab(
-                    child: Row(
-                      spacing: 10,
-                      children: [
-                        Text('Active Stories', style: theme.textTheme.titleLarge),
-                        CircleAvatar(
-                          backgroundColor: Colors.blueAccent,
-                          radius: 15,
-                          child: Text(activeStories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+              Column(
+                children: [
+                  TabBar(
+                    controller: _tabController,
+                    tabAlignment: TabAlignment.start,
+                    isScrollable: true,
+                    tabs: [
+                      Tab(
+                        child: Row(
+                          spacing: 10,
+                          children: [
+                            Text('Active Stories', style: theme.textTheme.titleLarge),
+                            CircleAvatar(
+                              backgroundColor: Colors.blueAccent,
+                              radius: 15,
+                              child: Text(activeStories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  Tab(
-                    child: Row(
-                      spacing: 10,
-                      children: [
-                        Text('Completed Stories', style: theme.textTheme.titleLarge),
-                        CircleAvatar(
-                          backgroundColor: Colors.blueAccent,
-                          radius: 15,
-                          child: Text(completedStories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                      ),
+                      Tab(
+                        child: Row(
+                          spacing: 10,
+                          children: [
+                            Text('Completed Stories', style: theme.textTheme.titleLarge),
+                            CircleAvatar(
+                              backgroundColor: Colors.blueAccent,
+                              radius: 15,
+                              child: Text(completedStories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      Tab(
+                        child: Row(
+                          spacing: 10,
+                          children: [
+                            Text('All Stories', style: theme.textTheme.titleLarge),
+                            CircleAvatar(
+                              backgroundColor: Colors.blueAccent,
+                              radius: 15,
+                              child: Text(stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  Tab(
-                    child: Row(
-                      spacing: 10,
-                      children: [
-                        Text('All Stories', style: theme.textTheme.titleLarge),
-                        CircleAvatar(
-                          backgroundColor: Colors.blueAccent,
-                          radius: 15,
-                          child: Text(stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                  SizedBox(
+                    height: stories.length * 50 + 101,
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: <Widget>[
+                        ReorderableListView.builder(
+                          buildDefaultDragHandles: false,
+                          itemBuilder: (context, index) {
+                            final t = activeStories[index];
+                            return VotingStoryItem(
+                              key: Key('$index'),
+                              currentStory: currentStory,
+                              onDelete: () => removeStory(widget.room, stories, t),
+                              story: t,
+                              onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(stories, t) : null,
+                              onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(stories, t),
+                              onSkip: () => skipStory(widget.room, stories, t),
+                              reorderIndex: index,
+                            );
+                          },
+                          itemCount: activeStories.length,
+                          onReorder: (oldIndex, newIndex) {
+                            if (newIndex > oldIndex) newIndex--;
+                            room_services.swapStories(stories, stories[oldIndex], stories[newIndex]);
+                          },
+                        ),
+                        Column(
+                          children:
+                              completedStories
+                                  .map(
+                                    (t) => VotingStoryItem(
+                                      currentStory: currentStory,
+                                      story: t,
+                                      onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.room, stories, t) : null,
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
+
+                        ReorderableListView.builder(
+                          buildDefaultDragHandles: false,
+                          itemBuilder: (context, index) {
+                            final t = stories[index];
+                            return VotingStoryItem(
+                              key: Key('$index'),
+                              currentStory: currentStory,
+                              story: t,
+                              onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.room, stories, t) : null,
+                              reorderIndex: index,
+                            );
+                          },
+                          itemCount: stories.length,
+                          onReorder: (oldIndex, newIndex) {
+                            if (newIndex > oldIndex) newIndex--;
+                            room_services.swapStories(stories, stories[oldIndex], stories[newIndex]);
+                          },
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-              SizedBox(
-                height: stories.length * 50 + 101,
-                child: TabBarView(
-                  controller: _tabController,
-                  children: <Widget>[
-                    ReorderableListView.builder(
-                      buildDefaultDragHandles: false,
-                      itemBuilder: (context, index) {
-                        final t = activeStories[index];
-                        return VotingStoryItem(
-                          key: Key('$index'),
-                          currentStory: currentStory,
-                          onDelete: () => removeStory(widget.room, stories, t),
-                          story: t,
-                          onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(stories, t) : null,
-                          onMoveUp: index == 0 ? null : () => room_services.moveStoryUp( stories, t),
-                          onSkip: () => skipStory(widget.room, stories, t),
-                          reorderIndex: index,
-                        );
-                      },
-                      itemCount: activeStories.length,
-                      onReorder: (oldIndex, newIndex) {
-                        if (newIndex > oldIndex) newIndex--;
-                        room_services.swapStories(stories, stories[oldIndex], stories[newIndex]);
-                      },
-                    ),
-                    Column(
-                      children:
-                          completedStories
-                              .map(
-                                (t) => VotingStoryItem(
-                                  currentStory: currentStory,
-                                  story: t,
-                                  onMoveToActive:
-                                      t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.room, stories, t) : null,
-                                ),
-                              )
-                              .toList(),
-                    ),
-
-                    ReorderableListView.builder(
-                      buildDefaultDragHandles: false,
-                      itemBuilder: (context, index) {
-                        final t = stories[index];
-                        return VotingStoryItem(
-                          key: Key('$index'),
-                          currentStory: currentStory,
-                          story: t,
-                          onMoveToActive:
-                              t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.room, stories, t) : null,
-                          reorderIndex: index,
-                        );
-                      },
-                      itemCount: stories.length,
-                      onReorder: (oldIndex, newIndex) {
-                        if (newIndex > oldIndex) newIndex--;
-                        room_services.swapStories(stories, stories[oldIndex], stories[newIndex]);
-                      },
-                    ),
-                  ],
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Hyperlink(
+                    text: 'Add new story',
+                    textColor: Colors.blueAccent,
+                    textStyle: theme.textTheme.bodyLarge,
+                    onTap: () async {
+                      final host = web.window.location.host;
+                      final protocol = web.window.location.protocol;
+                      final urlString = '$protocol//$host/editRoom/${currentStory!.roomId}';
+                      final Uri uri = Uri.parse(urlString);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      } else {
+                        throw 'Could not launch $urlString';
+                      }
+                    },
+                  ),
                 ),
               ),
             ],

@@ -2,12 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 
 class GiraffeAppBar extends StatefulWidget implements PreferredSizeWidget {
-  const GiraffeAppBar({super.key});
+  final GestureTapCallback? onSignOut;
+  const GiraffeAppBar({super.key, this.onSignOut});
 
   @override
   State<GiraffeAppBar> createState() => _GiraffeAppBarState();
@@ -20,7 +22,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
   final _avatarKey = GlobalKey();
 
   final user = FirebaseAuth.instance.currentUser;
-  Future<String?>? _avatar;
+  late Future<String?> _avatar;
 
   @override
   void initState() {
@@ -35,51 +37,72 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
       actionsPadding: const EdgeInsets.only(right: 16.0),
       title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
       actions: [
-        FutureBuilder<String?>(
-          future: _avatar,
-          builder: (_, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircleAvatar(key: _avatarKey, child: CircularProgressIndicator(color: Colors.blueAccent[200]));
-            } else if (snapshot.hasError) {
-              return CircleAvatar(
-                backgroundColor: Colors.blueAccent[200],
-                key: _avatarKey,
-                child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)),
-              );
-            } else if (snapshot.hasData && snapshot.data != null) {
-              return CircleAvatar(
-                backgroundColor: Colors.blueAccent[200],
-                key: _avatarKey,
-                backgroundImage: NetworkImage(snapshot.data!),
-                child: InkWell(onTap: () => _showMenu(context)),
-              );
-            } else {
-              return CircleAvatar(
-                backgroundColor: Colors.blueAccent[200],
-                key: _avatarKey,
-                child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)),
-              );
-            }
-          },
-        ),
+        user == null
+            ? CircleAvatar(
+              backgroundColor: Colors.blueAccent[200],
+              key: _avatarKey,
+              child: IconButton(
+                icon: Icon(Icons.person_outline, color: Colors.white),
+                onPressed: () {
+                  _showMenu(context);
+                },
+              ),
+            )
+            : FutureBuilder<String?>(
+              future: _avatar,
+              builder: (_, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircleAvatar(key: _avatarKey, child: CircularProgressIndicator(color: Colors.blueAccent[200]));
+                } else if (snapshot.hasError) {
+                  return CircleAvatar(
+                    backgroundColor: Colors.blueAccent[200],
+                    key: _avatarKey,
+                    child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)),
+                  );
+                } else if (snapshot.hasData && snapshot.data != null) {
+                  return CircleAvatar(
+                    backgroundColor: Colors.blueAccent[200],
+                    key: _avatarKey,
+                    backgroundImage: NetworkImage(snapshot.data!),
+                    child: InkWell(onTap: () => _showMenu(context)),
+                  );
+                } else {
+                  return CircleAvatar(
+                    backgroundColor: Colors.blueAccent[200],
+                    key: _avatarKey,
+                    child: IconButton(
+                      icon: Icon(Icons.person_outline, color: Colors.white),
+                      onPressed: () {
+                        _showMenu(context);
+                      },
+                    ),
+                  );
+                }
+              },
+            ),
       ],
     );
   }
 
-  Future<void> _showMenu(BuildContext context) async {
+  void _showMenu<T>(BuildContext context) {
     RenderBox box = _avatarKey.currentContext!.findRenderObject() as RenderBox;
     Offset position = box.localToGlobal(Offset.zero);
-    return await showMenu(
+    showMenu(
       context: context,
       position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
       items: [PopupMenuItem(child: ListTile(leading: Icon(Icons.logout_outlined), title: Text('Sign Out'), onTap: signOut))],
     );
   }
 
-  void signOut() {
-    AuthServices().signOut().then((_) {
-      navigatorKey.currentContext!.go(Routes.login);
-    });
+  void signOut() async {
+    final box = await Hive.openBox('scrumPoker');
+    box.delete('appUser');
+    widget.onSignOut?.call();
+    if (user != null) {
+      AuthServices().signOut().then((_) {
+        navigatorKey.currentContext!.go(Routes.login);
+      });
+    }
   }
 }
 

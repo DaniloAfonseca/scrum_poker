@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
+import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/models/jira_work_item.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
+import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
@@ -29,7 +31,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   final _urlController = TextEditingController();
   late Story story;
   bool isEditing = false;
-  bool integratedWithJira = true;
+  bool integratedWithJira = false;
+  StoryType? storyType;
 
   final jiraWorkItems = <JiraWorkItem>[
     JiraWorkItem(title: 'Create style', id: 'AC-1', link: 'https://apotec.atlassian.net/browse/AC-1'),
@@ -49,6 +52,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     _descriptionController.text = story.description;
     _searchController.value = _descriptionController.value;
     _urlController.text = story.url ?? '';
+
+    integratedWithJira = JiraCredentialsManager().currentCredentials != null;
 
     super.initState();
   }
@@ -94,7 +99,10 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                 if (!isEditing) ...[
                   Text(story.description, style: theme.textTheme.headlineLarge!.copyWith(color: Colors.white)),
                   if (story.url != null)
-                    InkWell(
+                    Hyperlink(
+                      text: widget.story!.url!,
+                      textColor: Colors.white,
+                      hyperlinkColor: Colors.white,
                       onTap: () async {
                         final Uri uri = Uri.parse(widget.story!.url!);
                         if (await canLaunchUrl(uri)) {
@@ -103,18 +111,6 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           throw 'Could not launch ${widget.story!.url!}';
                         }
                       },
-                      child: Text(
-                        widget.story!.url!,
-                        style: TextStyle(
-                          color: Colors.transparent,
-                          shadows: [Shadow(color: Colors.white, offset: Offset(0, -3))],
-
-                          decoration: TextDecoration.underline,
-                          decorationColor: Colors.white,
-                          decorationThickness: 1,
-                          decorationStyle: TextDecorationStyle.solid,
-                        ),
-                      ),
                     ),
                 ],
                 if (isEditing) ...[
@@ -219,7 +215,25 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       return null;
                     },
                   ),
+                  if (integratedWithJira)
+                    DropdownButtonFormField<StoryType>(
+                      items:
+                          StoryType.values
+                              .map(
+                                (t) => DropdownMenuItem<StoryType>(
+                                  value: t,
+                                  child: Row(spacing: 5, children: [t.icon != null ? Icon(t.icon) : const SizedBox(width: 24), Text(t.description)]),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (v) {
+                        setState(() {
+                          storyType = v;
+                        });
+                      },
+                    ),
                   Row(
+                    spacing: 10,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton(
@@ -234,6 +248,20 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           story.description = _descriptionController.value.text;
                           story.url = _urlController.value.text;
                           story.added = false;
+                          setState(() {
+                            isEditing = false;
+                          });
+                        },
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                          elevation: 5,
+                        ),
+                        child: Text('Cancel'),
+                        onPressed: () {
                           setState(() {
                             isEditing = false;
                           });
@@ -255,7 +283,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                 showMenu(
                   context: context,
                   items: [
-                    PopupMenuItem(onTap: edit, child: Row(spacing: 5, children: [Icon(Icons.edit), Text('Edit')])),
+                    PopupMenuItem(onTap: edit, child: Row(spacing: 5, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Edit')])),
                     PopupMenuItem(onTap: widget.onDelete, child: Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')])),
                     if (widget.onMoveUp != null)
                       PopupMenuItem(onTap: widget.onMoveUp, child: Row(spacing: 5, children: [Icon(Icons.move_up_outlined, color: Colors.blueAccent), Text('Move up')])),

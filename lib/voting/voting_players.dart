@@ -16,230 +16,217 @@ import 'package:scrum_poker/shared/models/app_user.dart';
 
 class VotingPlayers extends StatelessWidget {
   final Room room;
+  final ValueNotifier<Story?> currentStoryVN;
+  final ValueNotifier<List<Vote>> votesVN;
   final FutureOr<void> Function(AppUser appUser) onUserRenamed;
   final AppUser appUser;
-  const VotingPlayers({super.key, required this.room, required this.appUser, required this.onUserRenamed});
+  const VotingPlayers({super.key, required this.room, required this.appUser, required this.onUserRenamed, required this.currentStoryVN, required this.votesVN});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final firebaseUser = FirebaseAuth.instance.currentUser;
+
+    final currentStory = currentStoryVN.value;
+    final votes = votesVN.value;
+
     return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').snapshots(),
+      stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('currentUsers').snapshots(),
       builder: (context, snapshot) {
         final maps = snapshot.data?.docs.map((t) => t.data());
-        final stories = maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[];
-        final currentStory = stories.firstWhereOrNull((t) => t.currentStory);
+        final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList();
 
-        return StreamBuilder(
-          stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('currentUsers').snapshots(),
-          builder: (context, snapshot) {
-            final maps = snapshot.data?.docs.map((t) => t.data());
-            final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList();
+        final numPlayers = currentUsers?.where((t) => !t.observer).length ?? 0;
 
-            final numPlayers = currentUsers?.where((t) => !t.observer).length ?? 0;
+        final numPlayersWhoVoted = votes.length;
+        final notVoted = numPlayers - numPlayersWhoVoted;
 
-            return StreamBuilder(
-              stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').doc(currentStory?.id ?? '-1').collection('votes').snapshots(),
-              builder: (context, snapshot) {
-                final maps = snapshot.data?.docs.map((t) => t.data());
-                final votes = maps?.map((t) => Vote.fromJson(t)).toList() ?? <Vote>[];
+        final currentMessage =
+            currentStory == null
+                ? 'Waiting'
+                : currentStory.status == StoryStatus.voted
+                ? 'Story voting completed'
+                : currentStory.status == StoryStatus.notStarted
+                ? firebaseUser != null
+                    ? 'Click "Start" to begin voting'
+                    : 'Waiting for moderator'
+                : notVoted == 0
+                ? firebaseUser != null
+                    ? 'All players have voted'
+                    : 'Waiting for moderator'
+                : 'Waiting for $notVoted players to vote';
 
-                final numPlayersWhoVoted = votes.length;
-                final notVoted = numPlayers - numPlayersWhoVoted;
-
-                final currentMessage =
-                    currentStory == null
-                        ? 'Waiting'
-                        : currentStory.status == StoryStatus.voted
-                        ? 'Story voting completed'
-                        : currentStory.status == StoryStatus.notStarted
-                        ? firebaseUser != null
-                            ? 'Click "Start" to begin voting'
-                            : 'Waiting for moderator'
-                        : notVoted == 0
-                        ? firebaseUser != null
-                            ? 'All players have voted'
-                            : 'Waiting for moderator'
-                        : 'Waiting for $notVoted players to vote';
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 50,
-                      width: 400,
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent,
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(currentMessage, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
-                    ),
-                    if (firebaseUser != null && room.status != RoomStatus.ended)
-                      Container(
-                        height: 95,
-                        width: 400,
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white60,
-                          border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
-                        ),
-                        alignment: Alignment.center,
-                        child:
-                            currentStory?.status == StoryStatus.notStarted
-                                ? ElevatedButton(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 50,
+              width: 400,
+              decoration: BoxDecoration(
+                color: Colors.blueAccent,
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
+              ),
+              alignment: Alignment.center,
+              child: Text(currentMessage, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
+            ),
+            if (firebaseUser != null && room.status != RoomStatus.ended)
+              Container(
+                height: 95,
+                width: 400,
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white60,
+                  border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
+                ),
+                alignment: Alignment.center,
+                child:
+                    currentStory?.status == StoryStatus.notStarted
+                        ? ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                            elevation: 5,
+                          ),
+                          onPressed: currentStory != null ? () => room_services.storyStart(room, currentStory) : null,
+                          child: Text('Start'),
+                        )
+                        : currentStory?.status == StoryStatus.voted
+                        ? Row(
+                          spacing: 10,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                elevation: 5,
+                              ),
+                              onPressed: currentStory != null ? () => room_services.nextStory(room, currentStory, votes) : null,
+                              child: Text('Next story'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                elevation: 5,
+                              ),
+                              onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
+                              child: Text('Clear votes'),
+                            ),
+                          ],
+                        )
+                        : Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          spacing: 10,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              spacing: 10,
+                              children: [
+                                ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.blueAccent,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
                                   ),
-                                  onPressed: currentStory != null ? () => room_services.storyStart(room, stories, currentStory) : null,
-                                  child: Text('Start'),
-                                )
-                                : currentStory?.status == StoryStatus.voted
-                                ? Row(
-                                  spacing: 10,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blueAccent,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                        elevation: 5,
-                                      ),
-                                      onPressed: currentStory != null ? () => room_services.nextStory(room, stories, currentStory) : null,
-                                      child: Text('Next story'),
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blueAccent,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                        elevation: 5,
-                                      ),
-                                      onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
-                                      child: Text('Clear votes'),
-                                    ),
-                                  ],
-                                )
-                                : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  spacing: 10,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      spacing: 10,
-                                      children: [
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blueAccent,
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                            elevation: 5,
-                                          ),
-                                          onPressed: currentStory != null ? () => room_services.flipCards(room, stories, currentStory, votes) : null,
-                                          child: Text('Flip cards'),
-                                        ),
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blueAccent,
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                            elevation: 5,
-                                          ),
-                                          onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
-                                          child: Text('Clear votes'),
-                                        ),
-                                      ],
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blueAccent,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                        elevation: 5,
-                                      ),
-                                      onPressed: currentStory != null ? () => room_services.skipStory(room, stories, currentStory) : null,
-                                      child: Text('Skip story'),
-                                    ),
-                                  ],
+                                  onPressed: currentStory != null ? () => room_services.flipCards(room, currentStory, votes) : null,
+                                  child: Text('Flip cards'),
                                 ),
-                      ),
-                    Container(
-                      height: 50,
-                      width: 400,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
-                      ),
-                      alignment: Alignment.centerLeft,
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('Players:', style: theme.textTheme.headlineSmall),
-                    ),
-                    if (currentUsers != null && (currentUsers.isNotEmpty))
-                      ...currentUsers.mapIndexed(
-                        (index, u) => Container(
-                          height: 50,
-                          width: 400,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
-                            borderRadius:
-                                index == currentUsers.length - 1 && firebaseUser == null
-                                    ? BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6))
-                                    : null,
-                          ),
-                          alignment: Alignment.centerLeft,
-                          child: VotingPlayer(
-                            hasVoted: votes.any((t) => t.userId == u.id),
-                            currentAppUser: appUser,
-                            appUser: u,
-                            onObserverChanged: () => room_services.updateCurrentUser(room.id, u.id, {'observer': u.observer}),
-                            onUserRemoved: () => room_services.removeUser(room.id, u.id),
-                            onUserRenamed: () => onUserRenamed(u),
-                          ),
-                        ),
-                      ),
-                    if (appUser.moderator)
-                      Container(
-                        width: 400,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
-                          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)),
-                        ),
-                        alignment: Alignment.centerLeft,
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Theme(
-                          data: theme.copyWith(dividerColor: Colors.transparent),
-                          child: ExpansionTile(
-                            tilePadding: EdgeInsets.all(0),
-                            title: Text('Invite a teammate:', style: theme.textTheme.headlineSmall),
-                            children: [
-                              Row(
-                                children: [
-                                  Flexible(child: Text(web.window.location.href, overflow: TextOverflow.ellipsis)),
-                                  IconButton(
-                                    onPressed: () {
-                                      Clipboard.setData(ClipboardData(text: web.window.location.href));
-                                    },
-                                    icon: Icon(Icons.copy),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blueAccent,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                    elevation: 5,
                                   ),
-                                ],
+                                  onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
+                                  child: Text('Clear votes'),
+                                ),
+                              ],
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                elevation: 5,
                               ),
-                            ],
-                          ),
+                              onPressed: currentStory != null ? () => room_services.skipStory(room, currentStory) : null,
+                              child: Text('Skip story'),
+                            ),
+                          ],
                         ),
+              ),
+            Container(
+              height: 50,
+              width: 400,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
+              ),
+              alignment: Alignment.centerLeft,
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text('Players:', style: theme.textTheme.headlineSmall),
+            ),
+            if (currentUsers != null && (currentUsers.isNotEmpty))
+              ...currentUsers.mapIndexed(
+                (index, u) => Container(
+                  height: 50,
+                  width: 400,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
+                    borderRadius:
+                        index == currentUsers.length - 1 && firebaseUser == null ? BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)) : null,
+                  ),
+                  alignment: Alignment.centerLeft,
+                  child: VotingPlayer(
+                    hasVoted: votes.any((t) => t.userId == u.id),
+                    currentAppUser: appUser,
+                    appUser: u,
+                    onObserverChanged: () => room_services.updateCurrentUser(room.id, u.id, {'observer': u.observer}),
+                    onUserRemoved: () => room_services.removeUser(room.id, u.id),
+                    onUserRenamed: () => onUserRenamed(u),
+                  ),
+                ),
+              ),
+            if (appUser.moderator)
+              Container(
+                width: 400,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
+                  borderRadius: BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)),
+                ),
+                alignment: Alignment.centerLeft,
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Theme(
+                  data: theme.copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.all(0),
+                    title: Text('Invite a teammate:', style: theme.textTheme.headlineSmall),
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(child: Text(web.window.location.href, overflow: TextOverflow.ellipsis)),
+                          IconButton(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: web.window.location.href));
+                            },
+                            icon: Icon(Icons.copy),
+                          ),
+                        ],
                       ),
-                  ],
-                );
-              },
-            );
-          },
+                    ],
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );

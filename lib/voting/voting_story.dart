@@ -10,14 +10,16 @@ import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/models/vote.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
+import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/voting/voting_pie_chart.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class VotingStory extends StatelessWidget {
   final AppUser? appUser;
   final String roomId;
+  final FutureOr<void> Function(List<Vote> votes) votesChanged;
 
-  const VotingStory({super.key, required this.appUser, required this.roomId});
+  const VotingStory({super.key, required this.appUser, required this.roomId, required this.votesChanged});
 
   Future<void> vote(String roomId, Story story, List<Vote> votes, VoteEnum vote) async {
     if (appUser == null) {
@@ -30,7 +32,8 @@ class VotingStory extends StatelessWidget {
     } else {
       localUserVote.value = vote;
     }
-    await room_services.saveVote(localUserVote);
+    votesChanged(votes);
+    await room_services.updateVote(localUserVote);
   }
 
   @override
@@ -59,7 +62,9 @@ class VotingStory extends StatelessWidget {
                     children: [
                       if (currentStory?.url == null) Text(currentStory?.description ?? '', style: theme.textTheme.headlineMedium),
                       if (currentStory?.url != null)
-                        InkWell(
+                        Hyperlink(
+                          text: currentStory?.description ?? currentStory?.url ?? '',
+                          textStyle: theme.textTheme.headlineMedium!,
                           onTap: () async {
                             final Uri uri = Uri.parse(currentStory!.url!);
                             if (await canLaunchUrl(uri)) {
@@ -68,19 +73,7 @@ class VotingStory extends StatelessWidget {
                               throw 'Could not launch ${currentStory.url!}';
                             }
                           },
-                          child: Text(
-                            currentStory?.description ?? currentStory?.url ?? '',
-                            style: theme.textTheme.headlineMedium!.copyWith(
-                              color: Colors.transparent,
-                              shadows: [Shadow(color: Colors.black, offset: Offset(0, -3))],
-                              decoration: TextDecoration.underline,
-                              decorationColor: Colors.blue,
-                              decorationThickness: 1,
-                              decorationStyle: TextDecorationStyle.solid,
-                            ),
-                          ),
                         ),
-
                       Container(
                         width: constraint.maxWidth,
                         constraints: BoxConstraints(minHeight: 420),
@@ -94,6 +87,8 @@ class VotingStory extends StatelessWidget {
                             final maps = snapshot.data?.docs.map((t) => t.data());
                             final votes = maps?.map((t) => Vote.fromJson(t)).toList() ?? <Vote>[];
                             final userVote = votes.firstWhereOrNull((t) => t.userId == appUser?.id);
+
+                            votesChanged(votes);
 
                             return currentStory == null || (user == null && currentStory.status == StoryStatus.notStarted)
                                 ? Center(child: Text('Waiting', style: theme.textTheme.displayLarge))

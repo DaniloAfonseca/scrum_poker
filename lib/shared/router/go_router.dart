@@ -12,7 +12,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<String?> authGuard(BuildContext context, GoRouterState state) async {
   final auth = FirebaseAuth.instance;
 
-  if (auth.currentUser == null) {
+  if (auth.currentUser == null && !state.matchedLocation.startsWith(Routes.room)) {
     if (state.matchedLocation == Routes.login) {
       return null;
     }
@@ -62,6 +62,13 @@ class ManagerRouter {
         path: Routes.editRoom,
         builder: (context, state) {
           final roomId = state.extra as String?;
+          return EditRoomPage(roomId: roomId);
+        },
+      ),
+      GoRoute(
+        path: '${Routes.editRoom}/:roomId',
+        builder: (context, state) {
+          final roomId = state.pathParameters['roomId']!;
           return EditRoomPage(roomId: roomId);
         },
       ),

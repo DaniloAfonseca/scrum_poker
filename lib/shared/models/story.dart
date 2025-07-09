@@ -20,6 +20,7 @@ class Story {
   int? revisedEstimate;
   int order;
   bool currentStory;
+  StoryType? storyType;
 
   Story({
     required this.userId,
@@ -33,6 +34,7 @@ class Story {
     this.revisedEstimate,
     required this.order,
     this.currentStory = false,
+    this.storyType,
   });
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
@@ -49,6 +51,7 @@ class Story {
     if (instance.revisedEstimate case final value?) 'revisedEstimate': value,
     'order': instance.order,
     'currentStory': instance.currentStory,
+    if (instance.storyType case final value?) 'storyType': value,
   };
 
   List<VoteResult>? voteResults(List<Vote> votes) {

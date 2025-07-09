@@ -24,6 +24,8 @@ Story _$StoryFromJson(Map<String, dynamic> json) => $checkedCreate(
           order: $checkedConvert('order', (v) => (v as num).toInt()),
           currentStory:
               $checkedConvert('currentStory', (v) => v as bool? ?? false),
+          storyType: $checkedConvert(
+              'storyType', (v) => $enumDecodeNullable(_$StoryTypeEnumMap, v)),
         );
         return val;
       },
@@ -35,4 +37,10 @@ const _$StoryStatusEnumMap = {
   StoryStatus.skipped: 'skipped',
   StoryStatus.voted: 'voted',
   StoryStatus.ended: 'ended',
+};
+
+const _$StoryTypeEnumMap = {
+  StoryType.workItem: 'workItem',
+  StoryType.bug: 'bug',
+  StoryType.others: 'others',
 };

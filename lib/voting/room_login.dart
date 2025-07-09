@@ -60,6 +60,7 @@ class _RoomLoginState extends State<RoomLogin> {
                   const SizedBox(height: 30),
                   TextFormField(
                     controller: _userNameController,
+                    autofocus: true,
                     decoration: InputDecoration(
                       labelText: widget.isModerator == true ? 'Name' : 'Username',
                       prefixIcon: const Icon(Icons.person),
@@ -76,6 +77,7 @@ class _RoomLoginState extends State<RoomLogin> {
                       }
                       return null;
                     },
+                    onFieldSubmitted: (s) => _login(),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(

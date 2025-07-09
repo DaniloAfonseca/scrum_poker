@@ -45,7 +45,7 @@ class AuthServices extends BaseServices {
   }
 
   Future<void> signInWithJira(BuildContext context) async {
-    final clientId = JiraAuthentication.clientId2;
+    final clientId = JiraAuthentication.clientId;
     //final clientSecret = JiraAuthentication.secret2;
 
     final redirectUri = Uri.encodeComponent('${Uri.base.origin}/login');

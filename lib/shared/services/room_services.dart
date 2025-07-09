@@ -68,11 +68,17 @@ Future<void> removeUser(String roomId, String userId) async {
   await FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('currentUsers').doc(userId).delete();
 }
 
-
-
 /////////
 // story
 /////////
+
+Future<List<Story>> getStories(String roomId) async {
+  final dbRef = FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('stories');
+  final dbStories = await dbRef.get();
+  final maps = dbStories.docs.map((t) => t.data());
+
+  return maps.map((t) => Story.fromJson(t)).toList();
+}
 
 Future<void> updateStory(Story story, Map<String, dynamic> data) async {
   final docRef = FirebaseFirestore.instance.collection('rooms').doc(story.roomId).collection('stories').doc(story.id);
@@ -92,7 +98,8 @@ Future<void> setCurrentStory(List<Story> stories) async {
   }
 }
 
-Future<void> storyStart(Room room, List<Story> stories, Story story) async {
+Future<void> storyStart(Room room, Story story) async {
+  final stories = await getStories(room.id);
   story.status = StoryStatus.started;
 
   await updateStory(story, {'status': $StoryStatusEnumMap[story.status]});
@@ -145,23 +152,26 @@ Future<void> removeStory(Room room, List<Story> stories, Story story) async {
   await updateRoomStatus(room, stories);
 }
 
-Future<void> skipStory(Room room, List<Story> stories, Story story) async {
+Future<void> skipStory(Room room, Story story) async {
+  final stories = await getStories(room.id);
   story.estimate = null;
   story.revisedEstimate = null;
   story.status = StoryStatus.skipped;
   story.currentStory = false;
 
   await clearVotes(story);
-  await updateStory(story, {'status': $StoryStatusEnumMap[story.status]});
+  await updateStory(story, {'estimate': story.revisedEstimate, 'revisedEstimate': story.estimate, 'status': $StoryStatusEnumMap[story.status], 'currentStory': story.currentStory});
   await updateRoomStatus(room, stories);
 }
 
-Future<void> flipCards(Room room, List<Story> stories, Story story, List<Vote> votes) async {
+Future<void> flipCards(Room room, Story story, List<Vote> votes) async {
+  final stories = await getStories(room.id);
   final validVotes = votes.where((e) => e.value.value != null);
   final validVotesSum = validVotes.map((e) => e.value.value).reduce((e, t) => e! + t!)!;
   story.estimate = double.parse((validVotesSum / validVotes.length).toStringAsFixed(2));
   story.revisedEstimate = null;
   story.status = StoryStatus.voted;
+  await updateVotes(votes, story.status);
 
   await updateStory(story, {'estimate': story.estimate, 'revisedEstimate': story.revisedEstimate, 'status': $StoryStatusEnumMap[story.status]});
   await updateRoomStatus(room, stories);
@@ -179,9 +189,11 @@ Future<void> moveStoryToActive(Room room, List<Story> stories, Story story) asyn
   await updateRoomStatus(room, stories);
 }
 
-Future<void> nextStory(Room room, List<Story> stories, Story story) async {
+Future<void> nextStory(Room room, Story story, List<Vote> votes) async {
+  final stories = await getStories(room.id);
   story.status = StoryStatus.ended;
   story.currentStory = false;
+  await updateVotes(votes, story.status);
 
   await updateStory(story, {'currentStory': false, 'status': $StoryStatusEnumMap[story.status]});
   await updateRoomStatus(room, stories);
@@ -200,7 +212,17 @@ Future<void> swapStories(List<Story> stories, Story story1, Story story2) async 
   await updateStory(story2, {'currentStory': false, 'status': $StoryStatusEnumMap[story2.status]});
 }
 
+/////////
 // votes
+/////////
+
+Future<void> updateVotes(List<Vote> votes, StoryStatus storyStatus) async {
+  for (final vote in votes) {
+    vote.storyStatus = storyStatus;
+    await updateVote(vote);
+  }
+}
+
 Future<void> clearStoryVotes(Story story) async {
   if (![StoryStatus.voted, StoryStatus.started].contains(story.status)) {
     snackbarMessenger(navigatorKey.currentContext!, message: 'This story is not in progress.', type: SnackBarType.warning);
@@ -224,7 +246,7 @@ Future<void> clearVotes(Story story) async {
   }
 }
 
-Future<void> saveVote(Vote vote) async {
+Future<void> updateVote(Vote vote) async {
   await FirebaseFirestore.instance
       .collection('rooms')
       .doc(vote.roomId)
