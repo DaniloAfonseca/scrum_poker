@@ -166,7 +166,10 @@ class _RoomStoryState extends State<RoomStory> {
                             onChanged: (value) async {
                               if (_debounce?.isActive ?? false) _debounce!.cancel();
                               _debounce = Timer(const Duration(milliseconds: 500), () async {
-                                await JiraServices().searchIssues(query: 'text ~ "$value" AND issuetype in ("Story", "Bug") AND labels = "Refined"', fields: ['*all', '-comment']);
+                                await JiraServices().searchIssues(
+                                  query: 'text ~ "$value" AND issuetype in ("Story", "Bug") AND labels = "Refined"',
+                                  fields: ['parent', 'votes', '-comment'],
+                                );
                               });
                               _descriptionController.text = value;
                             },

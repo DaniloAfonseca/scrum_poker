@@ -81,6 +81,7 @@ class JiraCredentialsManager {
 
   Future<void> setCredentials(JiraCredentials credentials) async {
     await initialise();
+    await _box!.delete(_credentialsKey);
     await _box!.put(_credentialsKey, credentials.toMap());
     _currentCredentials = credentials;
   }

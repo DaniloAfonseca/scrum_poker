@@ -85,7 +85,7 @@ class JiraServices extends BaseServices {
         "grant_type": "refresh_token",
         "client_id": JiraAuthentication.clientId2,
         "client_secret": JiraAuthentication.secret2,
-        "code": token,
+        "refresh_token": token,
         "redirect_uri": "${Uri.base.origin}/redirect",
       }),
     );
