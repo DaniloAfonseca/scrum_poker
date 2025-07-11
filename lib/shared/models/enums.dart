@@ -15,8 +15,8 @@ const $StoryStatusEnumMap = {
 };
 
 enum StoryType {
-  workItem('Work item', Icons.work_outlined, Colors.blueAccent),
-  bug('Bug', Icons.bug_report_outlined, Colors.redAccent),
+  workItem('Work item', Icons.turned_in_not_outlined, Colors.green),
+  bug('Bug', Icons.bug_report_outlined, Colors.red),
   others('Others');
 
   const StoryType(this.description, [this.icon, this.color]);

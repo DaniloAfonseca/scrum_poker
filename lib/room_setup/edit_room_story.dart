@@ -37,15 +37,20 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   StoryType? storyType;
 
   Timer? _debounce;
-  final Duration _debounceDuration = const Duration(milliseconds: 500); // Adjust as needed
+  final Duration _debounceDuration = const Duration(milliseconds: 500);
 
   // A completer to manage the asynchronous search results for the FutureBuilder
   Completer<JiraIssueResponse?>? _searchCompleter;
+  String _currentSearchQuery = '';
+  String? _currentPageToken;
+  final List<String?> _previousPageTokens = []; // To navigate "Previous"
+  final int _pageSize = 20; // Number of items per page
 
   @override
   void initState() {
     story =
-        widget.story ?? Story(id: Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: widget.nextOrder, userId: widget.userId, roomId: widget.roomId);
+        widget.story ??
+        Story(id: const Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: widget.nextOrder, userId: widget.userId, roomId: widget.roomId);
     isEditing = (widget.story?.added ?? false) || widget.story == null;
 
     _descriptionController.text = story.description;
@@ -79,7 +84,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     });
   }
 
-  Future<JiraIssueResponse?> _performJiraSearch(String value) async {
+  Future<JiraIssueResponse?> _performJiraSearch(String value, {String? nextPageToken, int maxResults = 50}) async {
     if (value.isEmpty) {
       return null;
     }
@@ -87,6 +92,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     final response = await JiraServices().searchIssues(
       query: '(summary ~ "$value*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress")',
       fields: ['customfield_10026', '-comment', 'summary', 'statusCategory', 'issuetype'],
+      nextPageToken: nextPageToken,
+      maxResults: maxResults,
     );
 
     if (response.success) {
@@ -100,6 +107,13 @@ class _EditRoomStoryState extends State<EditRoomStory> {
 
   // This method will be called by the suggestionsBuilder with debouncing
   Future<JiraIssueResponse?> _debouncedSearchInJira(String value) {
+    // If the query has changed, reset the page to the first page
+    if (_currentSearchQuery != value) {
+      _currentPageToken = null; // Start from the first page
+      _previousPageTokens.clear(); // Clear history
+      _currentSearchQuery = value;
+    }
+
     // Cancel the previous debounce timer if it exists
     _debounce?.cancel();
 
@@ -114,7 +128,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
 
     // Start a new debounce timer
     _debounce = Timer(_debounceDuration, () async {
-      final result = await _performJiraSearch(value);
+      final result = await _performJiraSearch(value, nextPageToken: _currentPageToken, maxResults: _pageSize);
       if (!_searchCompleter!.isCompleted) {
         // Only complete if not already completed (e.g., by a new search)
         _searchCompleter!.complete(result);
@@ -122,6 +136,30 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     });
 
     return _searchCompleter!.future;
+  }
+
+  // Function to navigate to the previous page
+  void _goToPreviousPage() {
+    _searchController.closeView(null);
+    setState(() {
+      if (_previousPageTokens.isNotEmpty) {
+        _currentPageToken = _previousPageTokens.removeLast(); // Get the token for the *previous* page
+      } else {
+        _currentPageToken = null; // Go back to the very first page if no history
+      }
+      _searchController.openView(); // Reopen the search view to show new suggestions
+    });
+  }
+
+  // Function to navigate to the next page
+  void _goToNextPage(String? currentNextPageToken) {
+    _searchController.closeView(null);
+    if (currentNextPageToken == null) return;
+    setState(() {
+      _previousPageTokens.add(currentNextPageToken);
+      _currentPageToken = currentNextPageToken;
+      _searchController.openView(); // Reopen the search view to show new suggestions
+    });
   }
 
   @override
@@ -141,7 +179,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
           Expanded(
             child: Column(
               spacing: 10,
-              mainAxisSize: MainAxisSize.min, // Use mainAxisSize.min for column inside row
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!isEditing) ...[
@@ -169,10 +207,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           backgroundColor: Colors.grey.shade50,
                           dividerColor: Colors.blueGrey.shade200,
                           headerHeight: 46,
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.4, // Set your desired maximum height here
-                            minWidth: 360, // You can adjust minWidth if needed
-                          ),
+                          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: 360),
                         ),
                         child: SearchBarTheme(
                           data: SearchBarThemeData(
@@ -186,7 +221,6 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                               }
                               return BorderSide(color: Colors.blueGrey.shade200);
                             }),
-                            //overlayColor: WidgetStateProperty.all(Colors.grey.shade50),
                           ),
                           child: SearchAnchor.bar(
                             searchController: _searchController,
@@ -210,7 +244,6 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                     }
 
                                     final anyHasType = snapshot.data!.issues.any((t) => t.fields!.issueType != null);
-                                    final isLast = snapshot.data!.isLast ?? false;
                                     final nextPageToken = snapshot.data!.nextPageToken;
 
                                     final storyList =
@@ -240,7 +273,17 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                             )
                                             .toList();
 
-                                    return Column(mainAxisSize: MainAxisSize.min, children: [...storyList]);
+                                    return Column(
+                                      children: [
+                                        SizedBox(
+                                          height: MediaQuery.of(context).size.height * 0.4 - 100,
+                                          child: SingleChildScrollView(
+                                            child: Column(mainAxisSize: MainAxisSize.min, children: [Flexible(child: ListView(shrinkWrap: true, children: storyList))]),
+                                          ),
+                                        ),
+                                        _buildPaginationControls(nextPageToken),
+                                      ],
+                                    );
                                   },
                                 ),
                               ];
@@ -298,10 +341,11 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                 (t) => DropdownMenuItem<StoryType>(
                                   value: t,
                                   child: Row(
+                                    spacing: 5,
                                     children: [
-                                      if (t.icon != null) Icon(t.icon),
-                                      if (t.icon == null) const SizedBox(width: 24), // Maintain alignment if no icon
-                                      const SizedBox(width: 5), // Spacing between icon and text
+                                      if (t.icon != null) Icon(t.icon, color: t.color),
+                                      //if (t.icon == null) const SizedBox(width: 24), // Maintain alignment if no icon
+                                      //const SizedBox(width: 5), // Spacing between icon and text
                                       Text(t.description),
                                     ],
                                   ),
@@ -382,6 +426,24 @@ class _EditRoomStoryState extends State<EditRoomStory> {
               },
               icon: const Icon(Icons.more_vert, color: Colors.white),
             ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to build pagination controls
+  Widget _buildPaginationControls(String? currentNextPageToken) {
+    final bool canGoPrevious = _previousPageTokens.isNotEmpty || (_previousPageTokens.isEmpty && _currentPageToken != null);
+    final bool canGoNext = currentNextPageToken != null; // <--- Uses the token directly
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        spacing: 10,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(onPressed: canGoPrevious ? _goToPreviousPage : null, child: Text('Previous', style: TextStyle(color: canGoPrevious ? Colors.blue : Colors.grey))),
+          TextButton(onPressed: canGoNext ? () => _goToNextPage(currentNextPageToken) : null, child: Text('Next', style: TextStyle(color: canGoNext ? Colors.blue : Colors.grey))),
         ],
       ),
     );

@@ -95,7 +95,7 @@ class JiraServices extends BaseServices {
     return BaseResponse<AccessToken>(success: response.statusCode == 200, data: AccessToken.fromJson(json.decode(response.body)));
   }
 
-  Future<BaseResponse<JiraIssueResponse>> searchIssues({required String query, int maxResults = 20, List<String>? fields, int startAt = 0}) async {
+  Future<BaseResponse<JiraIssueResponse>> searchIssues({required String query, int maxResults = 20, List<String>? fields, String? nextPageToken}) async {
     final checkCredentialsResponse = await checkCredentials();
     if (checkCredentialsResponse != null) return BaseResponse(success: false, message: checkCredentialsResponse);
 
@@ -107,8 +107,8 @@ class JiraServices extends BaseServices {
       Uri uri = Uri.parse('${jiraApiUrl(credentials!.cloudId!, 'rest/api/3')}/search/jql').replace(
         queryParameters: {
           'jql': query,
-          //'maxResults': maxResults.toString(),
-          //'startAt': startAt.toString(),
+          'maxResults': maxResults.toString(),
+          'nextPageToken': nextPageToken,
           if (fields != null && fields.isNotEmpty) 'fields': fields.join(','),
         },
       );
