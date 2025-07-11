@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
-import 'package:scrum_poker/shared/models/jira_work_item.dart';
+import 'package:scrum_poker/shared/models/jira_issue_response.dart';
 import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
+import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
@@ -34,14 +36,11 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   bool integratedWithJira = false;
   StoryType? storyType;
 
-  final jiraWorkItems = <JiraWorkItem>[
-    JiraWorkItem(title: 'Create style', id: 'AC-1', link: 'https://apotec.atlassian.net/browse/AC-1'),
-    JiraWorkItem(title: 'Create users', id: 'AC-2', link: 'https://apotec.atlassian.net/browse/AC-2'),
-    JiraWorkItem(title: 'Delete users', id: 'AC-3', link: 'https://apotec.atlassian.net/browse/AC-3'),
-    JiraWorkItem(title: 'Pagination', id: 'AC-4', link: 'https://apotec.atlassian.net/browse/AC-4'),
-  ];
-
   Timer? _debounce;
+  final Duration _debounceDuration = const Duration(milliseconds: 500); // Adjust as needed
+
+  // A completer to manage the asynchronous search results for the FutureBuilder
+  Completer<JiraIssueResponse?>? _searchCompleter;
 
   @override
   void initState() {
@@ -65,6 +64,9 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     _urlController.dispose();
 
     _debounce?.cancel();
+    if (_searchCompleter != null && !_searchCompleter!.isCompleted) {
+      _searchCompleter!.complete(null); // Complete any pending completer on dispose
+    }
 
     super.dispose();
   }
@@ -77,11 +79,56 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     });
   }
 
+  Future<JiraIssueResponse?> _performJiraSearch(String value) async {
+    if (value.isEmpty) {
+      return null;
+    }
+
+    final response = await JiraServices().searchIssues(
+      query: '(summary ~ "$value*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress")',
+      fields: ['customfield_10026', '-comment', 'summary', 'statusCategory', 'issuetype'],
+    );
+
+    if (response.success) {
+      return response.data!;
+    } else if (response.message != null && response.message!.isNotEmpty) {
+      snackbarMessenger(navigatorKey.currentContext!, message: response.message!, type: SnackBarType.error);
+    }
+
+    return null;
+  }
+
+  // This method will be called by the suggestionsBuilder with debouncing
+  Future<JiraIssueResponse?> _debouncedSearchInJira(String value) {
+    // Cancel the previous debounce timer if it exists
+    _debounce?.cancel();
+
+    // If there's an active completer from a previous search, complete it with null
+    // to prevent it from resolving later with outdated data.
+    if (_searchCompleter != null && !_searchCompleter!.isCompleted) {
+      _searchCompleter!.complete(null);
+    }
+
+    // Create a new completer for this search request
+    _searchCompleter = Completer<JiraIssueResponse?>();
+
+    // Start a new debounce timer
+    _debounce = Timer(_debounceDuration, () async {
+      final result = await _performJiraSearch(value);
+      if (!_searchCompleter!.isCompleted) {
+        // Only complete if not already completed (e.g., by a new search)
+        _searchCompleter!.complete(result);
+      }
+    });
+
+    return _searchCompleter!.future;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
         color: isEditing ? Colors.white : Colors.blueAccent,
         borderRadius: BorderRadius.circular(15.0),
@@ -94,6 +141,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
           Expanded(
             child: Column(
               spacing: 10,
+              mainAxisSize: MainAxisSize.min, // Use mainAxisSize.min for column inside row
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!isEditing) ...[
@@ -121,6 +169,10 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           backgroundColor: Colors.grey.shade50,
                           dividerColor: Colors.blueGrey.shade200,
                           headerHeight: 46,
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.4, // Set your desired maximum height here
+                            minWidth: 360, // You can adjust minWidth if needed
+                          ),
                         ),
                         child: SearchBarTheme(
                           data: SearchBarThemeData(
@@ -143,32 +195,55 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                             barOverlayColor: WidgetStateProperty.all(Colors.transparent),
                             barLeading: const Icon(Icons.search),
                             barTrailing: [],
-                            constraints: BoxConstraints(minHeight: 46),
+                            constraints: const BoxConstraints(minHeight: 46),
                             suggestionsBuilder: (context, controller) {
-                              final items = jiraWorkItems.where((t) => t.title.toLowerCase().contains(controller.value.text.toLowerCase()));
-                              return items.map(
-                                (t) => Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: ListTile(
-                                    title: Text(t.title),
-                                    onTap: () {
-                                      controller.text = t.title;
-                                      _descriptionController.text = t.title;
-                                      controller.closeView(t.title);
-                                    },
-                                  ),
+                              return [
+                                FutureBuilder<JiraIssueResponse?>(
+                                  future: _debouncedSearchInJira(controller.text), // Call the debounced search function
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState == ConnectionState.waiting) {
+                                      return const ListTile(title: Text('Loading...'));
+                                    } else if (snapshot.hasError) {
+                                      return ListTile(title: Text('Error: ${snapshot.error}'));
+                                    } else if (!snapshot.hasData || snapshot.data == null || snapshot.data!.issues.isEmpty) {
+                                      return const ListTile(title: Text('No results found'));
+                                    }
+
+                                    final anyHasType = snapshot.data!.issues.any((t) => t.fields!.issueType != null);
+                                    final isLast = snapshot.data!.isLast ?? false;
+                                    final nextPageToken = snapshot.data!.nextPageToken;
+
+                                    final storyList =
+                                        snapshot.data!.issues
+                                            .map(
+                                              (t) => Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                child: ListTile(
+                                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                                                  visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                                                  leading:
+                                                      !anyHasType
+                                                          ? null
+                                                          : t.fields!.issueType?.name == 'Bug'
+                                                          ? const Icon(Icons.bug_report_outlined, color: Colors.red)
+                                                          : t.fields!.issueType?.name == 'Story'
+                                                          ? const Icon(Icons.turned_in_not_outlined, color: Colors.green)
+                                                          : const SizedBox(width: 24),
+                                                  title: Text('${t.id} - ${t.fields!.summary}'),
+                                                  trailing: t.storyPoints != null ? Text('${t.storyPoints!}') : null,
+                                                  onTap: () {
+                                                    _descriptionController.text = '${t.id} - ${t.fields!.summary}';
+                                                    controller.closeView('${t.id} - ${t.fields!.summary}');
+                                                  },
+                                                ),
+                                              ),
+                                            )
+                                            .toList();
+
+                                    return Column(mainAxisSize: MainAxisSize.min, children: [...storyList]);
+                                  },
                                 ),
-                              );
-                            },
-                            onChanged: (value) async {
-                              if (_debounce?.isActive ?? false) _debounce!.cancel();
-                              _debounce = Timer(const Duration(milliseconds: 500), () async {
-                                await JiraServices().searchIssues(
-                                  query: 'text ~ "$value" AND issuetype in ("Story", "Bug") AND labels = "Refined"',
-                                  fields: ['parent', 'votes', '-comment'],
-                                );
-                              });
-                              _descriptionController.text = value;
+                              ];
                             },
                           ),
                         ),
@@ -190,7 +265,6 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                   if (value == null || value.isEmpty) {
                                     return 'Invalid story description';
                                   }
-
                                   return null;
                                 }
                                 : null,
@@ -210,11 +284,9 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       if (value == null || value.isEmpty) {
                         return 'Invalid story description';
                       }
-
                       if (!Uri.parse(value).isAbsolute) {
                         return 'Invalid URL';
                       }
-
                       return null;
                     },
                   ),
@@ -225,7 +297,14 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                               .map(
                                 (t) => DropdownMenuItem<StoryType>(
                                   value: t,
-                                  child: Row(spacing: 5, children: [t.icon != null ? Icon(t.icon) : const SizedBox(width: 24), Text(t.description)]),
+                                  child: Row(
+                                    children: [
+                                      if (t.icon != null) Icon(t.icon),
+                                      if (t.icon == null) const SizedBox(width: 24), // Maintain alignment if no icon
+                                      const SizedBox(width: 5), // Spacing between icon and text
+                                      Text(t.description),
+                                    ],
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -246,7 +325,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                           elevation: 5,
                         ),
-                        child: Text('Update'),
+                        child: const Text('Update'),
                         onPressed: () {
                           story.description = _descriptionController.value.text;
                           story.url = _urlController.value.text;
@@ -263,7 +342,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                           elevation: 5,
                         ),
-                        child: Text('Cancel'),
+                        child: const Text('Cancel'),
                         onPressed: () {
                           setState(() {
                             isEditing = false;
@@ -276,7 +355,6 @@ class _EditRoomStoryState extends State<EditRoomStory> {
               ],
             ),
           ),
-
           if (!isEditing)
             IconButton(
               key: _menuKey,
@@ -286,17 +364,23 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                 showMenu(
                   context: context,
                   items: [
-                    PopupMenuItem(onTap: edit, child: Row(spacing: 5, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Edit')])),
-                    PopupMenuItem(onTap: widget.onDelete, child: Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')])),
+                    PopupMenuItem(onTap: edit, child: const Row(children: [Icon(Icons.edit, color: Colors.blueAccent), SizedBox(width: 5), Text('Edit')])),
+                    PopupMenuItem(onTap: widget.onDelete, child: const Row(children: [Icon(Icons.delete_outline, color: Colors.red), SizedBox(width: 5), Text('Delete')])),
                     if (widget.onMoveUp != null)
-                      PopupMenuItem(onTap: widget.onMoveUp, child: Row(spacing: 5, children: [Icon(Icons.move_up_outlined, color: Colors.blueAccent), Text('Move up')])),
+                      PopupMenuItem(
+                        onTap: widget.onMoveUp,
+                        child: const Row(children: [Icon(Icons.move_up_outlined, color: Colors.blueAccent), SizedBox(width: 5), Text('Move up')]),
+                      ),
                     if (widget.onMoveDown != null)
-                      PopupMenuItem(onTap: widget.onMoveDown, child: Row(spacing: 5, children: [Icon(Icons.move_down_outlined, color: Colors.blueAccent), Text('Move down')])),
+                      PopupMenuItem(
+                        onTap: widget.onMoveDown,
+                        child: const Row(children: [Icon(Icons.move_down_outlined, color: Colors.blueAccent), SizedBox(width: 5), Text('Move down')]),
+                      ),
                   ],
                   position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
                 );
               },
-              icon: Icon(Icons.more_vert, color: Colors.white),
+              icon: const Icon(Icons.more_vert, color: Colors.white),
             ),
         ],
       ),

@@ -23,10 +23,3 @@ AccessToken _$AccessTokenFromJson(Map<String, dynamic> json) => $checkedCreate(
         'expires': 'expires_in'
       },
     );
-
-Map<String, dynamic> _$AccessTokenToJson(AccessToken instance) =>
-    <String, dynamic>{
-      'access_token': instance.token,
-      'refresh_token': instance.refreshToken,
-      'expires_in': instance.expires,
-    };

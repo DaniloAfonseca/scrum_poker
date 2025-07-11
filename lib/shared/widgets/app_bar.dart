@@ -37,6 +37,8 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
       actionsPadding: const EdgeInsets.only(right: 16.0),
       title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
       actions: [
+        IconButton(onPressed: () {}, icon: Icon(Icons.settings_outlined), tooltip: 'Settings'),
+        SizedBox(width: 10),
         user == null
             ? CircleAvatar(
               backgroundColor: Colors.blueAccent[200],
