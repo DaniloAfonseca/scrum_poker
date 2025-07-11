@@ -119,7 +119,7 @@ class JiraServices extends BaseServices {
 
   Future<BaseResponse<List<JiraField>>> getAllFields() async {
     final checkCredentialsResponse = await checkCredentials();
-    if (credentials != null) return BaseResponse(success: false, message: checkCredentialsResponse);
+    if (checkCredentialsResponse != null) return BaseResponse(success: false, message: checkCredentialsResponse);
 
     try {
       final headers = getHeaders(credentials!.accessToken!, credentials!.accountId!);

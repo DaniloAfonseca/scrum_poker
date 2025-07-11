@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/models/jira_issue_response.dart';
@@ -31,10 +32,11 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   final _searchController = SearchController();
   final _descriptionController = TextEditingController();
   final _urlController = TextEditingController();
-  late Story story;
-  bool isEditing = false;
-  bool integratedWithJira = false;
-  StoryType? storyType;
+
+  late Story _story;
+  bool _isEditing = false;
+  bool _integratedWithJira = false;
+  StoryType? _storyType;
 
   Timer? _debounce;
   final Duration _debounceDuration = const Duration(milliseconds: 500);
@@ -51,18 +53,22 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   // This is what the ValueListenableBuilder will listen to.
   late ValueNotifier<Future<JiraIssueResponse?>> _suggestionsFutureNotifier;
 
+  Box? _box;
+  String? _jiraUrl;
+  String? _storyPointFieldName;
+
   @override
   void initState() {
-    story =
+    _story =
         widget.story ??
         Story(id: const Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: widget.nextOrder, userId: widget.userId, roomId: widget.roomId);
-    isEditing = (widget.story?.added ?? false) || widget.story == null;
+    _isEditing = (widget.story?.added ?? false) || widget.story == null;
 
-    _descriptionController.text = story.description;
+    _descriptionController.text = _story.description;
     _searchController.value = _descriptionController.value;
-    _urlController.text = story.url ?? '';
+    _urlController.text = _story.url ?? '';
 
-    integratedWithJira = JiraCredentialsManager().currentCredentials != null;
+    _integratedWithJira = JiraCredentialsManager().currentCredentials != null;
 
     // Initialize the notifier with a future that will be updated by _debouncedSearchInJira
     // or by the pagination buttons. Initially, perform a search based on the current text.
@@ -71,7 +77,20 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     // Listen to changes in the search controller to trigger debounced searches
     _searchController.addListener(_onSearchControllerTextChanged);
 
+    initialise();
+
     super.initState();
+  }
+
+  Future<void> initialise() async {
+    if (_box == null || !_box!.isOpen) {
+      _box = await Hive.openBox('ScrumPoker');
+    }
+
+    setState(() {
+      _jiraUrl = _box!.get('jiraUrl') ?? '';
+      _storyPointFieldName = _box!.get('storyPointFieldName');
+    });
   }
 
   @override
@@ -91,10 +110,10 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   }
 
   void edit() {
-    _descriptionController.text = story.description;
-    _urlController.text = story.url ?? '';
+    _descriptionController.text = _story.description;
+    _urlController.text = _story.url ?? '';
     setState(() {
-      isEditing = true;
+      _isEditing = true;
     });
   }
 
@@ -105,8 +124,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
 
     try {
       final response = await JiraServices().searchIssues(
-        query: '(summary ~ "$value*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress")',
-        fields: ['customfield_10026', '-comment', 'summary', 'statusCategory', 'issuetype'],
+        query: '(summary ~ "$value*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress") order by key',
+        fields: ['$_storyPointFieldName', '-comment', 'summary', 'statusCategory', 'issuetype'],
         nextPageToken: nextPageToken,
         maxResults: maxResults,
       );
@@ -123,7 +142,6 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     }
   }
 
-  // --- NEW: Listener for SearchController text changes ---
   void _onSearchControllerTextChanged() {
     // Only trigger a new debounced search if the search view is active
     // and the text has actually changed (to prevent unnecessary calls on e.g. focus)
@@ -199,7 +217,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: isEditing ? Colors.white : Colors.blueAccent,
+        color: _isEditing ? Colors.white : Colors.blueAccent,
         borderRadius: BorderRadius.circular(15.0),
         boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 5, blurRadius: 7, offset: const Offset(0, 3))],
       ),
@@ -213,9 +231,9 @@ class _EditRoomStoryState extends State<EditRoomStory> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!isEditing) ...[
-                  Text(story.description, style: theme.textTheme.headlineLarge!.copyWith(color: Colors.white)),
-                  if (story.url != null)
+                if (!_isEditing) ...[
+                  Text(_story.description, style: theme.textTheme.headlineLarge!.copyWith(color: Colors.white)),
+                  if (_story.url != null)
                     Hyperlink(
                       text: widget.story!.url!,
                       textColor: Colors.white,
@@ -230,8 +248,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       },
                     ),
                 ],
-                if (isEditing) ...[
-                  integratedWithJira
+                if (_isEditing) ...[
+                  _integratedWithJira
                       ? SearchViewTheme(
                         data: SearchViewThemeData(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -275,8 +293,13 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                           return ListTile(title: Text('Error: ${snapshot.error}'));
                                         } else if (!snapshot.hasData || snapshot.data == null || snapshot.data!.issues.isEmpty) {
                                           return Column(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             mainAxisSize: MainAxisSize.min,
-                                            children: [const ListTile(title: Text('No results found')), _buildPaginationControls(snapshot.data?.nextPageToken)],
+                                            children: [
+                                              SizedBox(height: MediaQuery.of(context).size.height * 0.4 - 100, child: const ListTile(title: Text('No results found'))),
+
+                                              _buildPaginationControls(snapshot.data?.nextPageToken),
+                                            ],
                                           );
                                         }
 
@@ -303,9 +326,9 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                                       trailing: t.storyPoints != null ? Text('${t.storyPoints!}') : null,
                                                       onTap: () {
                                                         _descriptionController.text = '${t.id} - ${t.fields!.summary}';
-                                                        _urlController.text = 'https://apotec.atlassian.net/browse/${t.key}';
+                                                        _urlController.text = '$_jiraUrl/${t.key}';
                                                         setState(() {
-                                                          storyType =
+                                                          _storyType =
                                                               !anyHasType
                                                                   ? null
                                                                   : t.fields!.issueType?.name == 'Bug'
@@ -339,6 +362,15 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                 ),
                               ];
                             },
+                            onClose: () {
+                              if (_searchController.text.isEmpty) {
+                                _descriptionController.text = '';
+                                _urlController.text = '';
+                                setState(() {
+                                  _storyType = null;
+                                });
+                              }
+                            },
                           ),
                         ),
                       )
@@ -354,7 +386,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                         ),
                         keyboardType: TextInputType.text,
                         validator:
-                            integratedWithJira
+                            _integratedWithJira
                                 ? (value) {
                                   if (value == null || value.isEmpty) {
                                     return 'Invalid story description';
@@ -384,18 +416,28 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       return null;
                     },
                   ),
-                  if (integratedWithJira)
-                    DropdownButtonFormField<StoryType>(
-                      value: storyType,
-                      items:
-                          StoryType.values
-                              .map((t) => DropdownMenuItem<StoryType>(value: t, child: Row(children: [if (t.icon != null) Icon(t.icon, color: t.color), Text(t.description)])))
-                              .toList(),
-                      onChanged: (v) {
-                        setState(() {
-                          storyType = v;
-                        });
-                      },
+                  if (_integratedWithJira)
+                    DropdownButtonHideUnderline(
+                      child: DropdownButtonFormField<StoryType>(
+                        decoration: InputDecoration(
+                          labelText: 'Story type',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                        ),
+                        value: _storyType,
+                        items:
+                            StoryType.values
+                                .map((t) => DropdownMenuItem<StoryType>(value: t, child: Row(children: [if (t.icon != null) Icon(t.icon, color: t.color), Text(t.description)])))
+                                .toList(),
+                        onChanged: (v) {
+                          setState(() {
+                            _storyType = v;
+                          });
+                        },
+                      ),
                     ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -409,11 +451,15 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                         ),
                         child: const Text('Update'),
                         onPressed: () {
-                          story.description = _descriptionController.value.text;
-                          story.url = _urlController.value.text;
-                          story.added = false;
+                          if (_descriptionController.text.isEmpty) {
+                            snackbarMessenger(navigatorKey.currentContext!, message: 'The story title cannot be empty.', type: SnackBarType.info);
+                            return;
+                          }
+                          _story.description = _descriptionController.value.text;
+                          _story.url = _urlController.value.text;
+                          _story.added = false;
                           setState(() {
-                            isEditing = false;
+                            _isEditing = false;
                           });
                         },
                       ),
@@ -428,7 +474,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                         child: const Text('Cancel'),
                         onPressed: () {
                           setState(() {
-                            isEditing = false;
+                            _isEditing = false;
                           });
                         },
                       ),
@@ -438,7 +484,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
               ],
             ),
           ),
-          if (!isEditing)
+          if (!_isEditing)
             IconButton(
               key: _menuKey,
               onPressed: () {

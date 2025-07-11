@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/edit_room_page.dart';
+import 'package:scrum_poker/settings_page.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/voting/room_page.dart';
 
@@ -70,6 +71,12 @@ class ManagerRouter {
         builder: (context, state) {
           final roomId = state.pathParameters['roomId']!;
           return EditRoomPage(roomId: roomId);
+        },
+      ),
+      GoRoute(
+        path: Routes.settings,
+        builder: (context, state) {
+          return SettingsPage();
         },
       ),
     ],

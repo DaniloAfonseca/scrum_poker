@@ -48,7 +48,7 @@ class JiraCredentialsManager {
   static const String _boxName = 'ScrumPoker';
   static const String _credentialsKey = 'jira-credentials';
 
-  Box? _box;
+ Box ? _box;
 
   JiraCredentials? _currentCredentials;
 
