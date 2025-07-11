@@ -40,11 +40,16 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   final Duration _debounceDuration = const Duration(milliseconds: 500);
 
   // A completer to manage the asynchronous search results for the FutureBuilder
+  // This completer is specifically for the *current* debounced search request.
   Completer<JiraIssueResponse?>? _searchCompleter;
   String _currentSearchQuery = '';
   String? _currentPageToken;
   final List<String?> _previousPageTokens = []; // To navigate "Previous"
   final int _pageSize = 20; // Number of items per page
+
+  // ValueNotifier to hold and update the Future for FutureBuilder
+  // This is what the ValueListenableBuilder will listen to.
+  late ValueNotifier<Future<JiraIssueResponse?>> _suggestionsFutureNotifier;
 
   @override
   void initState() {
@@ -59,11 +64,19 @@ class _EditRoomStoryState extends State<EditRoomStory> {
 
     integratedWithJira = JiraCredentialsManager().currentCredentials != null;
 
+    // Initialize the notifier with a future that will be updated by _debouncedSearchInJira
+    // or by the pagination buttons. Initially, perform a search based on the current text.
+    _suggestionsFutureNotifier = ValueNotifier(_performJiraSearch(_searchController.text, nextPageToken: _currentPageToken, maxResults: _pageSize));
+
+    // Listen to changes in the search controller to trigger debounced searches
+    _searchController.addListener(_onSearchControllerTextChanged);
+
     super.initState();
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchControllerTextChanged); // IMPORTANT: remove listener
     _searchController.dispose();
     _descriptionController.dispose();
     _urlController.dispose();
@@ -72,6 +85,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     if (_searchCompleter != null && !_searchCompleter!.isCompleted) {
       _searchCompleter!.complete(null); // Complete any pending completer on dispose
     }
+    _suggestionsFutureNotifier.dispose();
 
     super.dispose();
   }
@@ -89,23 +103,37 @@ class _EditRoomStoryState extends State<EditRoomStory> {
       return null;
     }
 
-    final response = await JiraServices().searchIssues(
-      query: '(summary ~ "$value*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress")',
-      fields: ['customfield_10026', '-comment', 'summary', 'statusCategory', 'issuetype'],
-      nextPageToken: nextPageToken,
-      maxResults: maxResults,
-    );
+    try {
+      final response = await JiraServices().searchIssues(
+        query: '(summary ~ "$value*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress")',
+        fields: ['customfield_10026', '-comment', 'summary', 'statusCategory', 'issuetype'],
+        nextPageToken: nextPageToken,
+        maxResults: maxResults,
+      );
 
-    if (response.success) {
-      return response.data!;
-    } else if (response.message != null && response.message!.isNotEmpty) {
-      snackbarMessenger(navigatorKey.currentContext!, message: response.message!, type: SnackBarType.error);
+      if (response.success) {
+        return response.data!;
+      } else if (response.message != null && response.message!.isNotEmpty) {
+        snackbarMessenger(navigatorKey.currentContext!, message: response.message!, type: SnackBarType.error);
+      }
+      return null;
+    } catch (e) {
+      snackbarMessenger(navigatorKey.currentContext!, message: 'Error fetching Jira issues: $e', type: SnackBarType.error);
+      return null;
     }
-
-    return null;
   }
 
-  // This method will be called by the suggestionsBuilder with debouncing
+  // --- NEW: Listener for SearchController text changes ---
+  void _onSearchControllerTextChanged() {
+    // Only trigger a new debounced search if the search view is active
+    // and the text has actually changed (to prevent unnecessary calls on e.g. focus)
+    if (_searchController.isOpen && _searchController.text != _currentSearchQuery) {
+      _debouncedSearchInJira(_searchController.text);
+    }
+  }
+
+  // This method will be called by the `_onSearchControllerTextChanged` and pagination.
+  // It triggers the actual search with debouncing.
   Future<JiraIssueResponse?> _debouncedSearchInJira(String value) {
     // If the query has changed, reset the page to the first page
     if (_currentSearchQuery != value) {
@@ -133,32 +161,35 @@ class _EditRoomStoryState extends State<EditRoomStory> {
         // Only complete if not already completed (e.g., by a new search)
         _searchCompleter!.complete(result);
       }
+      // Update the ValueNotifier with the new future.
+      // This will cause the ValueListenableBuilder in the suggestionsBuilder to rebuild.
+      _suggestionsFutureNotifier.value = Future.value(result);
     });
 
-    return _searchCompleter!.future;
+    return _searchCompleter!.future; // This future is what the completer will resolve
   }
 
   // Function to navigate to the previous page
   void _goToPreviousPage() {
-    _searchController.closeView(null);
     setState(() {
       if (_previousPageTokens.isNotEmpty) {
         _currentPageToken = _previousPageTokens.removeLast(); // Get the token for the *previous* page
       } else {
         _currentPageToken = null; // Go back to the very first page if no history
       }
-      _searchController.openView(); // Reopen the search view to show new suggestions
+      // Directly trigger a search for the new page and update the notifier
+      _suggestionsFutureNotifier.value = _performJiraSearch(_currentSearchQuery, nextPageToken: _currentPageToken, maxResults: _pageSize);
     });
   }
 
   // Function to navigate to the next page
   void _goToNextPage(String? currentNextPageToken) {
-    _searchController.closeView(null);
     if (currentNextPageToken == null) return;
     setState(() {
       _previousPageTokens.add(currentNextPageToken);
       _currentPageToken = currentNextPageToken;
-      _searchController.openView(); // Reopen the search view to show new suggestions
+      // Directly trigger a search for the new page and update the notifier
+      _suggestionsFutureNotifier.value = _performJiraSearch(_currentSearchQuery, nextPageToken: _currentPageToken, maxResults: _pageSize);
     });
   }
 
@@ -232,57 +263,77 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                             constraints: const BoxConstraints(minHeight: 46),
                             suggestionsBuilder: (context, controller) {
                               return [
-                                FutureBuilder<JiraIssueResponse?>(
-                                  future: _debouncedSearchInJira(controller.text), // Call the debounced search function
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
-                                      return const ListTile(title: Text('Loading...'));
-                                    } else if (snapshot.hasError) {
-                                      return ListTile(title: Text('Error: ${snapshot.error}'));
-                                    } else if (!snapshot.hasData || snapshot.data == null || snapshot.data!.issues.isEmpty) {
-                                      return const ListTile(title: Text('No results found'));
-                                    }
+                                ValueListenableBuilder<Future<JiraIssueResponse?>>(
+                                  valueListenable: _suggestionsFutureNotifier,
+                                  builder: (context, currentFuture, child) {
+                                    return FutureBuilder<JiraIssueResponse?>(
+                                      future: currentFuture, // This is the future we're listening to
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState == ConnectionState.waiting) {
+                                          return const ListTile(title: Text('Loading...'));
+                                        } else if (snapshot.hasError) {
+                                          return ListTile(title: Text('Error: ${snapshot.error}'));
+                                        } else if (!snapshot.hasData || snapshot.data == null || snapshot.data!.issues.isEmpty) {
+                                          return Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [const ListTile(title: Text('No results found')), _buildPaginationControls(snapshot.data?.nextPageToken)],
+                                          );
+                                        }
 
-                                    final anyHasType = snapshot.data!.issues.any((t) => t.fields!.issueType != null);
-                                    final nextPageToken = snapshot.data!.nextPageToken;
+                                        final anyHasType = snapshot.data!.issues.any((t) => t.fields!.issueType != null);
+                                        final nextPageToken = snapshot.data!.nextPageToken;
 
-                                    final storyList =
-                                        snapshot.data!.issues
-                                            .map(
-                                              (t) => Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                child: ListTile(
-                                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                                                  visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                                                  leading:
-                                                      !anyHasType
-                                                          ? null
-                                                          : t.fields!.issueType?.name == 'Bug'
-                                                          ? const Icon(Icons.bug_report_outlined, color: Colors.red)
-                                                          : t.fields!.issueType?.name == 'Story'
-                                                          ? const Icon(Icons.turned_in_not_outlined, color: Colors.green)
-                                                          : const SizedBox(width: 24),
-                                                  title: Text('${t.id} - ${t.fields!.summary}'),
-                                                  trailing: t.storyPoints != null ? Text('${t.storyPoints!}') : null,
-                                                  onTap: () {
-                                                    _descriptionController.text = '${t.id} - ${t.fields!.summary}';
-                                                    controller.closeView('${t.id} - ${t.fields!.summary}');
-                                                  },
-                                                ),
+                                        final storyList =
+                                            snapshot.data!.issues
+                                                .map(
+                                                  (t) => Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                    child: ListTile(
+                                                      contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                                                      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                                                      leading:
+                                                          !anyHasType
+                                                              ? null
+                                                              : t.fields!.issueType?.name == 'Bug'
+                                                              ? const Icon(Icons.bug_report_outlined, color: Colors.red)
+                                                              : t.fields!.issueType?.name == 'Story'
+                                                              ? const Icon(Icons.turned_in_not_outlined, color: Colors.green)
+                                                              : const SizedBox(width: 24),
+                                                      title: Text('${t.id} - ${t.fields!.summary}'),
+                                                      trailing: t.storyPoints != null ? Text('${t.storyPoints!}') : null,
+                                                      onTap: () {
+                                                        _descriptionController.text = '${t.id} - ${t.fields!.summary}';
+                                                        _urlController.text = 'https://apotec.atlassian.net/browse/${t.key}';
+                                                        setState(() {
+                                                          storyType =
+                                                              !anyHasType
+                                                                  ? null
+                                                                  : t.fields!.issueType?.name == 'Bug'
+                                                                  ? StoryType.bug
+                                                                  : t.fields!.issueType?.name == 'Story'
+                                                                  ? StoryType.workItem
+                                                                  : StoryType.others;
+                                                        });
+                                                        controller.closeView('${t.id} - ${t.fields!.summary}');
+                                                      },
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList();
+
+                                        return Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            SizedBox(
+                                              height: MediaQuery.of(context).size.height * 0.4 - 100,
+                                              child: SingleChildScrollView(
+                                                child: Column(mainAxisSize: MainAxisSize.min, children: [Flexible(child: ListView(shrinkWrap: true, children: storyList))]),
                                               ),
-                                            )
-                                            .toList();
-
-                                    return Column(
-                                      children: [
-                                        SizedBox(
-                                          height: MediaQuery.of(context).size.height * 0.4 - 100,
-                                          child: SingleChildScrollView(
-                                            child: Column(mainAxisSize: MainAxisSize.min, children: [Flexible(child: ListView(shrinkWrap: true, children: storyList))]),
-                                          ),
-                                        ),
-                                        _buildPaginationControls(nextPageToken),
-                                      ],
+                                            ),
+                                            _buildPaginationControls(nextPageToken),
+                                          ],
+                                        );
+                                      },
                                     );
                                   },
                                 ),
@@ -335,22 +386,10 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                   ),
                   if (integratedWithJira)
                     DropdownButtonFormField<StoryType>(
+                      value: storyType,
                       items:
                           StoryType.values
-                              .map(
-                                (t) => DropdownMenuItem<StoryType>(
-                                  value: t,
-                                  child: Row(
-                                    spacing: 5,
-                                    children: [
-                                      if (t.icon != null) Icon(t.icon, color: t.color),
-                                      //if (t.icon == null) const SizedBox(width: 24), // Maintain alignment if no icon
-                                      //const SizedBox(width: 5), // Spacing between icon and text
-                                      Text(t.description),
-                                    ],
-                                  ),
-                                ),
-                              )
+                              .map((t) => DropdownMenuItem<StoryType>(value: t, child: Row(children: [if (t.icon != null) Icon(t.icon, color: t.color), Text(t.description)])))
                               .toList(),
                       onChanged: (v) {
                         setState(() {
@@ -359,7 +398,6 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       },
                     ),
                   Row(
-                    spacing: 10,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton(
@@ -379,6 +417,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           });
                         },
                       ),
+                      const SizedBox(width: 10),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,
@@ -433,13 +472,12 @@ class _EditRoomStoryState extends State<EditRoomStory> {
 
   // Helper method to build pagination controls
   Widget _buildPaginationControls(String? currentNextPageToken) {
-    final bool canGoPrevious = _previousPageTokens.isNotEmpty || (_previousPageTokens.isEmpty && _currentPageToken != null);
-    final bool canGoNext = currentNextPageToken != null; // <--- Uses the token directly
+    final bool canGoPrevious = _previousPageTokens.isNotEmpty;
+    final bool canGoNext = currentNextPageToken != null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Row(
-        spacing: 10,
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           TextButton(onPressed: canGoPrevious ? _goToPreviousPage : null, child: Text('Previous', style: TextStyle(color: canGoPrevious ? Colors.blue : Colors.grey))),

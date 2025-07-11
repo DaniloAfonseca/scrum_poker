@@ -14,7 +14,7 @@ import 'package:scrum_poker/shared/services/base_services.dart';
 class JiraServices extends BaseServices {
   //String get jiraApiUrl => 'https://api.atlassian.com/ex/jira/e2969eda-f627-4429-ae2f-be8262224890';
 
-  final credentials = JiraCredentialsManager().currentCredentials;
+  JiraCredentials? get credentials => JiraCredentialsManager().currentCredentials;
 
   Future<BaseResponse<AppUser>> getJiraUser(String token) async {
     if (token.isEmpty) {
@@ -105,12 +105,7 @@ class JiraServices extends BaseServices {
       if (headers == null) return BaseResponse(success: false, message: 'There is an error in headers');
 
       Uri uri = Uri.parse('${jiraApiUrl(credentials!.cloudId!, 'rest/api/3')}/search/jql').replace(
-        queryParameters: {
-          'jql': query,
-          'maxResults': maxResults.toString(),
-          'nextPageToken': nextPageToken,
-          if (fields != null && fields.isNotEmpty) 'fields': fields.join(','),
-        },
+        queryParameters: {'jql': query, 'maxResults': maxResults.toString(), 'nextPageToken': nextPageToken, if (fields != null && fields.isNotEmpty) 'fields': fields.join(',')},
       );
       final response = await http.get(uri, headers: headers);
 
