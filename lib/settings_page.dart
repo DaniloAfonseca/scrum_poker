@@ -20,8 +20,9 @@ class _SettingsPageState extends State<SettingsPage> {
   Box? _box;
   final _jiraUrlController = TextEditingController();
   final _fields = <JiraField>[];
-  bool _loadingFields = false;
-  JiraField? _storyPointField;
+
+  final SearchController _fieldSearchController = SearchController();
+  bool _isLoadingFields = false;
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _fields.clear();
 
     setState(() {
-      _loadingFields = true;
+      _isLoadingFields = true;
     });
 
     try {
@@ -48,7 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
         _fields.sortBy((t) => t.name);
         final storyPointFieldName = _box!.get('storyPointFieldName');
         setState(() {
-          _storyPointField = _fields.firstWhereOrNull((t) => t.key == storyPointFieldName);
+          _fieldSearchController.text = _fields.firstWhereOrNull((t) => t.key == storyPointFieldName)?.name ?? '';
         });
       } else if (response.message != null && response.message!.isNotEmpty) {
         snackbarMessenger(navigatorKey.currentContext!, message: response.message!, type: SnackBarType.error);
@@ -58,12 +59,13 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     setState(() {
-      _loadingFields = false;
+      _isLoadingFields = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: GiraffeAppBar(),
       body: Padding(
@@ -91,28 +93,57 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
             ),
-            DropdownMenu<JiraField>(
-              width: MediaQuery.of(context).size.width - 32,
-              hintText: 'Story points field',
-              enableSearch: false,
-              dropdownMenuEntries: _fields.map((t) => DropdownMenuEntry<JiraField>(value: t, label: t.name)).toList(),
-              // isDense: true,
-              inputDecorationTheme: InputDecorationTheme(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-              // value: _storyPointField,
-              // items: _fields.map((t) => DropdownMenuItem<JiraField>(value: t, child: Text(t.name))).toList(),
-              onSelected: (value) {
-                setState(() {
-                  _storyPointField = value;
-                });
-                _box!.put('storyPointFieldName', value);
-              },
-            ),
+            _isLoadingFields
+                ? const Center(child: CircularProgressIndicator())
+                : SearchViewTheme(
+                  data: SearchViewThemeData(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: Colors.grey.shade50,
+                    dividerColor: Colors.blueGrey.shade200,
+                    headerHeight: 46,
+                    constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
+                  ),
+                  child: SearchBarTheme(
+                    data: SearchBarThemeData(
+                      hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: Colors.grey)),
+                      backgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
+                      shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      elevation: WidgetStateProperty.all(0),
+                      side: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.focused)) {
+                          return const BorderSide(color: Colors.blueAccent, width: 2.0);
+                        }
+                        return BorderSide(color: Colors.blueGrey.shade200);
+                      }),
+                    ),
+                    child: SearchAnchor.bar(
+                      searchController: _fieldSearchController,
+                      barHintText: 'Search Story points field',
+                      barBackgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
+                      barOverlayColor: WidgetStateProperty.all(Colors.transparent),
+                      barLeading: const Icon(Icons.search),
+                      barTrailing: [], // No trailing icon by default
+                      constraints: const BoxConstraints(minHeight: 46),
+                      suggestionsBuilder: (context, controller) {
+                        final filteredFields = _fields.where((e) => e.name.toLowerCase().contains(controller.text.toLowerCase()));
+                        if (filteredFields.isEmpty) {
+                          return [const ListTile(title: Text('No matching fields found'))];
+                        }
+                        return filteredFields.map((field) {
+                          return ListTile(
+                            title: Text(field.name),
+                            onTap: () {
+                              _fieldSearchController.text = field.name; // Update text
+                              // Close the search view and pass the selected value
+                              controller.closeView(field.name);
+                              _box!.put('storyPointFieldName', field.key); // Store the entire JiraField object (or just its ID)
+                            },
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
+                ),
           ],
         ),
       ),

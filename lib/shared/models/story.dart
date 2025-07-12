@@ -51,7 +51,7 @@ class Story {
     if (instance.revisedEstimate case final value?) 'revisedEstimate': value,
     'order': instance.order,
     'currentStory': instance.currentStory,
-    if (instance.storyType case final value?) 'storyType': value,
+    'storyType': _$StoryTypeEnumMap[instance.storyType],
   };
 
   List<VoteResult>? voteResults(List<Vote> votes) {
