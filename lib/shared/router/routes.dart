@@ -5,4 +5,5 @@ class Routes {
   static String editRoom = '/editRoom';
   static String test = '/test';
   static String redirect = '/redirect';
+  static String settings = '/settings';
 }

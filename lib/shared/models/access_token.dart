@@ -2,7 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'access_token.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(createToJson: false, includeIfNull: false)
 class AccessToken {
   @JsonKey(name: 'access_token')
   String? token;
@@ -14,5 +14,4 @@ class AccessToken {
   AccessToken({this.token, this.refreshToken, this.expires});
 
   factory AccessToken.fromJson(Map<String, dynamic> json) => _$AccessTokenFromJson(json);
-  Map<String, dynamic> toJson() => _$AccessTokenToJson(this);
 }

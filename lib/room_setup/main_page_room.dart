@@ -6,20 +6,19 @@ import 'package:intl/intl.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/text_tag.dart';
 
-class UserRoomWidget extends StatefulWidget {
+class MainPageRoom extends StatefulWidget {
   final UserRoom userRoom;
   final Function() deletedChanged;
-  const UserRoomWidget({super.key, required this.userRoom, required this.deletedChanged});
+  const MainPageRoom({super.key, required this.userRoom, required this.deletedChanged});
 
   @override
-  State<UserRoomWidget> createState() => _UserRoomWidgetState();
+  State<MainPageRoom> createState() => _MainPageRoomState();
 }
 
-class _UserRoomWidgetState extends State<UserRoomWidget> {
+class _MainPageRoomState extends State<MainPageRoom> {
   final _menuKey = GlobalKey();
   final user = FirebaseAuth.instance.currentUser;
   late UserRoom userRoom;
@@ -34,9 +33,9 @@ class _UserRoomWidgetState extends State<UserRoomWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: Colors.blueAccent,
+        color: theme.primaryColor,
         borderRadius: BorderRadius.circular(15.0),
         boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 5, blurRadius: 7, offset: const Offset(0, 3))],
       ),
@@ -83,7 +82,7 @@ class _UserRoomWidgetState extends State<UserRoomWidget> {
                   PopupMenuItem(
                     child: Row(spacing: 5, children: [Icon(Icons.play_arrow_outlined, color: Colors.blueAccent), Text('Open')]),
                     onTap: () async {
-                      navigatorKey.currentContext!.go('${Routes.room}/${userRoom.roomId}');
+                      context.go('${Routes.room}/${userRoom.roomId}');
                     },
                   ),
                   PopupMenuItem(

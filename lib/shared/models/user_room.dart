@@ -28,6 +28,6 @@ class UserRoom {
   };
 
   factory UserRoom.fromRoom(Room room) {
-    return UserRoom(userId: room.userId, roomId: room.id!, name: room.name!, status: room.status, dateAdded: room.dateAdded, dateDeleted: room.dateDeleted);
+    return UserRoom(userId: room.userId, roomId: room.id, name: room.name!, status: room.status, dateAdded: room.dateAdded, dateDeleted: room.dateDeleted);
   }
 }

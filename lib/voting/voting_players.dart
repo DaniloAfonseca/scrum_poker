@@ -7,44 +7,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
+import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/shared/models/vote.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/voting/voting_player.dart';
 import 'package:web/web.dart' as web;
 import 'package:scrum_poker/shared/models/app_user.dart';
 
 class VotingPlayers extends StatelessWidget {
-  final String roomId;
+  final Room room;
+  final ValueNotifier<Story?> currentStoryVN;
+  final ValueNotifier<List<Vote>> votesVN;
   final FutureOr<void> Function(AppUser appUser) onUserRenamed;
   final AppUser appUser;
-  const VotingPlayers({super.key, required this.roomId, required this.appUser, required this.onUserRenamed});
+  const VotingPlayers({super.key, required this.room, required this.appUser, required this.onUserRenamed, required this.currentStoryVN, required this.votesVN});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final firebaseUser = FirebaseAuth.instance.currentUser;
-    return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-        final map = snapshot.data!.data()!;
-        final room = Room.fromJson(map);
 
+    final currentStory = currentStoryVN.value;
+
+    return ValueListenableBuilder(
+      valueListenable: votesVN,
+      builder: (context, votes, child) {
         return StreamBuilder(
-          stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('currentUsers').snapshots(),
+          stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('currentUsers').snapshots(),
           builder: (context, snapshot) {
             final maps = snapshot.data?.docs.map((t) => t.data());
             final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList();
 
             final numPlayers = currentUsers?.where((t) => !t.observer).length ?? 0;
-            final numPlayersWhoVoted = room.currentStory?.votes.length ?? 0;
+
+            final numPlayersWhoVoted = votes.length;
             final notVoted = numPlayers - numPlayersWhoVoted;
 
             final currentMessage =
-                room.currentStory == null
+                currentStory == null
                     ? 'Waiting'
-                    : room.currentStory!.status == StoryStatus.voted
+                    : currentStory.status == StoryStatus.voted
                     ? 'Story voting completed'
-                    : room.currentStory!.status == StoryStatus.notStarted
+                    : currentStory.status == StoryStatus.notStarted
                     ? firebaseUser != null
                         ? 'Click "Start" to begin voting'
                         : 'Waiting for moderator'
@@ -61,7 +65,7 @@ class VotingPlayers extends StatelessWidget {
                   height: 50,
                   width: 400,
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent,
+                    color: theme.primaryColor,
                     border: Border.all(color: Colors.grey[300]!),
                     borderRadius: BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
                   ),
@@ -74,32 +78,48 @@ class VotingPlayers extends StatelessWidget {
                     width: 400,
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.white60,
+                      color: theme.cardColor.withAlpha(80),
                       border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                     ),
                     alignment: Alignment.center,
                     child:
-                        room.currentStory?.status == StoryStatus.notStarted
+                        currentStory?.status == StoryStatus.notStarted
                             ? ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
+                                backgroundColor: theme.primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                 elevation: 5,
                               ),
-                              onPressed: room.currentStory != null ? () => room_services.storyStart(room, room.currentStory!, appUser.id!) : null,
+                              onPressed: currentStory != null ? () => room_services.storyStart(room, currentStory) : null,
                               child: Text('Start'),
                             )
-                            : room.currentStory?.status == StoryStatus.voted
-                            ? ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                elevation: 5,
-                              ),
-                              onPressed: room.currentStory != null ? () => room_services.nextStory(room, room.currentStory!) : null,
-                              child: Text('Next story'),
+                            : currentStory?.status == StoryStatus.voted
+                            ? Row(
+                              spacing: 10,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: theme.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                    elevation: 5,
+                                  ),
+                                  onPressed: currentStory != null ? () => room_services.nextStory(room, currentStory, votes) : null,
+                                  child: Text('Next story'),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: theme.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                    elevation: 5,
+                                  ),
+                                  onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
+                                  child: Text('Clear votes'),
+                                ),
+                              ],
                             )
                             : Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
@@ -111,34 +131,34 @@ class VotingPlayers extends StatelessWidget {
                                   children: [
                                     ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blueAccent,
+                                        backgroundColor: theme.primaryColor,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                         elevation: 5,
                                       ),
-                                      onPressed: room.currentStory != null ? () => room_services.flipCards(room, room.currentStory!, appUser.id!) : null,
+                                      onPressed: currentStory != null ? () => room_services.flipCards(room, currentStory, votes) : null,
                                       child: Text('Flip cards'),
                                     ),
                                     ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blueAccent,
+                                        backgroundColor: theme.primaryColor,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                         elevation: 5,
                                       ),
-                                      onPressed: room.currentStory != null ? () => room_services.clearStoryVotes(room, room.currentStory!) : null,
+                                      onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
                                       child: Text('Clear votes'),
                                     ),
                                   ],
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blueAccent,
+                                    backgroundColor: theme.primaryColor,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
                                   ),
-                                  onPressed: room.currentStory != null ? () => room_services.skipStory(room, room.currentStory!, appUser.id!) : null,
+                                  onPressed: currentStory != null ? () => room_services.skipStory(room, currentStory) : null,
                                   child: Text('Skip story'),
                                 ),
                               ],
@@ -148,7 +168,7 @@ class VotingPlayers extends StatelessWidget {
                   height: 50,
                   width: 400,
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: theme.hoverColor,
                     border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                   ),
                   alignment: Alignment.centerLeft,
@@ -161,18 +181,18 @@ class VotingPlayers extends StatelessWidget {
                       height: 50,
                       width: 400,
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: theme.hoverColor,
                         border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                         borderRadius:
                             index == currentUsers.length - 1 && firebaseUser == null ? BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)) : null,
                       ),
                       alignment: Alignment.centerLeft,
                       child: VotingPlayer(
-                        hasVoted: room.currentStory?.votes.any((t) => t.userId == u.id) ?? false,
+                        hasVoted: votes.any((t) => t.userId == u.id),
                         currentAppUser: appUser,
                         appUser: u,
-                        onObserverChanged: () => room_services.saveRoom(room),
-                        onUserRemoved: () => room_services.removeUser(u, room),
+                        onObserverChanged: () => room_services.updateCurrentUser(room.id, u.id, {'observer': u.observer}),
+                        onUserRemoved: () => room_services.removeUser(room.id, u.id),
                         onUserRenamed: () => onUserRenamed(u),
                       ),
                     ),
@@ -181,7 +201,7 @@ class VotingPlayers extends StatelessWidget {
                   Container(
                     width: 400,
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: theme.hoverColor,
                       border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                       borderRadius: BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)),
                     ),

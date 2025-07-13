@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/room_setup/user_room_widget.dart';
+import 'package:scrum_poker/room_setup/main_page_room.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
@@ -104,7 +104,7 @@ class _MainPageState extends State<MainPage> {
                             }
                             return ToggleStyle(
                               backgroundGradient: LinearGradient(
-                                colors: [Colors.blue[600]!, Colors.red],
+                                colors: [theme.primaryColor, Colors.red],
                                 stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
                               ),
                             );
@@ -125,7 +125,7 @@ class _MainPageState extends State<MainPage> {
 
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
+                            backgroundColor: theme.primaryColor,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
@@ -142,7 +142,7 @@ class _MainPageState extends State<MainPage> {
                 if (user != null)
                   SingleChildScrollView(
                     key: ValueKey(_selectedOrder[0]),
-                    child: Column(spacing: 10, children: rooms.map((room) => UserRoomWidget(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList()),
+                    child: Column(spacing: 10, children: rooms.map((room) => MainPageRoom(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList()),
                   ),
               ],
             ),
