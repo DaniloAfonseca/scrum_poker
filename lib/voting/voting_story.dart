@@ -4,14 +4,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/models/vote.dart';
+import 'package:scrum_poker/shared/router/go_router.dart';
+import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
+import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 import 'package:scrum_poker/voting/voting_pie_chart.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -29,6 +33,7 @@ class VotingStory extends StatefulWidget {
 class _VotingStoryState extends State<VotingStory> {
   String? _storyPointFieldName;
   Box? _box;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -61,7 +66,12 @@ class _VotingStoryState extends State<VotingStory> {
     await room_services.updateVote(localUserVote);
   }
 
-  Future<void> updateStoryPoint() async {}
+  Future<void> updateStoryPoint(Story story) async {
+    final response = await JiraServices().updateStoryPoints(story.jiraKey!, _storyPointFieldName!, story.revisedEstimate!);
+    if (!response.success) {
+      snackbarMessenger(navigatorKey.currentContext!, message: response.message!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -199,27 +209,44 @@ class _VotingStoryState extends State<VotingStory> {
                                         ],
                                       ),
                                       if (user != null && _storyPointFieldName != null && _storyPointFieldName!.isNotEmpty)
-                                        Row(
-                                          spacing: 10,
-                                          children: [
-                                            SizedBox(
-                                              width: 200,
-                                              child: TextFormField(
-                                                controller: storyPointController,
-                                                decoration: InputDecoration(label: Text('Update story points')),
+                                        Form(
+                                          key: _formKey,
+                                          child: Row(
+                                            spacing: 10,
+                                            children: [
+                                              SizedBox(
+                                                width: 200,
+                                                child: TextFormField(
+                                                  controller: storyPointController,
+                                                  decoration: InputDecoration(label: Text('Update story points')),
+                                                  keyboardType: TextInputType.number,
+                                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                                  validator: (value) {
+                                                    if (value == null || value.isEmpty) {
+                                                      return 'Please, introduce a value';
+                                                    }
+                                                    return null;
+                                                  },
+                                                ),
                                               ),
-                                            ),
-                                            ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: theme.primaryColor,
-                                                foregroundColor: Colors.white,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                                elevation: 5,
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: theme.primaryColor,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                                  elevation: 5,
+                                                ),
+                                                onPressed: currentStory.jiraKey == null
+                                                    ? null
+                                                    : () {
+                                                        if (_formKey.currentState!.validate()) {
+                                                          updateStoryPoint(currentStory);
+                                                        }
+                                                      },
+                                                child: Text('Update'),
                                               ),
-                                              onPressed: currentStory.jiraKey == null ? null : () => updateStoryPoint(),
-                                              child: Text('Update'),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                     ],
                                   );

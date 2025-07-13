@@ -137,6 +137,45 @@ class JiraServices extends BaseServices {
     }
   }
 
+Future<BaseResponse<JiraIssue>> getJiraIssue(String key) async {
+    final checkCredentialsResponse = await checkCredentials();
+    if (checkCredentialsResponse != null) return BaseResponse(success: false, message: checkCredentialsResponse);
+
+    try {
+      final headers = getHeaders(credentials!.accessToken!, credentials!.accountId!);
+
+      if (headers == null) return BaseResponse<JiraIssue>(success: false, message: 'There is an error in headers');
+
+      Uri uri = Uri.parse('${jiraApiUrl(credentials!.cloudId!, 'rest/api/3')}/issue/$key');
+      final response = await http.get(uri, headers: headers);
+
+      final data = json.decode(response.body);
+
+      return BaseResponse<JiraIssue>(success: response.statusCode == 200, data: JiraIssue.fromJson(data));
+    } catch (e) {
+      return BaseResponse<JiraIssue>(success: false, message: 'There was an error: $e');
+    }
+  }
+
+  Future<BaseResponse> updateStoryPoints(String key, String storyPointField, int value) async {
+    final checkCredentialsResponse = await checkCredentials();
+    if (checkCredentialsResponse != null) return BaseResponse(success: false, message: checkCredentialsResponse);
+
+    try {
+      final headers = getHeaders(credentials!.accessToken!, credentials!.accountId!);
+
+      if (headers == null) return BaseResponse(success: false, message: 'There is an error in headers');
+
+      Uri uri = Uri.parse('${jiraApiUrl(credentials!.cloudId!, 'rest/api/3')}/issue/$key');
+      final response = await http.put(uri, headers: headers, body: '{"fields": {"$storyPointField": $value}}');
+
+      return BaseResponse(success: response.statusCode == 200);
+    } catch (e) {
+      return BaseResponse(success: false, message: 'There was an error: $e');
+    }
+  }
+
+
   Future<String?> checkCredentials() async {
     if (credentials == null) return 'You don\'t have access token.';
 

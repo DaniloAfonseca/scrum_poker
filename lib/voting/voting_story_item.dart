@@ -41,15 +41,18 @@ class VotingStoryItem extends StatelessWidget {
       selectedTileColor: theme.primaryColor.withAlpha(50),
       selectedColor: theme.textTheme.bodyLarge?.color,
       selected: currentStory?.id == story.id,
-      leading:
-          reorderIndex == null || user == null
-              ? null
-              : Container(
-                padding: EdgeInsets.only(left: 10),
-                height: 30,
-                decoration: currentStory?.id == story.id ? BoxDecoration(border: Border(left: BorderSide(color: Colors.red, width: 2))) : null,
-                child: ReorderableDragStartListener(index: reorderIndex!, child: const Icon(Icons.drag_handle_outlined)),
-              ),
+      leading: reorderIndex == null || user == null
+          ? null
+          : Container(
+              padding: EdgeInsets.only(left: 10),
+              height: 30,
+              decoration: currentStory?.id == story.id
+                  ? BoxDecoration(
+                      border: Border(left: BorderSide(color: Colors.red, width: 2)),
+                    )
+                  : null,
+              child: ReorderableDragStartListener(index: reorderIndex!, child: const Icon(Icons.drag_handle_outlined)),
+            ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -60,77 +63,136 @@ class VotingStoryItem extends StatelessWidget {
                 if (user == null) SizedBox(width: 10),
                 if (story.url == null || story.url!.isEmpty) Text(story.description, style: theme.textTheme.bodyLarge),
                 if (story.url != null && story.url!.isNotEmpty)
-                  Hyperlink(
-                    text: story.description,
-                    textStyle: theme.textTheme.bodyLarge,
-                    color: theme.textTheme.bodyLarge?.decorationColor,
-                    url: story.url!,
-                  ),
+                  Hyperlink(text: story.description, textStyle: theme.textTheme.bodyLarge, color: theme.textTheme.bodyLarge?.decorationColor, url: story.url!),
 
                 TextTag(text: 'Skipped', backgroundColor: Colors.red, foreColor: Colors.white, display: story.status == StoryStatus.skipped),
               ],
             ),
           ),
-          SizedBox(width: 120, child: story.estimate == null ? null : Tooltip(message: 'Calculated estimated', child: Text(story.estimate.toString()))),
-          SizedBox(width: 120, child: story.revisedEstimate == null ? null : Tooltip(message: 'Real estimated', child: Text(story.revisedEstimate.toString()))),
+          SizedBox(
+            width: 120,
+            child: story.estimate == null
+                ? null
+                : Row(
+                    children: [
+                      Tooltip(
+                        message: 'Calculated estimated',
+                        child: Container(
+                          color: theme.dividerColor,
+                          alignment: Alignment.center,
+                          padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                          child: Text(story.estimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
+                        ),
+                      ),
+                      Spacer(),
+                    ],
+                  ),
+          ),
+          SizedBox(
+            width: 120,
+            child: story.revisedEstimate == null
+                ? null
+                : Tooltip(
+                    message: 'Real estimated',
+                    child: Container(
+                      color: theme.dividerColor,
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                      child: Text(story.revisedEstimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
+                    ),
+                  ),
+          ),
         ],
       ),
-      trailing:
-          hasMenuItems
-              ? IconButton(
-                key: menuKey,
-                onPressed: () {
-                  RenderBox box = menuKey.currentContext!.findRenderObject() as RenderBox;
-                  Offset position = box.localToGlobal(Offset.zero);
-                  showMenu(
-                    context: context,
-                    items: [
-                      if (onMoveToActive != null)
-                        PopupMenuItem(
-                          onTap: onMoveToActive,
-                          child: Row(spacing: 5, children: [Icon(FontAwesomeIcons.arrowRotateLeft, color: Colors.blueAccent), Text('Move to active')]),
+      trailing: hasMenuItems
+          ? IconButton(
+              key: menuKey,
+              onPressed: () {
+                RenderBox box = menuKey.currentContext!.findRenderObject() as RenderBox;
+                Offset position = box.localToGlobal(Offset.zero);
+                showMenu(
+                  context: context,
+                  items: [
+                    if (onMoveToActive != null)
+                      PopupMenuItem(
+                        onTap: onMoveToActive,
+                        child: Row(
+                          spacing: 5,
+                          children: [
+                            Icon(FontAwesomeIcons.arrowRotateLeft, color: Colors.blueAccent),
+                            Text('Move to active'),
+                          ],
                         ),
-                      if (onSkip != null) PopupMenuItem(onTap: onSkip, child: Row(spacing: 5, children: [Icon(Icons.skip_next_outlined, color: Colors.blueAccent), Text('Skip')])),
-                      if (onMoveUp != null)
-                        PopupMenuItem(
-                          child: Row(spacing: 5, children: [Icon(Icons.move_up_outlined, color: Colors.blueAccent), Text('Move up')]),
-                          onTap: () async {
-                            onMoveUp!();
-                          },
+                      ),
+                    if (onSkip != null)
+                      PopupMenuItem(
+                        onTap: onSkip,
+                        child: Row(
+                          spacing: 5,
+                          children: [
+                            Icon(Icons.skip_next_outlined, color: Colors.blueAccent),
+                            Text('Skip'),
+                          ],
                         ),
-                      if (onMoveDown != null)
-                        PopupMenuItem(
-                          child: Row(spacing: 5, children: [Icon(Icons.move_down_outlined, color: Colors.blueAccent), Text('Move down')]),
-                          onTap: () async {
-                            onMoveDown!();
-                          },
+                      ),
+                    if (onMoveUp != null)
+                      PopupMenuItem(
+                        child: Row(
+                          spacing: 5,
+                          children: [
+                            Icon(Icons.move_up_outlined, color: Colors.blueAccent),
+                            Text('Move up'),
+                          ],
                         ),
-                      if (onDelete != null) ...[
-                        PopupMenuItem(height: 1, enabled: false, child: Divider()),
-                        PopupMenuItem(
-                          child: Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')]),
-                          onTap: () async {
-                            onDelete!();
-                          },
+                        onTap: () async {
+                          onMoveUp!();
+                        },
+                      ),
+                    if (onMoveDown != null)
+                      PopupMenuItem(
+                        child: Row(
+                          spacing: 5,
+                          children: [
+                            Icon(Icons.move_down_outlined, color: Colors.blueAccent),
+                            Text('Move down'),
+                          ],
                         ),
-                      ],
+                        onTap: () async {
+                          onMoveDown!();
+                        },
+                      ),
+                    if (onDelete != null) ...[
+                      PopupMenuItem(height: 1, enabled: false, child: Divider()),
+                      PopupMenuItem(
+                        child: Row(
+                          spacing: 5,
+                          children: [
+                            Icon(Icons.delete_outline, color: Colors.red),
+                            Text('Delete'),
+                          ],
+                        ),
+                        onTap: () async {
+                          onDelete!();
+                        },
+                      ),
                     ],
-                    position: RelativeRect.fromLTRB(
-                      position.dx -
-                          (onMoveToActive != null
-                              ? 185
-                              : onMoveDown != null
-                              ? 165
-                              : 110),
-                      position.dy,
-                      position.dx,
-                      position.dy,
-                    ),
-                  );
-                },
-                icon: Icon(Icons.more_vert),
-              )
-              : null,
+                  ],
+                  position: RelativeRect.fromLTRB(
+                    position.dx -
+                        (onMoveToActive != null
+                            ? 185
+                            : onMoveDown != null
+                            ? 165
+                            : 110),
+                    position.dy,
+                    position.dx,
+                    position.dy,
+                  ),
+                );
+              },
+              icon: Icon(Icons.more_vert),
+            )
+          : null,
     );
   }
 }

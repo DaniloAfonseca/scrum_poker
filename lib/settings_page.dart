@@ -83,60 +83,61 @@ class _SettingsPageState extends State<SettingsPage> {
                 onChanged: (value) {
                   _box!.put('jiraUrl', value);
                 },
+                keyboardType: TextInputType.url,
               ),
             ),
             _isLoadingFields
                 ? const Center(child: CircularProgressIndicator())
                 : SearchViewTheme(
-                  data: SearchViewThemeData(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    backgroundColor: theme.canvasColor,
-                    dividerColor: theme.dividerColor,
-                    headerHeight: 46,
-                    constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
-                  ),
-                  child: SearchBarTheme(
-                    data: SearchBarThemeData(
-                      hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
-                      //textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!),
-                      //backgroundColor: WidgetStateProperty.all(theme.canvasColor),
-                      shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                      elevation: WidgetStateProperty.all(0),
-                      side: WidgetStateProperty.resolveWith((states) {
-                        if (states.contains(WidgetState.focused)) {
-                          return const BorderSide(color: Colors.blueAccent, width: 2.0);
-                        }
-                        return BorderSide(color: Colors.blueGrey.shade200);
-                      }),
+                    data: SearchViewThemeData(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor: theme.canvasColor,
+                      dividerColor: theme.dividerColor,
+                      headerHeight: 46,
+                      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
                     ),
-                    child: SearchAnchor.bar(
-                      searchController: _fieldSearchController,
-                      barHintText: 'Search Story points field',
-                      barBackgroundColor: WidgetStateProperty.all(theme.canvasColor),
-                      barOverlayColor: WidgetStateProperty.all(Colors.transparent),
-                      barLeading: const Icon(Icons.search),
-                      barTrailing: [], // No trailing icon by default
-                      constraints: const BoxConstraints(minHeight: 46),
-                      suggestionsBuilder: (context, controller) {
-                        final filteredFields = _fields.where((e) => e.name.toLowerCase().contains(controller.text.toLowerCase()));
-                        if (filteredFields.isEmpty) {
-                          return [const ListTile(title: Text('No matching fields found'))];
-                        }
-                        return filteredFields.map((field) {
-                          return ListTile(
-                            title: Text(field.name),
-                            onTap: () {
-                              _fieldSearchController.text = field.name; // Update text
-                              // Close the search view and pass the selected value
-                              controller.closeView(field.name);
-                              _box!.put('storyPointFieldName', field.key); // Store the entire JiraField object (or just its ID)
-                            },
-                          );
-                        }).toList();
-                      },
+                    child: SearchBarTheme(
+                      data: SearchBarThemeData(
+                        hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
+                        //textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!),
+                        //backgroundColor: WidgetStateProperty.all(theme.canvasColor),
+                        shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                        elevation: WidgetStateProperty.all(0),
+                        side: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.focused)) {
+                            return const BorderSide(color: Colors.blueAccent, width: 2.0);
+                          }
+                          return BorderSide(color: Colors.blueGrey.shade200);
+                        }),
+                      ),
+                      child: SearchAnchor.bar(
+                        searchController: _fieldSearchController,
+                        barHintText: 'Search Story points field',
+                        barBackgroundColor: WidgetStateProperty.all(theme.canvasColor),
+                        barOverlayColor: WidgetStateProperty.all(Colors.transparent),
+                        barLeading: const Icon(Icons.search),
+                        barTrailing: [], // No trailing icon by default
+                        constraints: const BoxConstraints(minHeight: 46),
+                        suggestionsBuilder: (context, controller) {
+                          final filteredFields = _fields.where((e) => e.name.toLowerCase().contains(controller.text.toLowerCase()));
+                          if (filteredFields.isEmpty) {
+                            return [const ListTile(title: Text('No matching fields found'))];
+                          }
+                          return filteredFields.map((field) {
+                            return ListTile(
+                              title: Text(field.name),
+                              onTap: () {
+                                _fieldSearchController.text = field.name; // Update text
+                                // Close the search view and pass the selected value
+                                controller.closeView(field.name);
+                                _box!.put('storyPointFieldName', field.key); // Store the entire JiraField object (or just its ID)
+                              },
+                            );
+                          }).toList();
+                        },
+                      ),
                     ),
                   ),
-                ),
           ],
         ),
       ),
