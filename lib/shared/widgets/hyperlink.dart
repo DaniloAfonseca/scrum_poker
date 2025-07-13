@@ -24,8 +24,7 @@ class Hyperlink extends StatelessWidget {
     return Link(
       uri: url != null ? Uri.parse(url!) : null,
       builder: (context, followLink) {
-        return GestureDetector(
-          // Or InkWell, TextButton, etc.
+        return InkWell(
           onTap: onTap ?? followLink, // This triggers the URL launch
           child: Text(text, style: localTextStyle),
         );

@@ -88,7 +88,7 @@ class VotingStory extends StatelessWidget {
                             final votes = maps?.map((t) => Vote.fromJson(t)).toList() ?? <Vote>[];
                             final userVote = votes.firstWhereOrNull((t) => t.userId == appUser?.id);
 
-                            votesChanged(votes);
+                            //votesChanged(votes);
 
                             return currentStory == null || (user == null && currentStory.status == StoryStatus.notStarted)
                                 ? Center(child: Text('Waiting', style: theme.textTheme.displayLarge))
@@ -185,9 +185,7 @@ class VotingStory extends StatelessWidget {
                                                 child: Center(
                                                   child: Text(
                                                     e.label,
-                                                    style: theme.textTheme.displayLarge!.copyWith(
-                                                      color: currentStory.status == StoryStatus.notStarted ? Colors.grey : Colors.black,
-                                                    ),
+                                                    style: theme.textTheme.displayLarge!.copyWith(color: currentStory.status == StoryStatus.notStarted ? Colors.grey : null),
                                                   ),
                                                 ),
                                               ),

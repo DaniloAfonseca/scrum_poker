@@ -71,7 +71,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
               future: _avatar,
               builder: (_, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircleAvatar(key: _avatarKey, child: CircularProgressIndicator(color: Colors.blueAccent[200]));
+                  return CircleAvatar(key: _avatarKey, child: CircularProgressIndicator(color: theme.primaryColor));
                 } else if (snapshot.hasError) {
                   return CircleAvatar(
                     backgroundColor: theme.primaryColor,
