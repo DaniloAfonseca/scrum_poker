@@ -198,21 +198,21 @@ class _EditRoomPageState extends State<EditRoomPage> {
                 spacing: 20,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Hyperlink(text: 'Back to list', textColor: Colors.blueAccent, onTap: () => web.window.history.back()),
+                  Hyperlink(text: 'Back to list', onTap: () => web.window.history.back()),
                   Row(
                     spacing: 10,
                     children: [
                       Flexible(
                         child: TextFormField(
                           controller: _nameController,
-                          decoration: InputDecoration(
-                            hintStyle: theme.textTheme.bodyLarge!.copyWith(color: Colors.grey),
+                          decoration: const InputDecoration(
+                            //hintStyle: theme.textTheme.bodyLarge!.copyWith(color: Colors.grey),
                             labelText: 'Room description',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
+                            //border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            //enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
+                            //focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: theme.primaryColor, width: 2.0)),
+                            //filled: true,
+                            //fillColor: theme.primaryColor,
                           ),
                           keyboardType: TextInputType.text,
                           validator: (value) {
@@ -229,7 +229,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                           Switch(
                             thumbIcon: thumbIcon,
                             value: deleted,
-                            activeColor: Colors.blue[600],
+                            //activeColor: Colors.blue[600],
                             inactiveThumbColor: Colors.grey[500],
                             trackOutlineColor: borderColor,
                             onChanged: roomDeleteToggle,
@@ -238,7 +238,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
+                          backgroundColor: theme.primaryColor,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                           elevation: 5,
@@ -257,12 +257,12 @@ class _EditRoomPageState extends State<EditRoomPage> {
                           SizedBox(
                             width: 150,
                             child: CheckboxListTile(
-                              fillColor: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return Colors.blueAccent;
-                                }
-                                return Colors.white;
-                              }),
+                              // fillColor: WidgetStateProperty.resolveWith((states) {
+                              //   if (states.contains(WidgetState.selected)) {
+                              //     return Colors.blueAccent;
+                              //   }
+                              //   return Colors.white;
+                              // }),
                               controlAffinity: ListTileControlAffinity.leading,
                               value: allCards,
                               title: Text('Use all cards'),
@@ -284,12 +284,12 @@ class _EditRoomPageState extends State<EditRoomPage> {
                                     return SizedBox(
                                       width: 120,
                                       child: CheckboxListTile(
-                                        fillColor: WidgetStateProperty.resolveWith((states) {
-                                          if (states.contains(WidgetState.selected)) {
-                                            return Colors.blueAccent;
-                                          }
-                                          return Colors.white;
-                                        }),
+                                        // fillColor: WidgetStateProperty.resolveWith((states) {
+                                        //   if (states.contains(WidgetState.selected)) {
+                                        //     return Colors.blueAccent;
+                                        //   }
+                                        //   return Colors.white;
+                                        // }),
                                         controlAffinity: ListTileControlAffinity.leading,
                                         contentPadding: EdgeInsets.all(0),
                                         splashRadius: 10,
@@ -312,7 +312,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                     children: [
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
+                          backgroundColor: theme.primaryColor,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                           elevation: 5,

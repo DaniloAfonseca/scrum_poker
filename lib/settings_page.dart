@@ -74,20 +74,12 @@ class _SettingsPageState extends State<SettingsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
-            Hyperlink(text: 'Exit settings', textColor: Colors.blueAccent, onTap: () => web.window.history.back()),
+            Hyperlink(text: 'Exit settings', onTap: () => web.window.history.back()),
             SizedBox(height: 10),
             Flexible(
               child: TextFormField(
                 controller: _jiraUrlController,
-                decoration: InputDecoration(
-                  labelText: 'Jira URL',
-                  prefixIcon: const Icon(Icons.link),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                ),
+                decoration: InputDecoration(labelText: 'Jira URL'),
                 onChanged: (value) {
                   _box!.put('jiraUrl', value);
                 },

@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/story.dart';
+import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/text_tag.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class VotingStoryItem extends StatelessWidget {
   final Story? currentStory;
@@ -38,8 +38,8 @@ class VotingStoryItem extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.all(0),
       minVerticalPadding: 0,
-      selectedTileColor: Colors.grey[200],
-      selectedColor: Colors.black,
+      selectedTileColor: theme.primaryColor.withAlpha(50),
+      selectedColor: theme.textTheme.bodyLarge?.color,
       selected: currentStory?.id == story.id,
       leading:
           reorderIndex == null || user == null
@@ -60,28 +60,13 @@ class VotingStoryItem extends StatelessWidget {
                 if (user == null) SizedBox(width: 10),
                 if (story.url == null || story.url!.isEmpty) Text(story.description, style: theme.textTheme.bodyLarge),
                 if (story.url != null && story.url!.isNotEmpty)
-                  InkWell(
-                    onTap: () async {
-                      final Uri uri = Uri.parse(story.url!);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      } else {
-                        throw 'Could not launch ${story.url!}';
-                      }
-                    },
-                    child: Text(
-                      story.description,
-                      style: theme.textTheme.bodyLarge!.copyWith(
-                        color: Colors.transparent,
-                        shadows: [Shadow(color: Colors.black, offset: Offset(0, -3))],
-
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.blue,
-                        decorationThickness: 1,
-                        decorationStyle: TextDecorationStyle.solid,
-                      ),
-                    ),
+                  Hyperlink(
+                    text: story.description,
+                    textStyle: theme.textTheme.bodyLarge,
+                    color: theme.textTheme.bodyLarge?.decorationColor,
+                    url: story.url!,
                   ),
+
                 TextTag(text: 'Skipped', backgroundColor: Colors.red, foreColor: Colors.white, display: story.status == StoryStatus.skipped),
               ],
             ),

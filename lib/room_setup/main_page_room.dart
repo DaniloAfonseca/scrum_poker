@@ -35,7 +35,7 @@ class _MainPageRoomState extends State<MainPageRoom> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: Colors.blueAccent,
+        color: theme.primaryColor,
         borderRadius: BorderRadius.circular(15.0),
         boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 5, blurRadius: 7, offset: const Offset(0, 3))],
       ),

@@ -10,7 +10,6 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
 class EditRoomStory extends StatefulWidget {
@@ -221,7 +220,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         decoration: BoxDecoration(
-          color: _isEditing ? Colors.white : Colors.blueAccent,
+          color: _isEditing ? Colors.white : theme.primaryColor,
           borderRadius: BorderRadius.circular(15.0),
           boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 5, blurRadius: 7, offset: const Offset(0, 3))],
         ),
@@ -244,20 +243,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       ],
                     ),
 
-                    if (_story.url != null)
-                      Hyperlink(
-                        text: widget.story!.url!,
-                        textColor: Colors.white,
-                        hyperlinkColor: Colors.white,
-                        onTap: () async {
-                          final Uri uri = Uri.parse(widget.story!.url!);
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri, mode: LaunchMode.externalApplication);
-                          } else {
-                            throw 'Could not launch ${widget.story!.url!}';
-                          }
-                        },
-                      ),
+                    if (_story.url != null) Hyperlink(text: widget.story!.url!, color: Colors.white, url: widget.story!.url!),
                   ],
                   if (_isEditing) ...[
                     _integratedWithJira

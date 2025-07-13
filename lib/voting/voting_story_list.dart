@@ -133,7 +133,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                           children: [
                             Text('Active Stories', style: theme.textTheme.titleLarge),
                             CircleAvatar(
-                              backgroundColor: Colors.blueAccent,
+                              backgroundColor: theme.primaryColor,
                               radius: 15,
                               child: Text(activeStories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
                             ),
@@ -146,7 +146,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                           children: [
                             Text('Completed Stories', style: theme.textTheme.titleLarge),
                             CircleAvatar(
-                              backgroundColor: Colors.blueAccent,
+                              backgroundColor: theme.primaryColor,
                               radius: 15,
                               child: Text(completedStories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
                             ),
@@ -159,7 +159,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                           children: [
                             Text('All Stories', style: theme.textTheme.titleLarge),
                             CircleAvatar(
-                              backgroundColor: Colors.blueAccent,
+                              backgroundColor: theme.primaryColor,
                               radius: 15,
                               child: Text(stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
                             ),
@@ -236,7 +236,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                   padding: const EdgeInsets.all(12.0),
                   child: Hyperlink(
                     text: 'Add new story',
-                    textColor: Colors.blueAccent,
+                    //textColor: theme.primaryColor,
                     textStyle: theme.textTheme.bodyLarge,
                     onTap: () async {
                       final host = web.window.location.host;

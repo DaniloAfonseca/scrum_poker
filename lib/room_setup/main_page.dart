@@ -104,7 +104,7 @@ class _MainPageState extends State<MainPage> {
                             }
                             return ToggleStyle(
                               backgroundGradient: LinearGradient(
-                                colors: [Colors.blue[600]!, Colors.red],
+                                colors: [theme.primaryColor, Colors.red],
                                 stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
                               ),
                             );
@@ -125,7 +125,7 @@ class _MainPageState extends State<MainPage> {
 
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
+                            backgroundColor: theme.primaryColor,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,

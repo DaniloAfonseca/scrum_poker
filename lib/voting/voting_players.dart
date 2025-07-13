@@ -63,7 +63,7 @@ class VotingPlayers extends StatelessWidget {
               height: 50,
               width: 400,
               decoration: BoxDecoration(
-                color: Colors.blueAccent,
+                color: theme.primaryColor,
                 border: Border.all(color: Colors.grey[300]!),
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
               ),
@@ -76,7 +76,7 @@ class VotingPlayers extends StatelessWidget {
                 width: 400,
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white60,
+                  color: theme.cardColor.withAlpha(80),
                   border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                 ),
                 alignment: Alignment.center,
@@ -84,7 +84,7 @@ class VotingPlayers extends StatelessWidget {
                     currentStory?.status == StoryStatus.notStarted
                         ? ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
+                            backgroundColor: theme.primaryColor,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
@@ -99,7 +99,7 @@ class VotingPlayers extends StatelessWidget {
                           children: [
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
+                                backgroundColor: theme.primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                 elevation: 5,
@@ -109,7 +109,7 @@ class VotingPlayers extends StatelessWidget {
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
+                                backgroundColor: theme.primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                 elevation: 5,
@@ -129,7 +129,7 @@ class VotingPlayers extends StatelessWidget {
                               children: [
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blueAccent,
+                                    backgroundColor: theme.primaryColor,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
@@ -139,7 +139,7 @@ class VotingPlayers extends StatelessWidget {
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blueAccent,
+                                    backgroundColor: theme.primaryColor,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                     elevation: 5,
@@ -151,7 +151,7 @@ class VotingPlayers extends StatelessWidget {
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
+                                backgroundColor: theme.primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                                 elevation: 5,
@@ -166,7 +166,7 @@ class VotingPlayers extends StatelessWidget {
               height: 50,
               width: 400,
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: theme.hoverColor,
                 border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
               ),
               alignment: Alignment.centerLeft,
@@ -179,7 +179,7 @@ class VotingPlayers extends StatelessWidget {
                   height: 50,
                   width: 400,
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: theme.hoverColor,
                     border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                     borderRadius:
                         index == currentUsers.length - 1 && firebaseUser == null ? BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)) : null,
@@ -199,7 +199,7 @@ class VotingPlayers extends StatelessWidget {
               Container(
                 width: 400,
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: theme.hoverColor,
                   border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                   borderRadius: BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)),
                 ),

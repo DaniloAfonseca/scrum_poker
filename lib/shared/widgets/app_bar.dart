@@ -3,9 +3,11 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
+import 'package:scrum_poker/theme_manager.dart';
 
 class GiraffeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final GestureTapCallback? onSignOut;
@@ -33,21 +35,30 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return AppBar(
       actionsPadding: const EdgeInsets.only(right: 16.0),
       title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
       actions: [
         IconButton(
           onPressed: () {
-            navigatorKey.currentContext!.go(Routes.settings);
+            themeManager.setThemeMode(themeManager.themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
           },
-          icon: Icon(Icons.settings_outlined),
+          icon: Icon(themeManager.themeMode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
           tooltip: 'Settings',
         ),
+        if (user != null)
+          IconButton(
+            onPressed: () {
+              navigatorKey.currentContext!.go(Routes.settings);
+            },
+            icon: Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+          ),
         SizedBox(width: 10),
         user == null
             ? CircleAvatar(
-              backgroundColor: Colors.blueAccent[200],
+              backgroundColor: theme.primaryColor,
               key: _avatarKey,
               child: IconButton(
                 icon: Icon(Icons.person_outline, color: Colors.white),
@@ -63,20 +74,20 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
                   return CircleAvatar(key: _avatarKey, child: CircularProgressIndicator(color: Colors.blueAccent[200]));
                 } else if (snapshot.hasError) {
                   return CircleAvatar(
-                    backgroundColor: Colors.blueAccent[200],
+                    backgroundColor: theme.primaryColor,
                     key: _avatarKey,
                     child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)),
                   );
                 } else if (snapshot.hasData && snapshot.data != null) {
                   return CircleAvatar(
-                    backgroundColor: Colors.blueAccent[200],
+                    backgroundColor: theme.primaryColor,
                     key: _avatarKey,
                     backgroundImage: NetworkImage(snapshot.data!),
                     child: InkWell(onTap: () => _showMenu(context)),
                   );
                 } else {
                   return CircleAvatar(
-                    backgroundColor: Colors.blueAccent[200],
+                    backgroundColor: theme.primaryColor,
                     key: _avatarKey,
                     child: IconButton(
                       icon: Icon(Icons.person_outline, color: Colors.white),
