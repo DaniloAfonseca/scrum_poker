@@ -220,7 +220,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         decoration: BoxDecoration(
-          color: _isEditing ? Colors.white : theme.primaryColor,
+          color: _isEditing ? theme.cardColor : theme.primaryColor,
           borderRadius: BorderRadius.circular(15.0),
           boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 5, blurRadius: 7, offset: const Offset(0, 3))],
         ),
@@ -250,15 +250,16 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                         ? SearchViewTheme(
                           data: SearchViewThemeData(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            backgroundColor: Colors.grey.shade50,
-                            dividerColor: Colors.blueGrey.shade200,
+                            backgroundColor: theme.canvasColor,
+                            dividerColor: theme.dividerColor,
                             headerHeight: 46,
-                            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: 360),
+                            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
                           ),
                           child: SearchBarTheme(
                             data: SearchBarThemeData(
-                              hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: Colors.grey)),
-                              backgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
+                              hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
+                              //textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!),
+                              //backgroundColor: WidgetStateProperty.all(theme.canvasColor),
                               shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                               elevation: WidgetStateProperty.all(0),
                               side: WidgetStateProperty.resolveWith((states) {

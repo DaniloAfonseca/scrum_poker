@@ -117,7 +117,10 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
         final currentStory = stories.firstWhereOrNull((t) => t.currentStory);
 
         return Container(
-          decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.grey[300]!), borderRadius: BorderRadius.circular(6)),
+          decoration: BoxDecoration(
+            border: Border.all(width: 2, color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(6),
+          ),
           child: Stack(
             children: [
               Column(
@@ -195,16 +198,15 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                           },
                         ),
                         Column(
-                          children:
-                              completedStories
-                                  .map(
-                                    (t) => VotingStoryItem(
-                                      currentStory: currentStory,
-                                      story: t,
-                                      onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.room, stories, t) : null,
-                                    ),
-                                  )
-                                  .toList(),
+                          children: completedStories
+                              .map(
+                                (t) => VotingStoryItem(
+                                  currentStory: currentStory,
+                                  story: t,
+                                  onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.room, stories, t) : null,
+                                ),
+                              )
+                              .toList(),
                         ),
 
                         ReorderableListView.builder(

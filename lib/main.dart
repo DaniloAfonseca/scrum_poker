@@ -56,38 +56,19 @@ class ScrumPokerApp extends StatelessWidget {
             fontWeight: FontWeight.normal,
           ),
           //fillColor: theme.primaryColor,
-        ),
-        searchViewTheme: SearchViewThemeData(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          backgroundColor: Colors.grey.shade50,
-          dividerColor: Colors.blueGrey.shade200,
-          headerHeight: 46,
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
-        ),
-        searchBarTheme: SearchBarThemeData(
-          hintStyle: WidgetStateProperty.all(TextStyle(fontSize: 16, color: Colors.grey)),
-          backgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
-          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-          elevation: WidgetStateProperty.all(0),
-          side: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.focused)) {
-              return const BorderSide(color: Colors.blueAccent, width: 2.0);
-            }
-            return BorderSide(color: Colors.blueGrey.shade200);
-          }),
-        ),
+        )
       ),
       // Define your dark theme
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        primarySwatch: Colors.indigo, // Darker primary for dark mode
+        primarySwatch: Colors.blue, // Darker primary for dark mode
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.black, // Dark AppBar background
           foregroundColor: Colors.white,
         ),
         scaffoldBackgroundColor: Colors.grey[900], // Dark background for scaffolds
         cardColor: Colors.grey[850], // Darker cards
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.indigo, brightness: Brightness.dark).copyWith(secondary: Colors.tealAccent), // Accent color for dark mode
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(secondary: Colors.tealAccent), // Accent color for dark mode
         inputDecorationTheme: InputDecorationTheme(
           hintStyle: TextStyle(
             color: Colors.blueGrey.shade200, // Color for label when it's inside (unfocused, no text)

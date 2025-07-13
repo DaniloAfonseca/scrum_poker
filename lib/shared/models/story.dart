@@ -13,6 +13,7 @@ class Story {
   String id;
   String description;
   String? url;
+  String? jiraKey;
   double? estimate;
   StoryStatus status;
   @JsonKey(includeFromJson: false)
@@ -35,6 +36,7 @@ class Story {
     required this.order,
     this.currentStory = false,
     this.storyType,
+    this.jiraKey,
   });
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
@@ -52,6 +54,7 @@ class Story {
     'order': instance.order,
     'currentStory': instance.currentStory,
     'storyType': _$StoryTypeEnumMap[instance.storyType],
+    if (instance.jiraKey case final value?) 'jiraKey': value,
   };
 
   List<VoteResult>? voteResults(List<Vote> votes) {

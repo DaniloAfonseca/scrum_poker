@@ -90,15 +90,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 : SearchViewTheme(
                   data: SearchViewThemeData(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    backgroundColor: Colors.grey.shade50,
-                    dividerColor: Colors.blueGrey.shade200,
+                    backgroundColor: theme.canvasColor,
+                    dividerColor: theme.dividerColor,
                     headerHeight: 46,
                     constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
                   ),
                   child: SearchBarTheme(
                     data: SearchBarThemeData(
-                      hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: Colors.grey)),
-                      backgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
+                      hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
+                      //textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!),
+                      //backgroundColor: WidgetStateProperty.all(theme.canvasColor),
                       shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                       elevation: WidgetStateProperty.all(0),
                       side: WidgetStateProperty.resolveWith((states) {
@@ -111,7 +112,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: SearchAnchor.bar(
                       searchController: _fieldSearchController,
                       barHintText: 'Search Story points field',
-                      barBackgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
+                      barBackgroundColor: WidgetStateProperty.all(theme.canvasColor),
                       barOverlayColor: WidgetStateProperty.all(Colors.transparent),
                       barLeading: const Icon(Icons.search),
                       barTrailing: [], // No trailing icon by default

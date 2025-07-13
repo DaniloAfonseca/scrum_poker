@@ -26,6 +26,7 @@ Story _$StoryFromJson(Map<String, dynamic> json) => $checkedCreate(
               $checkedConvert('currentStory', (v) => v as bool? ?? false),
           storyType: $checkedConvert(
               'storyType', (v) => $enumDecodeNullable(_$StoryTypeEnumMap, v)),
+          jiraKey: $checkedConvert('jiraKey', (v) => v as String?),
         );
         return val;
       },
