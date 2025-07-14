@@ -11,7 +11,8 @@ import 'package:scrum_poker/theme_manager.dart';
 
 class GiraffeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final GestureTapCallback? onSignOut;
-  const GiraffeAppBar({super.key, this.onSignOut});
+  final bool? loginIn;
+  const GiraffeAppBar({super.key, this.onSignOut, this.loginIn = false});
 
   @override
   State<GiraffeAppBar> createState() => _GiraffeAppBarState();
@@ -37,17 +38,18 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
     final theme = Theme.of(context);
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return AppBar(
+      backgroundColor: theme.scaffoldBackgroundColor,
       actionsPadding: const EdgeInsets.only(right: 16.0),
-      title: Text('Scrum Poker', style: theme.textTheme.displayMedium),
+      title: widget.loginIn == true ? null : Text('Scrum Poker', style: theme.textTheme.displayMedium),
       actions: [
         IconButton(
           onPressed: () {
             themeManager.setThemeMode(themeManager.themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
           },
           icon: Icon(themeManager.themeMode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
-          tooltip: 'Settings',
+          tooltip: themeManager.themeMode == ThemeMode.dark ? 'Light Mode' : 'Dark Mode',
         ),
-        if (user != null)
+        if (user != null && widget.loginIn != true)
           IconButton(
             onPressed: () {
               navigatorKey.currentContext!.go(Routes.settings);
@@ -55,50 +57,58 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
             icon: Icon(Icons.settings_outlined),
             tooltip: 'Settings',
           ),
-        SizedBox(width: 10),
-        user == null
-            ? CircleAvatar(
-              backgroundColor: theme.primaryColor,
-              key: _avatarKey,
-              child: IconButton(
-                icon: Icon(Icons.person_outline, color: Colors.white),
-                onPressed: () {
-                  _showMenu(context);
-                },
-              ),
-            )
-            : FutureBuilder<String?>(
-              future: _avatar,
-              builder: (_, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircleAvatar(key: _avatarKey, child: CircularProgressIndicator(color: theme.primaryColor));
-                } else if (snapshot.hasError) {
-                  return CircleAvatar(
-                    backgroundColor: theme.primaryColor,
-                    key: _avatarKey,
-                    child: IconButton(icon: Icon(Icons.person_outline, color: Colors.white), onPressed: () => _showMenu(context)),
-                  );
-                } else if (snapshot.hasData && snapshot.data != null) {
-                  return CircleAvatar(
-                    backgroundColor: theme.primaryColor,
-                    key: _avatarKey,
-                    backgroundImage: NetworkImage(snapshot.data!),
-                    child: InkWell(onTap: () => _showMenu(context)),
-                  );
-                } else {
-                  return CircleAvatar(
-                    backgroundColor: theme.primaryColor,
-                    key: _avatarKey,
-                    child: IconButton(
-                      icon: Icon(Icons.person_outline, color: Colors.white),
-                      onPressed: () {
-                        _showMenu(context);
-                      },
-                    ),
-                  );
-                }
-              },
-            ),
+        if (widget.loginIn != true) ...[
+          SizedBox(width: 10),
+          user == null
+              ? CircleAvatar(
+                  backgroundColor: theme.primaryColor,
+                  key: _avatarKey,
+                  child: IconButton(
+                    icon: Icon(Icons.person_outline, color: Colors.white),
+                    onPressed: () {
+                      _showMenu(context);
+                    },
+                  ),
+                )
+              : FutureBuilder<String?>(
+                  future: _avatar,
+                  builder: (_, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return CircleAvatar(
+                        key: _avatarKey,
+                        child: CircularProgressIndicator(color: theme.primaryColor),
+                      );
+                    } else if (snapshot.hasError) {
+                      return CircleAvatar(
+                        backgroundColor: theme.primaryColor,
+                        key: _avatarKey,
+                        child: IconButton(
+                          icon: Icon(Icons.person_outline, color: Colors.white),
+                          onPressed: () => _showMenu(context),
+                        ),
+                      );
+                    } else if (snapshot.hasData && snapshot.data != null) {
+                      return CircleAvatar(
+                        backgroundColor: theme.primaryColor,
+                        key: _avatarKey,
+                        backgroundImage: NetworkImage(snapshot.data!),
+                        child: InkWell(onTap: () => _showMenu(context)),
+                      );
+                    } else {
+                      return CircleAvatar(
+                        backgroundColor: theme.primaryColor,
+                        key: _avatarKey,
+                        child: IconButton(
+                          icon: Icon(Icons.person_outline, color: Colors.white),
+                          onPressed: () {
+                            _showMenu(context);
+                          },
+                        ),
+                      );
+                    }
+                  },
+                ),
+        ],
       ],
     );
   }
@@ -109,7 +119,11 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
     showMenu(
       context: context,
       position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
-      items: [PopupMenuItem(child: ListTile(leading: Icon(Icons.logout_outlined), title: Text('Sign Out'), onTap: signOut))],
+      items: [
+        PopupMenuItem(
+          child: ListTile(leading: Icon(Icons.logout_outlined), title: Text('Sign Out'), onTap: signOut),
+        ),
+      ],
     );
   }
 

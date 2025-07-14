@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/models/jira_issue_response.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
+import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
@@ -110,7 +112,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     super.dispose();
   }
 
-  void edit() {
+  void edit() async {
     _descriptionController.text = _story.description;
     _urlController.text = _story.url ?? '';
     setState(() {
@@ -119,7 +121,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   }
 
   Future<JiraIssueResponse?> _performJiraSearch(String value, {String? nextPageToken, int maxResults = 50}) async {
-    if (value.isEmpty) {
+    if (value.isEmpty || _isEditing) {
       return null;
     }
 
@@ -248,164 +250,178 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                   if (_isEditing) ...[
                     _integratedWithJira
                         ? SearchViewTheme(
-                          data: SearchViewThemeData(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            backgroundColor: theme.canvasColor,
-                            dividerColor: theme.dividerColor,
-                            headerHeight: 46,
-                            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
-                          ),
-                          child: SearchBarTheme(
-                            data: SearchBarThemeData(
-                              hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
-                              //textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!),
-                              //backgroundColor: WidgetStateProperty.all(theme.canvasColor),
-                              shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                              elevation: WidgetStateProperty.all(0),
-                              side: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.focused)) {
-                                  return const BorderSide(color: Colors.blueAccent, width: 2.0);
-                                }
-                                return BorderSide(color: Colors.blueGrey.shade200);
-                              }),
+                            data: SearchViewThemeData(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              backgroundColor: theme.canvasColor,
+                              dividerColor: theme.dividerColor,
+                              headerHeight: 46,
+                              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
                             ),
-                            child: SearchAnchor.bar(
-                              searchController: _searchController,
-                              barHintText: 'Story title',
-                              barBackgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
-                              barOverlayColor: WidgetStateProperty.all(Colors.transparent),
-                              barLeading: const Icon(Icons.search),
-                              barTrailing: [],
-                              constraints: const BoxConstraints(minHeight: 46),
-                              suggestionsBuilder: (context, controller) {
-                                return [
-                                  ValueListenableBuilder<Future<JiraIssueResponse?>>(
-                                    valueListenable: _suggestionsFutureNotifier,
-                                    builder: (context, currentFuture, child) {
-                                      return FutureBuilder<JiraIssueResponse?>(
-                                        future: currentFuture, // This is the future we're listening to
-                                        builder: (context, snapshot) {
-                                          if (snapshot.connectionState == ConnectionState.waiting) {
-                                            return const ListTile(title: Text('Loading...'));
-                                          } else if (snapshot.hasError) {
-                                            return ListTile(title: Text('Error: ${snapshot.error}'));
-                                          } else if (!snapshot.hasData || snapshot.data == null || snapshot.data!.issues.isEmpty) {
+                            child: SearchBarTheme(
+                              data: SearchBarThemeData(
+                                hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
+                                //textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!),
+                                //backgroundColor: WidgetStateProperty.all(theme.canvasColor),
+                                shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                                elevation: WidgetStateProperty.all(0),
+                                side: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.focused)) {
+                                    return const BorderSide(color: Colors.blueAccent, width: 2.0);
+                                  }
+                                  return BorderSide(color: Colors.blueGrey.shade200);
+                                }),
+                              ),
+                              child: SearchAnchor.bar(
+                                searchController: _searchController,
+                                barHintText: 'Story title',
+                                barBackgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
+                                barOverlayColor: WidgetStateProperty.all(Colors.transparent),
+                                barLeading: const Icon(Icons.search),
+                                barTrailing: [],
+                                constraints: const BoxConstraints(minHeight: 46),
+                                suggestionsBuilder: (context, controller) {
+                                  return [
+                                    ValueListenableBuilder<Future<JiraIssueResponse?>>(
+                                      valueListenable: _suggestionsFutureNotifier,
+                                      builder: (context, currentFuture, child) {
+                                        return FutureBuilder<JiraIssueResponse?>(
+                                          future: currentFuture, // This is the future we're listening to
+                                          builder: (context, snapshot) {
+                                            if (snapshot.connectionState == ConnectionState.waiting) {
+                                              return const ListTile(title: Text('Loading...'));
+                                            } else if (snapshot.hasError) {
+                                              return ListTile(title: Text('Error: ${snapshot.error}'));
+                                            } else if (!snapshot.hasData || snapshot.data == null || snapshot.data!.issues.isEmpty) {
+                                              return Column(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  SizedBox(
+                                                    height: MediaQuery.of(context).size.height * 0.4 - 100,
+                                                    child: const ListTile(title: Text('No results found')),
+                                                  ),
+
+                                                  _buildPaginationControls(snapshot.data?.nextPageToken),
+                                                ],
+                                              );
+                                            }
+
+                                            final anyHasType = snapshot.data!.issues.any((t) => t.fields!.issueType != null);
+                                            final nextPageToken = snapshot.data!.nextPageToken;
+
+                                            final storyList = snapshot.data!.issues
+                                                .map(
+                                                  (t) => Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                    child: ListTile(
+                                                      contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                                                      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                                                      leading: !anyHasType
+                                                          ? null
+                                                          : t.fields!.issueType?.name == 'Bug'
+                                                          ? const Icon(Icons.bug_report_outlined, color: Colors.red)
+                                                          : t.fields!.issueType?.name == 'Story'
+                                                          ? const Icon(Icons.turned_in_not_outlined, color: Colors.green)
+                                                          : const SizedBox(width: 24),
+                                                      title: Text('${t.id} - ${t.fields!.summary}'),
+                                                      trailing: t.storyPoints != null ? Text('${t.storyPoints!}') : null,
+                                                      onTap: () {
+                                                        _descriptionController.text = '${t.id} - ${t.fields!.summary}';
+                                                        if (_jiraUrl?.endsWith('/') == true) {
+                                                          _jiraUrl = _jiraUrl!.substring(0, _jiraUrl!.length - 1);
+                                                        }
+                                                        if (_jiraUrl != null && _jiraUrl!.isNotEmpty) {
+                                                          _urlController.text = '$_jiraUrl/${t.key}';
+                                                        }
+
+                                                        setState(() {
+                                                          _storyType = !anyHasType
+                                                              ? null
+                                                              : t.fields!.issueType?.name == 'Bug'
+                                                              ? StoryType.bug
+                                                              : t.fields!.issueType?.name == 'Story'
+                                                              ? StoryType.workItem
+                                                              : StoryType.others;
+                                                        });
+                                                        controller.closeView('${t.id} - ${t.fields!.summary}');
+                                                      },
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList();
+
                                             return Column(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                SizedBox(height: MediaQuery.of(context).size.height * 0.4 - 100, child: const ListTile(title: Text('No results found'))),
-
-                                                _buildPaginationControls(snapshot.data?.nextPageToken),
+                                                SizedBox(
+                                                  height: MediaQuery.of(context).size.height * 0.4 - 100,
+                                                  child: SingleChildScrollView(
+                                                    child: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [Flexible(child: ListView(shrinkWrap: true, children: storyList))],
+                                                    ),
+                                                  ),
+                                                ),
+                                                _buildPaginationControls(nextPageToken),
                                               ],
                                             );
-                                          }
-
-                                          final anyHasType = snapshot.data!.issues.any((t) => t.fields!.issueType != null);
-                                          final nextPageToken = snapshot.data!.nextPageToken;
-
-                                          final storyList =
-                                              snapshot.data!.issues
-                                                  .map(
-                                                    (t) => Padding(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                      child: ListTile(
-                                                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                                                        visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                                                        leading:
-                                                            !anyHasType
-                                                                ? null
-                                                                : t.fields!.issueType?.name == 'Bug'
-                                                                ? const Icon(Icons.bug_report_outlined, color: Colors.red)
-                                                                : t.fields!.issueType?.name == 'Story'
-                                                                ? const Icon(Icons.turned_in_not_outlined, color: Colors.green)
-                                                                : const SizedBox(width: 24),
-                                                        title: Text('${t.id} - ${t.fields!.summary}'),
-                                                        trailing: t.storyPoints != null ? Text('${t.storyPoints!}') : null,
-                                                        onTap: () {
-                                                          _descriptionController.text = '${t.id} - ${t.fields!.summary}';
-                                                          if (_jiraUrl?.endsWith('/') == true) {
-                                                            _jiraUrl = _jiraUrl!.substring(0, _jiraUrl!.length - 1);
-                                                          }
-                                                          if (_jiraUrl != null && _jiraUrl!.isNotEmpty) {
-                                                            _urlController.text = '$_jiraUrl/${t.key}';
-                                                          }
-
-                                                          setState(() {
-                                                            _storyType =
-                                                                !anyHasType
-                                                                    ? null
-                                                                    : t.fields!.issueType?.name == 'Bug'
-                                                                    ? StoryType.bug
-                                                                    : t.fields!.issueType?.name == 'Story'
-                                                                    ? StoryType.workItem
-                                                                    : StoryType.others;
-                                                          });
-                                                          controller.closeView('${t.id} - ${t.fields!.summary}');
-                                                        },
-                                                      ),
-                                                    ),
-                                                  )
-                                                  .toList();
-
-                                          return Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              SizedBox(
-                                                height: MediaQuery.of(context).size.height * 0.4 - 100,
-                                                child: SingleChildScrollView(
-                                                  child: Column(mainAxisSize: MainAxisSize.min, children: [Flexible(child: ListView(shrinkWrap: true, children: storyList))]),
-                                                ),
-                                              ),
-                                              _buildPaginationControls(nextPageToken),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ];
-                              },
-                              onClose: () {
-                                if (_searchController.text.isEmpty) {
-                                  _descriptionController.text = '';
-                                  _urlController.text = '';
-                                  setState(() {
-                                    _storyType = null;
-                                  });
-                                }
-                              },
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ];
+                                },
+                                onClose: () {
+                                  if (_searchController.text.isEmpty) {
+                                    _descriptionController.text = '';
+                                    _urlController.text = '';
+                                    setState(() {
+                                      _storyType = null;
+                                    });
+                                  }
+                                },
+                              ),
                             ),
-                          ),
-                        )
+                          )
                         : TextFormField(
-                          controller: _descriptionController,
-                          decoration: InputDecoration(
-                            labelText: 'Story title',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
-                          ),
-                          keyboardType: TextInputType.text,
-                          validator:
-                              _integratedWithJira
-                                  ? (value) {
+                            controller: _descriptionController,
+                            decoration: InputDecoration(
+                              labelText: 'Story title',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide(color: Colors.blueGrey.shade200),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                            ),
+                            keyboardType: TextInputType.text,
+                            validator: _integratedWithJira
+                                ? (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Invalid story description';
                                     }
                                     return null;
                                   }
-                                  : null,
-                        ),
+                                : null,
+                          ),
                     TextFormField(
                       controller: _urlController,
                       decoration: InputDecoration(
                         labelText: 'Story URL',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                          borderSide: BorderSide(color: Colors.blueGrey.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                          borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
+                        ),
                         filled: true,
                         fillColor: Colors.grey.shade50,
                       ),
@@ -423,16 +439,31 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           decoration: InputDecoration(
                             labelText: 'Story type',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: BorderSide(color: Colors.blueGrey.shade200),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
+                            ),
                             filled: true,
                             fillColor: Colors.grey.shade50,
                           ),
                           value: _storyType,
-                          items:
-                              StoryType.values
-                                  .map((t) => DropdownMenuItem<StoryType>(value: t, child: Row(children: [if (t.icon != null) Icon(t.icon, color: t.color), Text(t.description)])))
-                                  .toList(),
+                          items: StoryType.values
+                              .map(
+                                (t) => DropdownMenuItem<StoryType>(
+                                  value: t,
+                                  child: Row(
+                                    children: [
+                                      if (t.icon != null) Icon(t.icon, color: t.color),
+                                      Text(t.description),
+                                    ],
+                                  ),
+                                ),
+                              )
+                              .toList(),
                           onChanged: (v) {
                             setState(() {
                               _storyType = v;
@@ -493,17 +524,47 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                   showMenu(
                     context: context,
                     items: [
-                      PopupMenuItem(onTap: edit, child: const Row(children: [Icon(Icons.edit, color: Colors.blueAccent), SizedBox(width: 5), Text('Edit')])),
-                      PopupMenuItem(onTap: widget.onDelete, child: const Row(children: [Icon(Icons.delete_outline, color: Colors.red), SizedBox(width: 5), Text('Delete')])),
+                      PopupMenuItem(
+                        onTap: edit,
+                        child: const Row(
+                          children: [
+                            Icon(Icons.edit, color: Colors.blueAccent),
+                            SizedBox(width: 5),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        onTap: widget.onDelete,
+                        child: const Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: Colors.red),
+                            SizedBox(width: 5),
+                            Text('Delete'),
+                          ],
+                        ),
+                      ),
                       if (widget.onMoveUp != null)
                         PopupMenuItem(
                           onTap: widget.onMoveUp,
-                          child: const Row(children: [Icon(Icons.move_up_outlined, color: Colors.blueAccent), SizedBox(width: 5), Text('Move up')]),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.move_up_outlined, color: Colors.blueAccent),
+                              SizedBox(width: 5),
+                              Text('Move up'),
+                            ],
+                          ),
                         ),
                       if (widget.onMoveDown != null)
                         PopupMenuItem(
                           onTap: widget.onMoveDown,
-                          child: const Row(children: [Icon(Icons.move_down_outlined, color: Colors.blueAccent), SizedBox(width: 5), Text('Move down')]),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.move_down_outlined, color: Colors.blueAccent),
+                              SizedBox(width: 5),
+                              Text('Move down'),
+                            ],
+                          ),
                         ),
                     ],
                     position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
@@ -527,8 +588,14 @@ class _EditRoomStoryState extends State<EditRoomStory> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          TextButton(onPressed: canGoPrevious ? _goToPreviousPage : null, child: Text('Previous', style: TextStyle(color: canGoPrevious ? Colors.blue : Colors.grey))),
-          TextButton(onPressed: canGoNext ? () => _goToNextPage(currentNextPageToken) : null, child: Text('Next', style: TextStyle(color: canGoNext ? Colors.blue : Colors.grey))),
+          TextButton(
+            onPressed: canGoPrevious ? _goToPreviousPage : null,
+            child: Text('Previous', style: TextStyle(color: canGoPrevious ? Colors.blue : Colors.grey)),
+          ),
+          TextButton(
+            onPressed: canGoNext ? () => _goToNextPage(currentNextPageToken) : null,
+            child: Text('Next', style: TextStyle(color: canGoNext ? Colors.blue : Colors.grey)),
+          ),
         ],
       ),
     );

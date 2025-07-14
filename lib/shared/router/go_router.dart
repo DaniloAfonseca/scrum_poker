@@ -5,7 +5,9 @@ import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/edit_room_page.dart';
 import 'package:scrum_poker/settings_page.dart';
+import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
+import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/voting/room_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -13,10 +15,25 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<String?> authGuard(BuildContext context, GoRouterState state) async {
   final auth = FirebaseAuth.instance;
 
-  if (auth.currentUser == null && !state.matchedLocation.startsWith(Routes.room)) {
-    if (state.matchedLocation == Routes.login) {
-      return null;
+  bool redirectToLogin = false;
+  if (!state.matchedLocation.startsWith(Routes.room)) {
+    if (auth.currentUser == null) {
+      if (state.matchedLocation == Routes.login) {
+        return null;
+      }
+      redirectToLogin = true;
+    } else {
+      if (JiraCredentialsManager().currentCredentials != null) {
+        final response = await JiraServices().checkCredentials();
+        if (response != null) {
+          JiraCredentialsManager().clearCredentials();
+          redirectToLogin = true;
+        }
+      }
     }
+  }
+
+  if (redirectToLogin) {
     final currentUri = state.uri;
 
     final loginUri = Uri(path: Routes.login, queryParameters: currentUri.queryParameters);

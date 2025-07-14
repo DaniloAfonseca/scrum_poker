@@ -6,6 +6,7 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
+import 'package:scrum_poker/shared/widgets/app_bar.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 
 class LoginPage extends StatefulWidget {
@@ -99,13 +100,14 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final Size screenSize = MediaQuery.of(context).size;
     final bool isSmallScreen = screenSize.width < 600;
-
+    final theme = Theme.of(context);
     return Scaffold(
+      appBar: GiraffeAppBar(loginIn: true),
       body: Center(
         child: AnimatedContainer(
           constraints: BoxConstraints(maxWidth: isSmallScreen ? screenSize.width * 0.9 : 450.0, maxHeight: _isLoading ? 400 : 800.0),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(15.0),
             boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 5, blurRadius: 7, offset: const Offset(0, 3))],
           ),
@@ -121,9 +123,23 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     const Icon(Icons.lock_person, size: 80, color: Colors.blueAccent),
                     const SizedBox(height: 20),
-                    Text('Welcome Scrum Poker', style: TextStyle(fontSize: isSmallScreen ? 24 : 28, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade800)),
+                    Text(
+                      'Welcome Scrum Poker',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 24 : 28,
+                        fontWeight: FontWeight.bold,
+                        color: theme.brightness == Brightness.light ? Colors.blueGrey.shade800 : theme.textTheme.bodyLarge!.color,
+                      ),
+                    ),
                     const SizedBox(height: 10),
-                    Text('Sign in', style: TextStyle(fontSize: isSmallScreen ? 24 : 48, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade800)),
+                    Text(
+                      'Sign in',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 24 : 48,
+                        fontWeight: FontWeight.bold,
+                        color: theme.brightness == Brightness.light ? Colors.blueGrey.shade800 : theme.textTheme.bodyLarge!.color,
+                      ),
+                    ),
                     const SizedBox(height: 30),
                     if (_isLoading) ...[
                       const Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
@@ -133,11 +149,17 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: InputDecoration(
                           labelText: 'Email',
                           prefixIcon: const Icon(Icons.email_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
+                          // border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          // enabledBorder: OutlineInputBorder(
+                          //   borderRadius: BorderRadius.circular(10.0),
+                          //   borderSide: BorderSide(color: Colors.blueGrey.shade200),
+                          // ),
+                          // focusedBorder: OutlineInputBorder(
+                          //   borderRadius: BorderRadius.circular(10.0),
+                          //   borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
+                          // ),
+                          // filled: true,
+                          // fillColor: Colors.grey.shade50,
                         ),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
@@ -158,11 +180,17 @@ class _LoginPageState extends State<LoginPage> {
                           labelText: 'Password',
                           hintText: '••••••••',
                           prefixIcon: const Icon(Icons.lock_outline),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0)),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
+                          // border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                          // enabledBorder: OutlineInputBorder(
+                          //   borderRadius: BorderRadius.circular(10.0),
+                          //   borderSide: BorderSide(color: Colors.blueGrey.shade200),
+                          // ),
+                          // focusedBorder: OutlineInputBorder(
+                          //   borderRadius: BorderRadius.circular(10.0),
+                          //   borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
+                          // ),
+                          // filled: true,
+                          // fillColor: Colors.grey.shade50,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -196,15 +224,21 @@ class _LoginPageState extends State<LoginPage> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
                           ),
-                          child: const Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          child: Text('Login', style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
                         ),
                       ),
                       const SizedBox(height: 20),
                       Row(
                         children: [
-                          Expanded(child: Divider(color: Colors.grey, thickness: 1)),
-                          Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text('OR', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold))),
-                          Expanded(child: Divider(color: Colors.grey, thickness: 1)),
+                          Expanded(child: Divider(color: theme.brightness == Brightness.light ? Colors.grey : null, thickness: 1)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              'OR',
+                              style: TextStyle(fontWeight: FontWeight.bold).copyWith(color: theme.brightness == Brightness.light ? Colors.grey : null),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: theme.brightness == Brightness.light ? Colors.grey : null, thickness: 1)),
                         ],
                       ),
                       const SizedBox(height: 20),

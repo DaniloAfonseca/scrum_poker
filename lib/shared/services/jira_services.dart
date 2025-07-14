@@ -137,7 +137,7 @@ class JiraServices extends BaseServices {
     }
   }
 
-Future<BaseResponse<JiraIssue>> getJiraIssue(String key) async {
+  Future<BaseResponse<JiraIssue>> getJiraIssue(String key) async {
     final checkCredentialsResponse = await checkCredentials();
     if (checkCredentialsResponse != null) return BaseResponse(success: false, message: checkCredentialsResponse);
 
@@ -174,7 +174,6 @@ Future<BaseResponse<JiraIssue>> getJiraIssue(String key) async {
       return BaseResponse(success: false, message: 'There was an error: $e');
     }
   }
-
 
   Future<String?> checkCredentials() async {
     if (credentials == null) return 'You don\'t have access token.';
