@@ -156,12 +156,18 @@ class _VotingStoryState extends State<VotingStory> {
                                                               borderRadius: BorderRadius.circular(6),
                                                             ),
                                                             child: Center(
-                                                              child: Text(
-                                                                e.value.label,
-                                                                style: theme.textTheme.displayLarge!.copyWith(
-                                                                  color: currentStory.status == StoryStatus.notStarted ? Colors.grey : null,
-                                                                ),
-                                                              ),
+                                                              child: e.value.icon != null
+                                                                  ? Icon(
+                                                                      e.value.icon,
+                                                                      size: 48,
+                                                                      color: currentStory.status == StoryStatus.notStarted ? Colors.grey : theme.textTheme.displayLarge?.color,
+                                                                    )
+                                                                  : Text(
+                                                                      e.value.label,
+                                                                      style: theme.textTheme.displayLarge!.copyWith(
+                                                                        color: currentStory.status == StoryStatus.notStarted ? Colors.grey : null,
+                                                                      ),
+                                                                    ),
                                                             ),
                                                           ),
                                                           Text(e.userName),
@@ -262,10 +268,12 @@ class _VotingStoryState extends State<VotingStory> {
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Center(
-                                            child: Text(
-                                              e.label,
-                                              style: theme.textTheme.displayLarge!.copyWith(color: currentStory.status == StoryStatus.notStarted ? Colors.grey : null),
-                                            ),
+                                            child: e.icon != null
+                                                ? Icon(e.icon, size: 48, color: currentStory.status == StoryStatus.notStarted ? Colors.grey : theme.textTheme.displayLarge?.color)
+                                                : Text(
+                                                    e.label,
+                                                    style: theme.textTheme.displayLarge!.copyWith(color: currentStory.status == StoryStatus.notStarted ? Colors.grey : null),
+                                                  ),
                                           ),
                                         ),
                                       ),

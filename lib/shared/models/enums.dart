@@ -26,23 +26,24 @@ enum StoryType {
 }
 
 enum VoteEnum {
-  zero('0', 0),
-  half('½', 0.5),
-  one('1', 1),
-  two('2', 2),
-  three('3', 3),
-  five('5', 5),
-  eight('8', 8),
-  thirteen('13', 13),
-  twenty('20', 20),
-  forty('40', 40),
-  oneHundred('100', 100),
-  questionMark('?'),
-  infinity('∞'),
-  coffee('coffee');
+  zero(label: '0', value: 0),
+  half(label: '½', value: 0.5),
+  one(label: '1', value: 1),
+  two(label: '2', value: 2),
+  three(label: '3', value: 3),
+  five(label: '5', value: 5),
+  eight(label: '8', value: 8),
+  thirteen(label: '13', value: 13),
+  twenty(label: '20', value: 20),
+  forty(label: '40', value: 40),
+  oneHundred(label: '100', value: 100),
+  questionMark(label: '?'),
+  infinity(label: '∞'),
+  coffee(label: 'coffee', icon: Icons.coffee);
 
-  const VoteEnum(this.label, [this.value]);
+  const VoteEnum({required this.label, this.value, this.icon});
 
   final double? value;
   final String label;
+  final IconData? icon;
 }

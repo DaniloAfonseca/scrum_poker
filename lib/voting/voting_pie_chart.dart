@@ -48,7 +48,8 @@ class VotingPieChart extends StatelessWidget {
                             spacing: 5,
                             children: [
                               CircleAvatar(radius: 5, backgroundColor: result.color),
-                              Text(result.vote.label, style: theme.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.bold)),
+                              if (result.vote.icon != null) Icon(result.vote.icon, size: 12, color: theme.textTheme.bodySmall?.color),
+                              if (result.vote.icon == null) Text(result.vote.label, style: theme.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.bold)),
                             ],
                           ),
                           Row(
