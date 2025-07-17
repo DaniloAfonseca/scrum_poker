@@ -198,7 +198,7 @@ class _RoomPageState extends State<RoomPage> {
       await user!.updateDisplayName(username);
     }
 
-    final appUser = user == null ? AppUser(name: username, id: Uuid().v4()) : AppUser.fromUser(user!, widget.roomId);
+    final appUser = user == null ? AppUser(name: username, id: const Uuid().v4()) : AppUser.fromUser(user!, widget.roomId);
 
     _box!.put('appUser', appUser.toJson());
 
@@ -216,7 +216,7 @@ class _RoomPageState extends State<RoomPage> {
           SnackBar(
             backgroundColor: Colors.blueAccent[200],
             behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
             content: Text(message),
             action: SnackBarAction(
               label: 'Dismiss',
@@ -270,13 +270,13 @@ class _RoomPageState extends State<RoomPage> {
                   ),
           body:
               _isLoading
-                  ? Center(child: CircularProgressIndicator())
+                  ? const Center(child: CircularProgressIndicator())
                   : (_appUser.value == null)
                   ? RoomLogin(isModerator: user != null, login: logIn)
                   : StreamBuilder(
                     stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+                      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                       final map = snapshot.data!.data()!;
                       final room = Room.fromJson(map);
 

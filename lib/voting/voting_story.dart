@@ -83,7 +83,7 @@ class _VotingStoryState extends State<VotingStory> {
       builder: (ctx, constraint) => StreamBuilder(
         stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           final map = snapshot.data!.data()!;
           final room = Room.fromJson(map);
 
@@ -115,7 +115,7 @@ class _VotingStoryState extends State<VotingStory> {
                     ),
                   Container(
                     width: constraint.maxWidth,
-                    constraints: BoxConstraints(minHeight: 420),
+                    constraints: const BoxConstraints(minHeight: 420),
                     decoration: currentStory == null || (user == null && currentStory.status == StoryStatus.notStarted)
                         ? BoxDecoration(
                             border: Border.all(width: 2, color: Colors.grey[300]!),
@@ -218,7 +218,7 @@ class _VotingStoryState extends State<VotingStory> {
                                                 width: 200,
                                                 child: TextFormField(
                                                   controller: storyPointController,
-                                                  decoration: InputDecoration(label: Text('Update story points')),
+                                                  decoration: const InputDecoration(label: Text('Update story points')),
                                                   keyboardType: TextInputType.number,
                                                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                                   validator: (value) {
@@ -243,7 +243,7 @@ class _VotingStoryState extends State<VotingStory> {
                                                           updateStoryPoint(currentStory);
                                                         }
                                                       },
-                                                child: Text('Update'),
+                                                child: const Text('Update'),
                                               ),
                                             ],
                                           ),

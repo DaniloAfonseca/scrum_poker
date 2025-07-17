@@ -41,16 +41,16 @@ class ScrumPokerApp extends StatelessWidget {
         ),
         colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.light).copyWith(secondary: Colors.amber), // Accent color
         inputDecorationTheme: InputDecorationTheme(
-          hintStyle: TextStyle(
+          hintStyle: const TextStyle(
             color: Colors.grey, // Color for label when it's inside (unfocused, no text)
             fontSize: 16.0,
             fontWeight: FontWeight.normal,
           ),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blue, width: 2.0)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blue, width: 2.0)),
           filled: true,
-          floatingLabelStyle: TextStyle(
+          floatingLabelStyle: const TextStyle(
             color: Colors.blueGrey, // Color for label when it's floating (focused or has text)
             fontSize: 14.0,
             fontWeight: FontWeight.normal,
@@ -77,9 +77,9 @@ class ScrumPokerApp extends StatelessWidget {
           ),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.white, width: 2.0)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.white, width: 2.0)),
           filled: true,
-          floatingLabelStyle: TextStyle(
+          floatingLabelStyle: const TextStyle(
             color: Colors.white, // Color for label when it's floating (focused or has text)
             fontSize: 14.0,
             fontWeight: FontWeight.bold,

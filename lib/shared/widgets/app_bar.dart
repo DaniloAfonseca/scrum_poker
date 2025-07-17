@@ -54,17 +54,17 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
             onPressed: () {
               navigatorKey.currentContext!.go(Routes.settings);
             },
-            icon: Icon(Icons.settings_outlined),
+            icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
           ),
         if (widget.loginIn != true) ...[
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           user == null
               ? CircleAvatar(
                   backgroundColor: theme.primaryColor,
                   key: _avatarKey,
                   child: IconButton(
-                    icon: Icon(Icons.person_outline, color: Colors.white),
+                    icon: const Icon(Icons.person_outline, color: Colors.white),
                     onPressed: () {
                       _showMenu(context);
                     },
@@ -83,7 +83,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
                         backgroundColor: theme.primaryColor,
                         key: _avatarKey,
                         child: IconButton(
-                          icon: Icon(Icons.person_outline, color: Colors.white),
+                          icon: const Icon(Icons.person_outline, color: Colors.white),
                           onPressed: () => _showMenu(context),
                         ),
                       );
@@ -99,7 +99,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
                         backgroundColor: theme.primaryColor,
                         key: _avatarKey,
                         child: IconButton(
-                          icon: Icon(Icons.person_outline, color: Colors.white),
+                          icon: const Icon(Icons.person_outline, color: Colors.white),
                           onPressed: () {
                             _showMenu(context);
                           },
@@ -121,7 +121,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
       position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
       items: [
         PopupMenuItem(
-          child: ListTile(leading: Icon(Icons.logout_outlined), title: Text('Sign Out'), onTap: signOut),
+          child: ListTile(leading: const Icon(Icons.logout_outlined), title: const Text('Sign Out'), onTap: signOut),
         ),
       ],
     );

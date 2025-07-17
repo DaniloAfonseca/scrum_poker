@@ -33,7 +33,7 @@ class _MainPageRoomState extends State<MainPageRoom> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
         color: theme.primaryColor,
         borderRadius: BorderRadius.circular(15.0),
@@ -74,19 +74,19 @@ class _MainPageRoomState extends State<MainPageRoom> {
                 context: context,
                 items: [
                   PopupMenuItem(
-                    child: Row(spacing: 5, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Edit')]),
+                    child: const Row(spacing: 5, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Edit')]),
                     onTap: () {
                       context.go(Routes.editRoom, extra: userRoom.roomId);
                     },
                   ),
                   PopupMenuItem(
-                    child: Row(spacing: 5, children: [Icon(Icons.play_arrow_outlined, color: Colors.blueAccent), Text('Open')]),
+                    child: const Row(spacing: 5, children: [Icon(Icons.play_arrow_outlined, color: Colors.blueAccent), Text('Open')]),
                     onTap: () async {
                       context.go('${Routes.room}/${userRoom.roomId}');
                     },
                   ),
                   PopupMenuItem(
-                    child: Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')]),
+                    child: const Row(spacing: 5, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Delete')]),
                     onTap: () async {
                       userRoom.dateDeleted = DateTime.now();
                       final json = userRoom.toJson();
@@ -105,7 +105,7 @@ class _MainPageRoomState extends State<MainPageRoom> {
                 position: RelativeRect.fromLTRB(position.dx - 110, position.dy, position.dx, position.dy),
               );
             },
-            icon: Icon(Icons.more_vert, color: Colors.white),
+            icon: const Icon(Icons.more_vert, color: Colors.white),
           ),
         ],
       ),

@@ -67,7 +67,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: GiraffeAppBar(),
+      appBar: const GiraffeAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -75,11 +75,11 @@ class _SettingsPageState extends State<SettingsPage> {
           spacing: 10,
           children: [
             Hyperlink(text: 'Exit settings', onTap: () => web.window.history.back()),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Flexible(
               child: TextFormField(
                 controller: _jiraUrlController,
-                decoration: InputDecoration(labelText: 'Jira URL'),
+                decoration: const InputDecoration(labelText: 'Jira URL'),
                 onChanged: (value) {
                   _box!.put('jiraUrl', value);
                 },

@@ -37,8 +37,11 @@ JiraIssue _$JiraIssueFromJson(Map<String, dynamic> json) => $checkedCreate(
           id: $checkedConvert('id', (v) => v as String),
           key: $checkedConvert('key', (v) => v as String),
           self: $checkedConvert('self', (v) => v as String),
-          storyPoints:
-              $checkedConvert('storyPoints', (v) => (v as num?)?.toInt()),
+          storyPoints: $checkedConvert(
+            'storyPoints',
+            (v) => (v as num?)?.toDouble(),
+            readValue: JiraIssue._readStoryPoints,
+          ),
         );
         return val;
       },

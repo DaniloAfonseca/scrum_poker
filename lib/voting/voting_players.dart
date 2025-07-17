@@ -67,7 +67,7 @@ class VotingPlayers extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: theme.primaryColor,
                     border: Border.all(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
+                    borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
                   ),
                   alignment: Alignment.center,
                   child: Text(currentMessage, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white)),
@@ -76,7 +76,7 @@ class VotingPlayers extends StatelessWidget {
                   Container(
                     height: 95,
                     width: 400,
-                    padding: EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: theme.cardColor.withAlpha(80),
                       border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
@@ -92,7 +92,7 @@ class VotingPlayers extends StatelessWidget {
                                 elevation: 5,
                               ),
                               onPressed: currentStory != null ? () => room_services.storyStart(room, currentStory) : null,
-                              child: Text('Start'),
+                              child: const Text('Start'),
                             )
                             : currentStory?.status == StoryStatus.voted
                             ? Row(
@@ -107,7 +107,7 @@ class VotingPlayers extends StatelessWidget {
                                     elevation: 5,
                                   ),
                                   onPressed: currentStory != null ? () => room_services.nextStory(room, currentStory, votes) : null,
-                                  child: Text('Next story'),
+                                  child: const Text('Next story'),
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
@@ -117,7 +117,7 @@ class VotingPlayers extends StatelessWidget {
                                     elevation: 5,
                                   ),
                                   onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
-                                  child: Text('Clear votes'),
+                                  child: const Text('Clear votes'),
                                 ),
                               ],
                             )
@@ -137,7 +137,7 @@ class VotingPlayers extends StatelessWidget {
                                         elevation: 5,
                                       ),
                                       onPressed: currentStory != null ? () => room_services.flipCards(room, currentStory, votes) : null,
-                                      child: Text('Flip cards'),
+                                      child: const Text('Flip cards'),
                                     ),
                                     ElevatedButton(
                                       style: ElevatedButton.styleFrom(
@@ -147,7 +147,7 @@ class VotingPlayers extends StatelessWidget {
                                         elevation: 5,
                                       ),
                                       onPressed: currentStory != null ? () => room_services.clearStoryVotes(currentStory) : null,
-                                      child: Text('Clear votes'),
+                                      child: const Text('Clear votes'),
                                     ),
                                   ],
                                 ),
@@ -159,7 +159,7 @@ class VotingPlayers extends StatelessWidget {
                                     elevation: 5,
                                   ),
                                   onPressed: currentStory != null ? () => room_services.skipStory(room, currentStory) : null,
-                                  child: Text('Skip story'),
+                                  child: const Text('Skip story'),
                                 ),
                               ],
                             ),
@@ -172,7 +172,7 @@ class VotingPlayers extends StatelessWidget {
                     border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                   ),
                   alignment: Alignment.centerLeft,
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text('Players:', style: theme.textTheme.headlineSmall),
                 ),
                 if (currentUsers != null && (currentUsers.isNotEmpty))
@@ -184,7 +184,7 @@ class VotingPlayers extends StatelessWidget {
                         color: theme.hoverColor,
                         border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
                         borderRadius:
-                            index == currentUsers.length - 1 && firebaseUser == null ? BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)) : null,
+                            index == currentUsers.length - 1 && firebaseUser == null ? const BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)) : null,
                       ),
                       alignment: Alignment.centerLeft,
                       child: VotingPlayer(
@@ -203,14 +203,14 @@ class VotingPlayers extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: theme.hoverColor,
                       border: Border(bottom: BorderSide(color: Colors.grey[300]!), left: BorderSide(color: Colors.grey[300]!), right: BorderSide(color: Colors.grey[300]!)),
-                      borderRadius: BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)),
+                      borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)),
                     ),
                     alignment: Alignment.centerLeft,
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Theme(
                       data: theme.copyWith(dividerColor: Colors.transparent),
                       child: ExpansionTile(
-                        tilePadding: EdgeInsets.all(0),
+                        tilePadding: const EdgeInsets.all(0),
                         title: Text('Invite a teammate:', style: theme.textTheme.headlineSmall),
                         children: [
                           Row(
@@ -220,7 +220,7 @@ class VotingPlayers extends StatelessWidget {
                                 onPressed: () {
                                   Clipboard.setData(ClipboardData(text: web.window.location.href));
                                 },
-                                icon: Icon(Icons.copy),
+                                icon: const Icon(Icons.copy),
                               ),
                             ],
                           ),

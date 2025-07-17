@@ -67,7 +67,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
               ),
               child: const Text('Yes'),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             ElevatedButton(
               onPressed: () {
                 result = false;
@@ -129,44 +129,55 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                     controller: _tabController,
                     tabAlignment: TabAlignment.start,
                     isScrollable: true,
+                    //indicatorPadding: const EdgeInsets.all(5),
+                    labelPadding: const EdgeInsets.all(0),
                     tabs: [
                       Tab(
-                        child: Row(
-                          spacing: 10,
-                          children: [
-                            Text('Active Stories', style: theme.textTheme.titleLarge),
-                            CircleAvatar(
-                              backgroundColor: theme.primaryColor,
-                              radius: 15,
-                              child: Text(activeStories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
-                            ),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Row(
+                            spacing: 10,
+                            children: [
+                              Text('Active Stories', style: theme.textTheme.titleLarge),
+                              CircleAvatar(
+                                backgroundColor: Colors.redAccent,
+                                radius: 12,
+                                child: Text(activeStories.length.toString(), style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       Tab(
-                        child: Row(
-                          spacing: 10,
-                          children: [
-                            Text('Completed Stories', style: theme.textTheme.titleLarge),
-                            CircleAvatar(
-                              backgroundColor: theme.primaryColor,
-                              radius: 15,
-                              child: Text(completedStories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
-                            ),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Row(
+                            spacing: 10,
+                            children: [
+                              Text('Completed Stories', style: theme.textTheme.titleLarge),
+                              CircleAvatar(
+                                backgroundColor: Colors.redAccent,
+                                radius: 12,
+                                child: Text(completedStories.length.toString(), style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       Tab(
-                        child: Row(
-                          spacing: 10,
-                          children: [
-                            Text('All Stories', style: theme.textTheme.titleLarge),
-                            CircleAvatar(
-                              backgroundColor: theme.primaryColor,
-                              radius: 15,
-                              child: Text(stories.length.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
-                            ),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Row(
+                            spacing: 10,
+                            children: [
+                              Text('All Stories', style: theme.textTheme.titleLarge),
+                              CircleAvatar(
+                                backgroundColor: Colors.redAccent,
+                                radius: 12,
+                                child: Text(stories.length.toString(), style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

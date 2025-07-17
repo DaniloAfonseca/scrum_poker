@@ -102,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
     final bool isSmallScreen = screenSize.width < 600;
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: GiraffeAppBar(loginIn: true),
+      appBar: const GiraffeAppBar(loginIn: true),
       body: Center(
         child: AnimatedContainer(
           constraints: BoxConstraints(maxWidth: isSmallScreen ? screenSize.width * 0.9 : 450.0, maxHeight: _isLoading ? 400 : 800.0),
@@ -146,20 +146,9 @@ class _LoginPageState extends State<LoginPage> {
                     ] else ...[
                       TextFormField(
                         controller: _emailController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Email',
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          // border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          // enabledBorder: OutlineInputBorder(
-                          //   borderRadius: BorderRadius.circular(10.0),
-                          //   borderSide: BorderSide(color: Colors.blueGrey.shade200),
-                          // ),
-                          // focusedBorder: OutlineInputBorder(
-                          //   borderRadius: BorderRadius.circular(10.0),
-                          //   borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
-                          // ),
-                          // filled: true,
-                          // fillColor: Colors.grey.shade50,
+                          prefixIcon: Icon(Icons.email_outlined)
                         ),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
@@ -176,21 +165,10 @@ class _LoginPageState extends State<LoginPage> {
                       TextFormField(
                         controller: _passwordController,
                         obscureText: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Password',
                           hintText: '••••••••',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          // border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-                          // enabledBorder: OutlineInputBorder(
-                          //   borderRadius: BorderRadius.circular(10.0),
-                          //   borderSide: BorderSide(color: Colors.blueGrey.shade200),
-                          // ),
-                          // focusedBorder: OutlineInputBorder(
-                          //   borderRadius: BorderRadius.circular(10.0),
-                          //   borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
-                          // ),
-                          // filled: true,
-                          // fillColor: Colors.grey.shade50,
+                          prefixIcon:  Icon(Icons.lock_outline)
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -235,7 +213,7 @@ class _LoginPageState extends State<LoginPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             child: Text(
                               'OR',
-                              style: TextStyle(fontWeight: FontWeight.bold).copyWith(color: theme.brightness == Brightness.light ? Colors.grey : null),
+                              style: const TextStyle(fontWeight: FontWeight.bold).copyWith(color: theme.brightness == Brightness.light ? Colors.grey : null),
                             ),
                           ),
                           Expanded(child: Divider(color: theme.brightness == Brightness.light ? Colors.grey : null, thickness: 1)),
@@ -247,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
                           onPressed: () async {
                             await AuthServices().signInWithJira(context);
                           },
-                          child: Text('Login by JIRA'),
+                          child: const Text('Login by JIRA'),
                         ),
                       ),
                     ],

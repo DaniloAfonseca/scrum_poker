@@ -36,7 +36,7 @@ class VotingStoryItem extends StatelessWidget {
     final hasMenuItems = (onMoveToActive != null || onSkip != null || onMoveUp != null || onMoveDown != null || onDelete != null) && user != null;
     final theme = Theme.of(context);
     return ListTile(
-      contentPadding: EdgeInsets.all(0),
+      contentPadding: const EdgeInsets.all(0),
       minVerticalPadding: 0,
       selectedTileColor: theme.primaryColor.withAlpha(50),
       selectedColor: theme.textTheme.bodyLarge?.color,
@@ -44,14 +44,14 @@ class VotingStoryItem extends StatelessWidget {
       leading: reorderIndex == null || user == null
           ? null
           : Container(
-              padding: EdgeInsets.only(left: 10),
-              height: 30,
+              padding: const EdgeInsets.only(left: 5),
+              height: 45,
               decoration: currentStory?.id == story.id
-                  ? BoxDecoration(
+                  ? const BoxDecoration(
                       border: Border(left: BorderSide(color: Colors.red, width: 2)),
                     )
                   : null,
-              child: ReorderableDragStartListener(index: reorderIndex!, child: const Icon(Icons.drag_handle_outlined)),
+              child: ReorderableDragStartListener(index: reorderIndex!, child: const Icon(Icons.format_list_bulleted_sharp, size: 18)),
             ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -60,7 +60,7 @@ class VotingStoryItem extends StatelessWidget {
             child: Row(
               spacing: 10,
               children: [
-                if (user == null) SizedBox(width: 10),
+                if (user == null) const SizedBox(width: 10),
                 if (story.url == null || story.url!.isEmpty) Text(story.description, style: theme.textTheme.bodyLarge),
                 if (story.url != null && story.url!.isNotEmpty)
                   Hyperlink(text: story.description, textStyle: theme.textTheme.bodyLarge, color: theme.textTheme.bodyLarge?.decorationColor, url: story.url!),
@@ -80,11 +80,11 @@ class VotingStoryItem extends StatelessWidget {
                         child: Container(
                           color: theme.dividerColor,
                           alignment: Alignment.center,
-                          padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                           child: Text(story.estimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
                         ),
                       ),
-                      Spacer(),
+                      const Spacer(),
                     ],
                   ),
           ),
@@ -97,7 +97,7 @@ class VotingStoryItem extends StatelessWidget {
                     child: Container(
                       color: theme.dividerColor,
                       alignment: Alignment.center,
-                      padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                       child: Text(story.revisedEstimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
                     ),
                   ),
@@ -116,7 +116,7 @@ class VotingStoryItem extends StatelessWidget {
                     if (onMoveToActive != null)
                       PopupMenuItem(
                         onTap: onMoveToActive,
-                        child: Row(
+                        child: const Row(
                           spacing: 5,
                           children: [
                             Icon(FontAwesomeIcons.arrowRotateLeft, color: Colors.blueAccent),
@@ -127,7 +127,7 @@ class VotingStoryItem extends StatelessWidget {
                     if (onSkip != null)
                       PopupMenuItem(
                         onTap: onSkip,
-                        child: Row(
+                        child: const Row(
                           spacing: 5,
                           children: [
                             Icon(Icons.skip_next_outlined, color: Colors.blueAccent),
@@ -137,7 +137,7 @@ class VotingStoryItem extends StatelessWidget {
                       ),
                     if (onMoveUp != null)
                       PopupMenuItem(
-                        child: Row(
+                        child: const Row(
                           spacing: 5,
                           children: [
                             Icon(Icons.move_up_outlined, color: Colors.blueAccent),
@@ -150,7 +150,7 @@ class VotingStoryItem extends StatelessWidget {
                       ),
                     if (onMoveDown != null)
                       PopupMenuItem(
-                        child: Row(
+                        child: const Row(
                           spacing: 5,
                           children: [
                             Icon(Icons.move_down_outlined, color: Colors.blueAccent),
@@ -162,9 +162,9 @@ class VotingStoryItem extends StatelessWidget {
                         },
                       ),
                     if (onDelete != null) ...[
-                      PopupMenuItem(height: 1, enabled: false, child: Divider()),
+                      const PopupMenuItem(height: 1, enabled: false, child: Divider()),
                       PopupMenuItem(
-                        child: Row(
+                        child: const Row(
                           spacing: 5,
                           children: [
                             Icon(Icons.delete_outline, color: Colors.red),
@@ -190,7 +190,7 @@ class VotingStoryItem extends StatelessWidget {
                   ),
                 );
               },
-              icon: Icon(Icons.more_vert),
+              icon: const Icon(Icons.more_vert),
             )
           : null,
     );

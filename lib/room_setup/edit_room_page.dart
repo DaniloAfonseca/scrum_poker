@@ -63,7 +63,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
   Future<void> loadRoom() async {
     if (widget.roomId == null) {
       setState(() {
-        room = Room(dateAdded: DateTime.now(), id: Uuid().v4(), cardsToUse: [...VoteEnum.values], userId: _user.uid, status: RoomStatus.notStarted);
+        room = Room(dateAdded: DateTime.now(), id: const Uuid().v4(), cardsToUse: [...VoteEnum.values], userId: _user.uid, status: RoomStatus.notStarted);
       });
     } else {
       final dbUserRooms = await FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').doc(widget.roomId).snapshots().first;
@@ -147,7 +147,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
   }
 
   void addStory(String roomId, List<Story> stories) {
-    stories.add(Story(id: Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: stories.length, userId: _user.uid, roomId: roomId));
+    stories.add(Story(id: const Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: stories.length, userId: _user.uid, roomId: roomId));
     setState(() {
       newStory = true;
     });
@@ -189,7 +189,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
     return LayoutBuilder(
       builder: (context, constraint) {
         return Scaffold(
-          appBar: GiraffeAppBar(),
+          appBar: const GiraffeAppBar(),
           body: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Form(
@@ -225,7 +225,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                       ),
                       Row(
                         children: [
-                          Text('Deleted'),
+                          const Text('Deleted'),
                           Switch(
                             thumbIcon: thumbIcon,
                             value: deleted,
@@ -244,7 +244,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                           elevation: 5,
                         ),
                         onPressed: () => saveRoom(),
-                        child: Text('Save'),
+                        child: const Text('Save'),
                       ),
                     ],
                   ),
@@ -265,12 +265,12 @@ class _EditRoomPageState extends State<EditRoomPage> {
                               // }),
                               controlAffinity: ListTileControlAffinity.leading,
                               value: allCards,
-                              title: Text('Use all cards'),
-                              contentPadding: EdgeInsets.all(0),
+                              title: const Text('Use all cards'),
+                              contentPadding: const EdgeInsets.all(0),
                               splashRadius: 10,
                               tristate: false,
                               checkboxSemanticLabel: 'Use all cards',
-                              visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                               onChanged: useAllCardsToggle,
                             ),
                           ),
@@ -291,10 +291,10 @@ class _EditRoomPageState extends State<EditRoomPage> {
                                         //   return Colors.white;
                                         // }),
                                         controlAffinity: ListTileControlAffinity.leading,
-                                        contentPadding: EdgeInsets.all(0),
+                                        contentPadding: const EdgeInsets.all(0),
                                         splashRadius: 10,
                                         tristate: false,
-                                        visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                                        visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                                         value: selected,
                                         onChanged: (v) => cardInUse(index, v),
                                         title: Text(value.label),
@@ -318,7 +318,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                           elevation: 5,
                         ),
                         onPressed: () => addStory(room.id, stories),
-                        child: Text('Add Story'),
+                        child: const Text('Add Story'),
                       ),
                     ],
                   ),

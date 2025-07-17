@@ -1,14 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/models/jira_issue_response.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
-import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
@@ -38,6 +36,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   bool _isEditing = false;
   bool _integratedWithJira = false;
   StoryType? _storyType;
+  String? _jiraKey;
 
   Timer? _debounce;
   final Duration _debounceDuration = const Duration(milliseconds: 500);
@@ -70,6 +69,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     _searchController.value = _descriptionController.value;
     _urlController.text = _story.url ?? '';
     _storyType = _story.storyType;
+    _jiraKey = _story.jiraKey;
 
     _integratedWithJira = JiraCredentialsManager().currentCredentials != null;
 
@@ -121,7 +121,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   }
 
   Future<JiraIssueResponse?> _performJiraSearch(String value, {String? nextPageToken, int maxResults = 50}) async {
-    if (value.isEmpty || _isEditing) {
+    if (value.isEmpty || !_isEditing) {
       return null;
     }
 
@@ -274,7 +274,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                               child: SearchAnchor.bar(
                                 searchController: _searchController,
                                 barHintText: 'Story title',
-                                barBackgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
+                                //barBackgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
                                 barOverlayColor: WidgetStateProperty.all(Colors.transparent),
                                 barLeading: const Icon(Icons.search),
                                 barTrailing: [],
@@ -323,10 +323,24 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                                           : t.fields!.issueType?.name == 'Story'
                                                           ? const Icon(Icons.turned_in_not_outlined, color: Colors.green)
                                                           : const SizedBox(width: 24),
-                                                      title: Text('${t.id} - ${t.fields!.summary}'),
-                                                      trailing: t.storyPoints != null ? Text('${t.storyPoints!}') : null,
+                                                      title: Row(
+                                                        spacing: 10,
+                                                        children: [
+                                                          Text('${t.key} - ${t.fields!.summary}'),
+                                                          if (t.storyPoints != null)
+                                                            Tooltip(
+                                                              message: 'Story points',
+                                                              child: Container(
+                                                                color: theme.dividerColor,
+                                                                alignment: Alignment.center,
+                                                                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                                                                child: Text(t.storyPoints.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
+                                                              ),
+                                                            ),
+                                                        ],
+                                                      ),
                                                       onTap: () {
-                                                        _descriptionController.text = '${t.id} - ${t.fields!.summary}';
+                                                        _descriptionController.text = '${t.key} - ${t.fields!.summary}';
                                                         if (_jiraUrl?.endsWith('/') == true) {
                                                           _jiraUrl = _jiraUrl!.substring(0, _jiraUrl!.length - 1);
                                                         }
@@ -342,8 +356,9 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                                               : t.fields!.issueType?.name == 'Story'
                                                               ? StoryType.workItem
                                                               : StoryType.others;
+                                                          _jiraKey = t.key;
                                                         });
-                                                        controller.closeView('${t.id} - ${t.fields!.summary}');
+                                                        controller.closeView('${t.key} - ${t.fields!.summary}');
                                                       },
                                                     ),
                                                   ),
@@ -385,20 +400,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           )
                         : TextFormField(
                             controller: _descriptionController,
-                            decoration: InputDecoration(
-                              labelText: 'Story title',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: BorderSide(color: Colors.blueGrey.shade200),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey.shade50,
-                            ),
+                            decoration: const InputDecoration(labelText: 'Story title'),
                             keyboardType: TextInputType.text,
                             validator: _integratedWithJira
                                 ? (value) {
@@ -411,20 +413,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           ),
                     TextFormField(
                       controller: _urlController,
-                      decoration: InputDecoration(
-                        labelText: 'Story URL',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: BorderSide(color: Colors.blueGrey.shade200),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                      ),
+                      decoration: const InputDecoration(labelText: 'Story URL'),
                       keyboardType: TextInputType.text,
                       validator: (value) {
                         if (value != null && !Uri.parse(value).isAbsolute) {
@@ -436,20 +425,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                     if (_integratedWithJira)
                       DropdownButtonHideUnderline(
                         child: DropdownButtonFormField<StoryType>(
-                          decoration: InputDecoration(
-                            labelText: 'Story type',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                              borderSide: BorderSide(color: Colors.blueGrey.shade200),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                              borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
-                          ),
+                          decoration: const InputDecoration(labelText: 'Story type'),
                           value: _storyType,
                           items: StoryType.values
                               .map(
@@ -488,6 +464,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                               _story.url = _urlController.value.text;
                               _story.added = false;
                               _story.storyType = _storyType;
+                              _story.jiraKey = _jiraKey;
                               setState(() {
                                 _isEditing = false;
                               });

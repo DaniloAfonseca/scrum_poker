@@ -93,7 +93,7 @@ class ManagerRouter {
       GoRoute(
         path: Routes.settings,
         builder: (context, state) {
-          return SettingsPage();
+          return const SettingsPage();
         },
       ),
     ],

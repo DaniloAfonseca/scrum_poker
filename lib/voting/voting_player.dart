@@ -37,7 +37,7 @@ class _VotingPlayerState extends State<VotingPlayer> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ListTile(
-      contentPadding: EdgeInsets.only(left: 20),
+      contentPadding: const EdgeInsets.only(left: 20),
       leading: Tooltip(
         message:
             widget.appUser.moderator
@@ -59,13 +59,13 @@ class _VotingPlayerState extends State<VotingPlayer> {
                   : Colors.black,
         ),
       ),
-      title: Row(spacing: 5, children: [Text(widget.appUser.name, style: theme.textTheme.bodyLarge), if (widget.hasVoted) Icon(Icons.check)]),
+      title: Row(spacing: 5, children: [Text(widget.appUser.name, style: theme.textTheme.bodyLarge), if (widget.hasVoted) const Icon(Icons.check)]),
       trailing:
           widget.appUser.moderator
               ? null
               : IconButton(
                 key: _menuKey,
-                icon: Icon(Icons.more_vert),
+                icon: const Icon(Icons.more_vert),
                 onPressed: () {
                   RenderBox box = _menuKey.currentContext!.findRenderObject() as RenderBox;
                   Offset position = box.localToGlobal(Offset.zero);
@@ -75,29 +75,29 @@ class _VotingPlayerState extends State<VotingPlayer> {
                       if (widget.appUser.id == widget.currentAppUser.id)
                         PopupMenuItem(
                           onTap: widget.onUserRenamed,
-                          child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Rename')]),
+                          child: const Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.edit, color: Colors.blueAccent), Text('Rename')]),
                         ),
                       PopupMenuItem<bool>(
                         value: !widget.appUser.observer,
                         enabled: widget.appUser.observer,
                         onTap: !widget.appUser.observer ? null : () => changeUserStatus(false),
-                        child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.play_arrow, color: Colors.blueAccent), Text('Player')]),
+                        child: const Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.play_arrow, color: Colors.blueAccent), Text('Player')]),
                       ),
                       PopupMenuItem<bool>(
                         value: widget.appUser.observer,
                         enabled: !widget.appUser.observer,
                         onTap: widget.appUser.observer ? null : () => changeUserStatus(true),
-                        child: Row(
+                        child: const Row(
                           spacing: 5,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [Icon(Icons.remove_red_eye_outlined, color: Colors.blueAccent), Text('Observer')],
                         ),
                       ),
                       if (widget.appUser.id != widget.currentAppUser.id) ...[
-                        PopupMenuItem(height: 1, enabled: false, child: Divider()),
+                        const PopupMenuItem(height: 1, enabled: false, child: Divider()),
                         PopupMenuItem(
                           onTap: widget.onUserRemoved,
-                          child: Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Remove')]),
+                          child: const Row(spacing: 5, crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.delete_outline, color: Colors.red), Text('Remove')]),
                         ),
                       ],
                     ],

@@ -51,11 +51,11 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: GiraffeAppBar(),
+      appBar: const GiraffeAppBar(),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           var rooms = snapshot.data!.docs.map((t) => UserRoom.fromJson(t.data())).toList();
 
           if (!showDeleted) {
@@ -82,8 +82,8 @@ class _MainPageState extends State<MainPage> {
                       borderRadius: BorderRadius.circular(6),
                       onPressed: sortToggle,
                       children: [
-                        Tooltip(message: 'Sort by earliest date', child: Transform.rotate(origin: Offset(-3, -3), angle: -0.5 * pi, child: Icon(Icons.arrow_back_ios))),
-                        Tooltip(message: 'Sort by latest date', child: Transform.rotate(origin: Offset(-3, 1), angle: 0.5 * pi, child: Icon(Icons.arrow_back_ios))),
+                        Tooltip(message: 'Sort by earliest date', child: Transform.rotate(origin: const Offset(-3, -3), angle: -0.5 * pi, child: const Icon(Icons.arrow_back_ios))),
+                        Tooltip(message: 'Sort by latest date', child: Transform.rotate(origin: const Offset(-3, 1), angle: 0.5 * pi, child: const Icon(Icons.arrow_back_ios))),
                       ],
                     ),
                     Row(
@@ -95,12 +95,12 @@ class _MainPageState extends State<MainPage> {
                           first: false,
                           second: true,
                           spacing: 70.0,
-                          indicatorSize: Size(22, 22),
+                          indicatorSize: const Size(22, 22),
                           animationDuration: const Duration(milliseconds: 600),
                           style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
                           customStyleBuilder: (context, local, global) {
                             if (global.position <= 0.0) {
-                              return ToggleStyle(backgroundColor: Colors.red);
+                              return const ToggleStyle(backgroundColor: Colors.red);
                             }
                             return ToggleStyle(
                               backgroundGradient: LinearGradient(
@@ -133,7 +133,7 @@ class _MainPageState extends State<MainPage> {
                           onPressed: () {
                             context.go(Routes.editRoom);
                           },
-                          child: Text('Add Room'),
+                          child: const Text('Add Room'),
                         ),
                       ],
                     ),

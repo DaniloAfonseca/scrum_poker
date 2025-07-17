@@ -10,7 +10,7 @@ class VotingBoard extends StatelessWidget {
     return StreamBuilder(
       stream: FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('votes').snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         final docs = snapshot.data!.docs;
         return ListView(children: docs.map((doc) => ListTile(title: Text('User: ${doc.id}, Vote: ${doc['value']}'))).toList());
       },
