@@ -89,7 +89,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
     return result;
   }
 
-  Future<void> skipStory(Room room, List<Story> stories, Story story) async {
+  Future<void> skipStory(Room room, List<Story> stories, Story story, [Story? currentStory]) async {
     if (story.status == StoryStatus.started) {
       final canSkip = await showConfirm('Move story to active', 'You are about to skip story "${story.description}" that was started, this will remove the votes.\nAre you sure?');
       if (!canSkip) {
@@ -97,7 +97,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
       }
     }
 
-    await room_services.skipStory(room, story);
+    await room_services.skipStory(room, story, currentStory);
   }
 
   @override
@@ -198,7 +198,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                               story: t,
                               onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(stories, t) : null,
                               onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(stories, t),
-                              onSkip: () => skipStory(widget.room, stories, t),
+                              onSkip: () => skipStory(widget.room, stories, t, currentStory),
                               reorderIndex: index,
                             );
                           },

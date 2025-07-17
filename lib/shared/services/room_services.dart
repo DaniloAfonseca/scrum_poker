@@ -152,7 +152,7 @@ Future<void> removeStory(Room room, List<Story> stories, Story story) async {
   await updateRoomStatus(room, stories);
 }
 
-Future<void> skipStory(Room room, Story story) async {
+Future<void> skipStory(Room room, Story story, [Story? currentStory]) async {
   final stories = await getStories(room.id);
   story.estimate = null;
   story.revisedEstimate = null;
@@ -161,6 +161,12 @@ Future<void> skipStory(Room room, Story story) async {
 
   await clearVotes(story);
   await updateStory(story, {'estimate': story.revisedEstimate, 'revisedEstimate': story.estimate, 'status': $StoryStatusEnumMap[story.status], 'currentStory': story.currentStory});
+
+  if (currentStory != null && currentStory.id != story.id) {
+    currentStory.currentStory = false;
+    await updateStory(currentStory, {'currentStory': currentStory.currentStory});
+  }
+
   await updateRoomStatus(room, stories);
 }
 
