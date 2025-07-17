@@ -18,7 +18,7 @@ class Story {
   StoryStatus status;
   @JsonKey(includeFromJson: false)
   bool added;
-  int? revisedEstimate;
+  double? revisedEstimate;
   int order;
   bool currentStory;
   StoryType? storyType;

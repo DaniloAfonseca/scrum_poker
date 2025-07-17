@@ -31,6 +31,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   final _searchController = SearchController();
   final _descriptionController = TextEditingController();
   final _urlController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   late Story _story;
   bool _isEditing = false;
@@ -56,7 +57,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   Box? _box;
   String? _jiraUrl;
   String? _storyPointFieldName;
-  final _formKey = GlobalKey<FormState>();
+  bool searching = false;
 
   @override
   void initState() {
@@ -177,6 +178,10 @@ class _EditRoomStoryState extends State<EditRoomStory> {
 
     // Start a new debounce timer
     _debounce = Timer(_debounceDuration, () async {
+      setState(() {
+        searching = true;
+      });
+
       final result = await _performJiraSearch(value, nextPageToken: _currentPageToken, maxResults: _pageSize);
       if (!_searchCompleter!.isCompleted) {
         // Only complete if not already completed (e.g., by a new search)
@@ -185,6 +190,9 @@ class _EditRoomStoryState extends State<EditRoomStory> {
       // Update the ValueNotifier with the new future.
       // This will cause the ValueListenableBuilder in the suggestionsBuilder to rebuild.
       _suggestionsFutureNotifier.value = Future.value(result);
+      setState(() {
+        searching = false;
+      });
     });
 
     return _searchCompleter!.future; // This future is what the completer will resolve
@@ -198,8 +206,14 @@ class _EditRoomStoryState extends State<EditRoomStory> {
       } else {
         _currentPageToken = null; // Go back to the very first page if no history
       }
+      setState(() {
+        searching = true;
+      });
       // Directly trigger a search for the new page and update the notifier
       _suggestionsFutureNotifier.value = _performJiraSearch(_currentSearchQuery, nextPageToken: _currentPageToken, maxResults: _pageSize);
+      setState(() {
+        searching = false;
+      });
     });
   }
 
@@ -209,8 +223,14 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     setState(() {
       _previousPageTokens.add(currentNextPageToken);
       _currentPageToken = currentNextPageToken;
+      setState(() {
+        searching = true;
+      });
       // Directly trigger a search for the new page and update the notifier
       _suggestionsFutureNotifier.value = _performJiraSearch(_currentSearchQuery, nextPageToken: _currentPageToken, maxResults: _pageSize);
+      setState(() {
+        searching = false;
+      });
     });
   }
 
@@ -232,7 +252,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
           children: [
             Expanded(
               child: Column(
-                spacing: 10,
+                spacing: 5,
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -242,6 +262,27 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       children: [
                         if (_story.storyType?.icon != null) Icon(_story.storyType!.icon, color: _story.storyType!.color),
                         Text(_story.description, style: theme.textTheme.headlineLarge!.copyWith(color: Colors.white)),
+                        if (_story.estimate != null || _story.revisedEstimate != null) const SizedBox(width: 5),
+                        if (_story.estimate != null)
+                          Tooltip(
+                            message: 'Estimated story point',
+                            child: Container(
+                              color: theme.dividerColor,
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                              child: Text(_story.estimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
+                            ),
+                          ),
+                        if (_story.revisedEstimate != null)
+                          Tooltip(
+                            message: 'Story points',
+                            child: Container(
+                              color: Colors.blueAccent,
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                              child: Text(_story.revisedEstimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                            ),
+                          ),
                       ],
                     ),
 
@@ -287,7 +328,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                         return FutureBuilder<JiraIssueResponse?>(
                                           future: currentFuture, // This is the future we're listening to
                                           builder: (context, snapshot) {
-                                            if (snapshot.connectionState == ConnectionState.waiting) {
+                                            if (searching || snapshot.connectionState == ConnectionState.waiting) {
                                               return const ListTile(title: Text('Loading...'));
                                             } else if (snapshot.hasError) {
                                               return ListTile(title: Text('Error: ${snapshot.error}'));

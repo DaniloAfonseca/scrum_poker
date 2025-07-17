@@ -41,6 +41,7 @@ class VotingStoryItem extends StatelessWidget {
       selectedTileColor: theme.primaryColor.withAlpha(50),
       selectedColor: theme.textTheme.bodyLarge?.color,
       selected: currentStory?.id == story.id,
+      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
       leading: reorderIndex == null || user == null
           ? null
           : Container(
@@ -54,8 +55,10 @@ class VotingStoryItem extends StatelessWidget {
               child: ReorderableDragStartListener(index: reorderIndex!, child: const Icon(Icons.format_list_bulleted_sharp, size: 18)),
             ),
       title: Row(
+        spacing: 5,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          if (story.storyType != null) Icon(story.storyType!.icon, color: story.storyType!.color),
           Flexible(
             child: Row(
               spacing: 10,
@@ -76,7 +79,7 @@ class VotingStoryItem extends StatelessWidget {
                 : Row(
                     children: [
                       Tooltip(
-                        message: 'Calculated estimated',
+                        message: 'Estimated story point',
                         child: Container(
                           color: theme.dividerColor,
                           alignment: Alignment.center,
@@ -92,14 +95,19 @@ class VotingStoryItem extends StatelessWidget {
             width: 120,
             child: story.revisedEstimate == null
                 ? null
-                : Tooltip(
-                    message: 'Real estimated',
-                    child: Container(
-                      color: theme.dividerColor,
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                      child: Text(story.revisedEstimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
-                    ),
+                : Row(
+                    children: [
+                      Tooltip(
+                        message: 'Story points',
+                        child: Container(
+                          color: Colors.blueAccent,
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                          child: Text(story.revisedEstimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+                        ),
+                      ),
+                      const Spacer(),
+                    ],
                   ),
           ),
         ],

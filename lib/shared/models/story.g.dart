@@ -19,8 +19,8 @@ Story _$StoryFromJson(Map<String, dynamic> json) => $checkedCreate(
           estimate: $checkedConvert('estimate', (v) => (v as num?)?.toDouble()),
           status: $checkedConvert(
               'status', (v) => $enumDecode(_$StoryStatusEnumMap, v)),
-          revisedEstimate:
-              $checkedConvert('revisedEstimate', (v) => (v as num?)?.toInt()),
+          revisedEstimate: $checkedConvert(
+              'revisedEstimate', (v) => (v as num?)?.toDouble()),
           order: $checkedConvert('order', (v) => (v as num).toInt()),
           currentStory:
               $checkedConvert('currentStory', (v) => v as bool? ?? false),

@@ -34,6 +34,7 @@ class _VotingStoryState extends State<VotingStory> {
   String? _storyPointFieldName;
   Box? _box;
   final _formKey = GlobalKey<FormState>();
+  final storyPointController = TextEditingController();
 
   @override
   void initState() {
@@ -67,9 +68,13 @@ class _VotingStoryState extends State<VotingStory> {
   }
 
   Future<void> updateStoryPoint(Story story) async {
-    final response = await JiraServices().updateStoryPoints(story.jiraKey!, _storyPointFieldName!, story.revisedEstimate!);
-    if (!response.success) {
-      snackbarMessenger(navigatorKey.currentContext!, message: response.message!);
+    if (_formKey.currentState!.validate()) {
+      story.revisedEstimate = double.parse(storyPointController.text);
+      await room_services.updateRevisedEstimate(story);
+      final response = await JiraServices().updateStoryPoints(story.jiraKey!, _storyPointFieldName!, story.revisedEstimate!);
+      if (!response.success) {
+        snackbarMessenger(navigatorKey.currentContext!, message: response.message!);
+      }
     }
   }
 
@@ -77,7 +82,6 @@ class _VotingStoryState extends State<VotingStory> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final theme = Theme.of(context);
-    final storyPointController = TextEditingController();
 
     return LayoutBuilder(
       builder: (ctx, constraint) => StreamBuilder(
@@ -101,18 +105,7 @@ class _VotingStoryState extends State<VotingStory> {
                 children: [
                   if (currentStory?.url == null) Text(currentStory?.description ?? '', style: theme.textTheme.headlineMedium),
                   if (currentStory?.url != null)
-                    Hyperlink(
-                      text: currentStory?.description ?? currentStory?.url ?? '',
-                      textStyle: theme.textTheme.headlineMedium!,
-                      onTap: () async {
-                        final Uri uri = Uri.parse(currentStory!.url!);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        } else {
-                          throw 'Could not launch ${currentStory.url!}';
-                        }
-                      },
-                    ),
+                    Hyperlink(text: currentStory?.description ?? currentStory?.url ?? '', textStyle: theme.textTheme.headlineMedium!, url: currentStory!.url!),
                   Container(
                     width: constraint.maxWidth,
                     constraints: const BoxConstraints(minHeight: 420),

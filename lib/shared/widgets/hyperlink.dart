@@ -13,16 +13,16 @@ class Hyperlink extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final localColor = color ?? theme.colorScheme.primary;
-    final localTextStyle =
-        textStyle != null
-            ? textStyle!.copyWith(color: localColor, decorationColor: localColor, decoration: TextDecoration.underline)
-            : TextStyle(
-              color: localColor, // Using primary color for consistency
-              decorationColor: localColor,
-              decoration: TextDecoration.underline,
-            );
+    final localTextStyle = textStyle != null
+        ? textStyle!.copyWith(color: localColor, decorationColor: localColor, decoration: TextDecoration.underline)
+        : TextStyle(
+            color: localColor, // Using primary color for consistency
+            decorationColor: localColor,
+            decoration: TextDecoration.underline,
+          );
     return Link(
       uri: url != null ? Uri.parse(url!) : null,
+      target: LinkTarget.blank,
       builder: (context, followLink) {
         return InkWell(
           onTap: onTap ?? followLink, // This triggers the URL launch

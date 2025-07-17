@@ -177,6 +177,10 @@ Future<void> flipCards(Room room, Story story, List<Vote> votes) async {
   await updateRoomStatus(room, stories);
 }
 
+Future<void> updateRevisedEstimate(Story story) async {
+  await updateStory(story, {'revisedEstimate': story.revisedEstimate});
+}
+
 Future<void> moveStoryToActive(Room room, List<Story> stories, Story story) async {
   if (story.status != StoryStatus.skipped) {
     return;

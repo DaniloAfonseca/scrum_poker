@@ -249,19 +249,8 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                   padding: const EdgeInsets.all(12.0),
                   child: Hyperlink(
                     text: 'Add new story',
-                    //textColor: theme.primaryColor,
                     textStyle: theme.textTheme.bodyLarge,
-                    onTap: () async {
-                      final host = web.window.location.host;
-                      final protocol = web.window.location.protocol;
-                      final urlString = '$protocol//$host/editRoom/${currentStory!.roomId}';
-                      final Uri uri = Uri.parse(urlString);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      } else {
-                        throw 'Could not launch $urlString';
-                      }
-                    },
+                    url: currentStory == null ? null : '${web.window.location.protocol}//${web.window.location.host}/editRoom/${currentStory!.roomId}',
                   ),
                 ),
               ),

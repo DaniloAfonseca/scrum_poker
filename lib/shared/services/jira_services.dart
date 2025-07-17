@@ -157,7 +157,7 @@ class JiraServices extends BaseServices {
     }
   }
 
-  Future<BaseResponse> updateStoryPoints(String key, String storyPointField, int value) async {
+  Future<BaseResponse> updateStoryPoints(String key, String storyPointField, double value) async {
     final checkCredentialsResponse = await checkCredentials();
     if (checkCredentialsResponse != null) return BaseResponse(success: false, message: checkCredentialsResponse);
 
