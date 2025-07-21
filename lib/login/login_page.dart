@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/shared/helpers/credentials_helper.dart' as credentials_helper;
-import 'package:scrum_poker/shared/models/jira_credentials.dart';
+import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';

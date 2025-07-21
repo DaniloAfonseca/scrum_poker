@@ -5,7 +5,7 @@ import 'package:scrum_poker/login/login_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/edit_room_page.dart';
 import 'package:scrum_poker/settings_page.dart';
-import 'package:scrum_poker/shared/models/jira_credentials.dart';
+import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/voting/room_page.dart';

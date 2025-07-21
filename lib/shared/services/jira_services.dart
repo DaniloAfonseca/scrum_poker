@@ -6,6 +6,7 @@ import 'package:scrum_poker/shared/helpers/credentials_helper.dart' as credentia
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/base_response.dart';
 import 'package:scrum_poker/shared/models/access_token.dart';
+import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/models/jira_field.dart';
 import 'package:scrum_poker/shared/models/jira_issue_response.dart';

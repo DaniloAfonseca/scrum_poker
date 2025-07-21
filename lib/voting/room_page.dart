@@ -1,11 +1,10 @@
-import 'dart:convert';
 import 'dart:js_interop';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_ce/hive.dart';
+import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
@@ -35,7 +34,6 @@ class _RoomPageState extends State<RoomPage> {
   final _appUser = ValueNotifier<AppUser?>(null);
 
   bool _isLoading = true;
-  Box? _box;
   bool invalidRoom = false;
   Room? _oldRoom;
   final _oldCurrentUsers = <AppUser>[];
@@ -57,19 +55,17 @@ class _RoomPageState extends State<RoomPage> {
     storiesStream.listen(onStoriesData);
     currentUsersStream.listen(onCurrentUsersData);
 
-    web.window.onbeforeunload =
-        (JSAny data) {
-          if (_appUser.value != null) {
-            room_services.removeUser(widget.roomId, _appUser.value!.id);
-          }
-        }.toJS;
+    web.window.onbeforeunload = (JSAny data) {
+      if (_appUser.value != null) {
+        room_services.removeUser(widget.roomId, _appUser.value!.id);
+      }
+    }.toJS;
 
-    web.window.onpopstate =
-        (JSAny data) {
-          if (_appUser.value != null) {
-            room_services.removeUser(widget.roomId, _appUser.value!.id);
-          }
-        }.toJS;
+    web.window.onpopstate = (JSAny data) {
+      if (_appUser.value != null) {
+        room_services.removeUser(widget.roomId, _appUser.value!.id);
+      }
+    }.toJS;
 
     loadUser();
     super.initState();
@@ -175,18 +171,13 @@ class _RoomPageState extends State<RoomPage> {
       _isLoading = true;
     });
 
-    _box = await Hive.openBox('scrumPoker');
 
     if (user?.metadata != null) {
       final appUser = AppUser.fromUser(user!, widget.roomId);
-      _box!.put('appUser', appUser.toJson());
+      SettingsManager().updateAppUser(appUser);
     }
 
-    final appUserMap = _box!.get('appUser');
-    if (appUserMap != null) {
-      final map = jsonDecode(jsonEncode(appUserMap));
-      _appUser.value = AppUser.fromJson(map);
-    }
+    _appUser.value = SettingsManager().appUser;
 
     setState(() {
       _isLoading = false;
@@ -200,7 +191,7 @@ class _RoomPageState extends State<RoomPage> {
 
     final appUser = user == null ? AppUser(name: username, id: const Uuid().v4()) : AppUser.fromUser(user!, widget.roomId);
 
-    _box!.put('appUser', appUser.toJson());
+    SettingsManager().updateAppUser(appUser);
 
     _appUser.value = appUser;
   }
@@ -257,90 +248,88 @@ class _RoomPageState extends State<RoomPage> {
       builder: (ctx, value, child) {
         return Scaffold(
           key: Key('${_appUser.value}'),
-          appBar:
-              (_appUser.value == null)
-                  ? null
-                  : GiraffeAppBar(
-                    onSignOut: () {
-                      room_services.removeUser(widget.roomId, _appUser.value!.id);
-                      setState(() {
-                        _appUser.value = null;
-                      });
-                    },
-                  ),
-          body:
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : (_appUser.value == null)
-                  ? RoomLogin(isModerator: user != null, login: logIn)
-                  : StreamBuilder(
-                    stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                      final map = snapshot.data!.data()!;
-                      final room = Room.fromJson(map);
+          appBar: (_appUser.value == null)
+              ? null
+              : GiraffeAppBar(
+                  onSignOut: () {
+                    room_services.removeUser(widget.roomId, _appUser.value!.id);
+                    setState(() {
+                      _appUser.value = null;
+                    });
+                  },
+                ),
+          body: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : (_appUser.value == null)
+              ? RoomLogin(isModerator: user != null, login: logIn)
+              : StreamBuilder(
+                  stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                    final map = snapshot.data!.data()!;
+                    final room = Room.fromJson(map);
 
-                      _appUser.value!.roomId = room.id;
+                    _appUser.value!.roomId = room.id;
 
-                      room_services.addUserToRoom(_appUser.value);
+                    room_services.addUserToRoom(_appUser.value);
 
-                      return StreamBuilder(
-                        stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').snapshots(),
-                        builder: (context, snapshot) {
-                          final maps = snapshot.data?.docs.map((t) => t.data());
-                          final stories = maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[];
-                          stories.sortBy((t) => t.order);
+                    return StreamBuilder(
+                      stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').snapshots(),
+                      builder: (context, snapshot) {
+                        final maps = snapshot.data?.docs.map((t) => t.data());
+                        final stories = maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[];
+                        stories.sortBy((t) => t.order);
 
-                          if (user != null) {
-                            room_services.setCurrentStory(stories);
-                          }
+                        if (user != null) {
+                          room_services.setCurrentStory(stories);
+                        }
 
-                          currentStoryVN.value = stories.firstWhereOrNull((t) => t.currentStory);
+                        currentStoryVN.value = stories.firstWhereOrNull((t) => t.currentStory);
 
-                          return SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(room.name!, style: theme.textTheme.headlineLarge),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    spacing: 20,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          spacing: 20,
-                                          children: [
-                                            VotingStory(
-                                              appUser: _appUser.value,
-                                              roomId: room.id,
-                                              votesChanged: (votes) {
-                                                votesVN.value = votes;
-                                              },
-                                            ),
-                                            VotingStoryList(room: room),
-                                          ],
-                                        ),
+                        return SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(room.name!, style: theme.textTheme.headlineLarge),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  spacing: 20,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        spacing: 20,
+                                        children: [
+                                          VotingStory(
+                                            appUser: _appUser.value,
+                                            roomId: room.id,
+                                            votesChanged: (votes) {
+                                              votesVN.value = votes;
+                                            },
+                                          ),
+                                          VotingStoryList(room: room),
+                                        ],
                                       ),
+                                    ),
 
-                                      VotingPlayers(
-                                        currentStoryVN: currentStoryVN,
-                                        votesVN: votesVN,
-                                        room: room,
-                                        appUser: _appUser.value!,
-                                        onUserRenamed: (appUser) => renameUser(appUser, room),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                    VotingPlayers(
+                                      currentStoryVN: currentStoryVN,
+                                      votesVN: votesVN,
+                                      room: room,
+                                      appUser: _appUser.value!,
+                                      onUserRenamed: (appUser) => renameUser(appUser, room),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
         );
       },
     );

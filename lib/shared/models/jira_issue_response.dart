@@ -1,4 +1,3 @@
-import 'package:hive_ce/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'jira_issue_response.g.dart';
@@ -27,11 +26,11 @@ class JiraIssue {
 
   factory JiraIssue.fromJson(Map<String, dynamic> json) => _$JiraIssueFromJson(json);
 
-  /// Reads storyPoints from fields["customfield_10026"] or other key
+  /// Reads storyPoints from fields["customField_10026"] or other key
   static Object? _readStoryPoints(Map json, String _) {
     final fields = json['fields'];
     if (fields is Map<String, dynamic>) {
-      // Try to find any customfield_* that contains numeric story points
+      // Try to find any customField_* that contains numeric story points
       for (final entry in fields.entries) {
         if (entry.key.startsWith('customfield_') && entry.value is num) {
           return entry.value;

@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hive_ce/hive.dart';
+import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
@@ -17,7 +17,6 @@ import 'package:scrum_poker/shared/services/room_services.dart' as room_services
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 import 'package:scrum_poker/voting/voting_pie_chart.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class VotingStory extends StatefulWidget {
   final AppUser? appUser;
@@ -32,24 +31,13 @@ class VotingStory extends StatefulWidget {
 
 class _VotingStoryState extends State<VotingStory> {
   String? _storyPointFieldName;
-  Box? _box;
   final _formKey = GlobalKey<FormState>();
   final storyPointController = TextEditingController();
 
   @override
   void initState() {
-    initialise();
+    _storyPointFieldName = SettingsManager().storyPointFieldName;
     super.initState();
-  }
-
-  Future<void> initialise() async {
-    if (_box == null || !_box!.isOpen) {
-      _box = await Hive.openBox('ScrumPoker');
-    }
-
-    setState(() {
-      _storyPointFieldName = _box!.get('storyPointFieldName');
-    });
   }
 
   Future<void> vote(String roomId, Story story, List<Vote> votes, VoteEnum vote) async {
@@ -103,9 +91,8 @@ class _VotingStoryState extends State<VotingStory> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 10,
                 children: [
-                  if (currentStory?.url == null) Text(currentStory?.description ?? '', style: theme.textTheme.headlineMedium),
-                  if (currentStory?.url != null)
-                    Hyperlink(text: currentStory?.description ?? currentStory?.url ?? '', textStyle: theme.textTheme.headlineMedium!, url: currentStory!.url!),
+                  if (currentStory?.url == null) Text(currentStory?.fullDescription ?? '', style: theme.textTheme.headlineMedium),
+                  if (currentStory?.url != null) Hyperlink(text: currentStory?.fullDescription ?? '', textStyle: theme.textTheme.headlineMedium!, url: currentStory!.url!),
                   Container(
                     width: constraint.maxWidth,
                     constraints: const BoxConstraints(minHeight: 420),

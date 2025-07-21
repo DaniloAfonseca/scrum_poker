@@ -2,12 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:provider/provider.dart';
+import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
-import 'package:scrum_poker/theme_manager.dart';
+import 'package:scrum_poker/shared/managers/theme_manager.dart';
 
 class GiraffeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final GestureTapCallback? onSignOut;
@@ -128,8 +128,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
   }
 
   void signOut() async {
-    final box = await Hive.openBox('scrumPoker');
-    box.delete('appUser');
+    SettingsManager().deleteAppUser();
     widget.onSignOut?.call();
     if (user != null) {
       AuthServices().signOut().then((_) {

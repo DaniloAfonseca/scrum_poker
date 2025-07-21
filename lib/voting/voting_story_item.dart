@@ -64,9 +64,9 @@ class VotingStoryItem extends StatelessWidget {
               spacing: 10,
               children: [
                 if (user == null) const SizedBox(width: 10),
-                if (story.url == null || story.url!.isEmpty) Text(story.description, style: theme.textTheme.bodyLarge),
+                if (story.url == null || story.url!.isEmpty) Text(story.fullDescription, style: theme.textTheme.bodyLarge),
                 if (story.url != null && story.url!.isNotEmpty)
-                  Hyperlink(text: story.description, textStyle: theme.textTheme.bodyLarge, color: theme.textTheme.bodyLarge?.decorationColor, url: story.url!),
+                  Hyperlink(text: story.fullDescription, textStyle: theme.textTheme.bodyLarge, color: theme.textTheme.bodyLarge?.decorationColor, url: story.url!),
 
                 TextTag(text: 'Skipped', backgroundColor: Colors.red, foreColor: Colors.white, display: story.status == StoryStatus.skipped),
               ],

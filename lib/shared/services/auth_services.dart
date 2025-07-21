@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:scrum_poker/jira_authentication.dart';
-import 'package:scrum_poker/shared/models/jira_credentials.dart';
+import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/services/base_services.dart';
 import 'package:url_launcher/url_launcher.dart';
 

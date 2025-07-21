@@ -71,4 +71,12 @@ class Story {
     }
     return ret;
   }
+
+  String get fullDescription {
+    if (jiraKey != null && jiraKey!.isNotEmpty && description.isNotEmpty) {
+      return '$jiraKey - $description';
+    }
+
+    return description;
+  }
 }

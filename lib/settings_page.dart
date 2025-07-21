@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_ce/hive.dart';
+import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/jira_field.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
@@ -17,7 +17,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  Box? _box;
   final _jiraUrlController = TextEditingController();
   final _fields = <JiraField>[];
 
@@ -31,11 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> initialise() async {
-    if (_box == null || !_box!.isOpen) {
-      _box = await Hive.openBox('ScrumPoker');
-    }
-
-    _jiraUrlController.text = _box!.get('jiraUrl') ?? '';
+    _jiraUrlController.text = SettingsManager().jiraUrl ?? '';
     _fields.clear();
 
     setState(() {
@@ -47,7 +42,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (response.success) {
         _fields.addAll(response.data!);
         _fields.sortBy((t) => t.name);
-        final storyPointFieldName = _box!.get('storyPointFieldName');
+        final storyPointFieldName = SettingsManager().storyPointFieldName;
         setState(() {
           _fieldSearchController.text = _fields.firstWhereOrNull((t) => t.key == storyPointFieldName)?.name ?? '';
         });
@@ -81,7 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 controller: _jiraUrlController,
                 decoration: const InputDecoration(labelText: 'Jira URL'),
                 onChanged: (value) {
-                  _box!.put('jiraUrl', value);
+                  SettingsManager().updateJiraUrl(value);
                 },
                 keyboardType: TextInputType.url,
               ),
@@ -130,7 +125,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 _fieldSearchController.text = field.name; // Update text
                                 // Close the search view and pass the selected value
                                 controller.closeView(field.name);
-                                _box!.put('storyPointFieldName', field.key); // Store the entire JiraField object (or just its ID)
+                                SettingsManager().updateStoryPointFieldName(field.key);// Store the entire JiraField object (or just its ID)
                               },
                             );
                           }).toList();

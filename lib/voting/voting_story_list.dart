@@ -9,7 +9,6 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/voting/voting_story_item.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web;
 
 class VotingStoryList extends StatefulWidget {
@@ -250,7 +249,7 @@ class _VotingStoryListState extends State<VotingStoryList> with SingleTickerProv
                   child: Hyperlink(
                     text: 'Add new story',
                     textStyle: theme.textTheme.bodyLarge,
-                    url: currentStory == null ? null : '${web.window.location.protocol}//${web.window.location.host}/editRoom/${currentStory!.roomId}',
+                    url: currentStory == null ? null : '${web.window.location.protocol}//${web.window.location.host}/editRoom/${currentStory.roomId}',
                   ),
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:scrum_poker/shared/models/access_token.dart';
+import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 
