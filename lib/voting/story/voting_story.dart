@@ -1,25 +1,16 @@
-import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/models/vote.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
-import 'package:scrum_poker/shared/services/jira_services.dart';
-import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
-import 'package:scrum_poker/shared/widgets/snack_bar.dart';
-import 'package:scrum_poker/voting/story/voting_pie_chart.dart';
 import 'package:scrum_poker/voting/story/voting_results.dart';
 import 'package:scrum_poker/voting/story/voting_story_cards.dart';
-import 'package:scrum_poker/voting/story/voting_story_voted_cards.dart';
 
 class VotingStory extends StatefulWidget {
   final AppUser? appUser;
