@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/room_setup/edit_room_story_jira_search.dart';
+import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/models/jira_issue_response.dart';
@@ -14,10 +15,21 @@ class EditRoomStory extends StatefulWidget {
   final FutureOr<void> Function() onDelete;
   final FutureOr<void> Function()? onMoveUp;
   final FutureOr<void> Function()? onMoveDown;
+  final FutureOr<void> Function() onCancelled;
   final int nextOrder;
   final String roomId;
   final String userId;
-  const EditRoomStory({super.key, this.story, required this.onDelete, this.onMoveUp, this.onMoveDown, required this.nextOrder, required this.userId, required this.roomId});
+  const EditRoomStory({
+    super.key,
+    this.story,
+    required this.onDelete,
+    this.onMoveUp,
+    this.onMoveDown,
+    required this.nextOrder,
+    required this.userId,
+    required this.roomId,
+    required this.onCancelled,
+  });
 
   @override
   State<EditRoomStory> createState() => _EditRoomStoryState();
@@ -51,6 +63,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
 
     _integratedWithJira = JiraCredentialsManager().currentCredentials != null;
 
+    _jiraUrl = SettingsManager().jiraUrl;
+
     super.initState();
   }
 
@@ -73,7 +87,6 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
     return Form(
       key: _formKey,
       child: Container(
@@ -216,7 +229,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       children: [
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
+                            backgroundColor: theme.primaryColor,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
@@ -248,6 +261,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                             setState(() {
                               _isEditing = false;
                             });
+                            widget.onCancelled();
                           },
                         ),
                       ],

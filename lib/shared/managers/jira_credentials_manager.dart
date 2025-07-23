@@ -31,7 +31,7 @@ class JiraCredentialsManager {
 
   Future<void> setCredentials(JiraCredentials credentials) async {
     await initialise();
-    SettingsManager().setCredentials(credentials);
+    await SettingsManager().setCredentials(credentials);
     _currentCredentials = credentials;
   }
 
@@ -41,14 +41,7 @@ class JiraCredentialsManager {
     _currentCredentials = null;
   }
 
-  Future<void> _ensureCredentialsLoaded() async {
-    if (_currentCredentials == null) {
-      await initialise();
-    }
-  }
-
   JiraCredentials? get currentCredentials {
-    _ensureCredentialsLoaded();
     return _currentCredentials;
   }
 }

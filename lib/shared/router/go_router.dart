@@ -6,7 +6,9 @@ import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/edit_room_page.dart';
 import 'package:scrum_poker/settings_page.dart';
 import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
+import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
+import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/voting/room_page.dart';
 
@@ -26,6 +28,8 @@ Future<String?> authGuard(BuildContext context, GoRouterState state) async {
       if (JiraCredentialsManager().currentCredentials != null) {
         final response = await JiraServices().checkCredentials();
         if (response != null) {
+          SettingsManager().deleteAppUser();
+          AuthServices().signOut();
           JiraCredentialsManager().clearCredentials();
           redirectToLogin = true;
         }

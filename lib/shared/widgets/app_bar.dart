@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
@@ -36,7 +35,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
+    final themeManager = ThemeManager();
     return AppBar(
       backgroundColor: theme.scaffoldBackgroundColor,
       actionsPadding: const EdgeInsets.only(right: 16.0),
@@ -49,14 +48,6 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
           icon: Icon(themeManager.themeMode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
           tooltip: themeManager.themeMode == ThemeMode.dark ? 'Light Mode' : 'Dark Mode',
         ),
-        if (user != null && widget.loginIn != true)
-          IconButton(
-            onPressed: () {
-              navigatorKey.currentContext!.go(Routes.settings);
-            },
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-          ),
         if (widget.loginIn != true) ...[
           const SizedBox(width: 10),
           user == null
@@ -123,6 +114,10 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
         PopupMenuItem(
           child: ListTile(leading: const Icon(Icons.logout_outlined), title: const Text('Sign Out'), onTap: signOut),
         ),
+        if (user != null && widget.loginIn != true)
+          PopupMenuItem(
+            child: ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () => navigatorKey.currentContext!.go(Routes.settings)),
+          ),
       ],
     );
   }

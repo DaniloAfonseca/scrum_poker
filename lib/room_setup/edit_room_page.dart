@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +15,7 @@ import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
+import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 import 'package:uuid/uuid.dart';
 import 'package:collection/collection.dart';
 import 'package:web/web.dart' as web;
@@ -32,7 +35,6 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
   late Room room;
 
-  bool newStory = false;
   bool deleted = false;
   bool allCards = true;
   final cardsToUse = <bool>[];
@@ -117,7 +119,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
       await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
 
       // save story
-      for (var story in stories) {
+      for (var story in stories.where((s) => s.added == false)) {
         await FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').doc(story.id).set(story.toJson());
       }
 
@@ -125,6 +127,11 @@ class _EditRoomPageState extends State<EditRoomPage> {
       final userRoom = UserRoom.fromRoom(room);
       final userRoomsMap = userRoom.toJson();
       await FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').doc(room.id).set(userRoomsMap);
+
+      if (stories.any((s) => s.added)) {
+        snackbarMessenger(navigatorKey.currentContext!, message: 'Unsaved story were skipped.');
+        await Future.delayed(const Duration(microseconds: 500));
+      }
 
       navigatorKey.currentContext!.go(Routes.home);
     }
@@ -147,9 +154,8 @@ class _EditRoomPageState extends State<EditRoomPage> {
   }
 
   void addStory(String roomId, List<Story> stories) {
-    stories.add(Story(id: const Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: stories.length, userId: _user.uid, roomId: roomId));
     setState(() {
-      newStory = true;
+      stories.add(Story(id: const Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: stories.length, userId: _user.uid, roomId: roomId));
     });
   }
 
@@ -308,6 +314,13 @@ class _EditRoomPageState extends State<EditRoomPage> {
                                 nextOrder: stories.length,
                                 userId: _user.uid,
                                 roomId: room.id,
+                                onCancelled: () {
+                                  if (story.added) {
+                                    setState(() {
+                                      stories.remove(story);
+                                    });
+                                  }
+                                },
                               ),
                             )
                             .toList(),

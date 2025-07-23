@@ -5,13 +5,17 @@ import 'package:hive_ce/hive.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/jira_credentials.dart';
 
+const String _boxName = 'ScrumPoker';
+const String _credentialsKey = 'jira-credentials';
+const String _jiraUrlKey = 'jiraUrl';
+const String _storyPointFieldNameKey = 'storyPointFieldName';
+const String _appUserKey = 'appUser';
+const String _themeModeKey = 'themeMode';
+
 class SettingsManager {
   static final SettingsManager _instance = SettingsManager._internal();
   factory SettingsManager() => _instance;
   SettingsManager._internal();
-
-  static const String _boxName = 'ScrumPoker';
-  static const String _credentialsKey = 'jira-credentials';
 
   Box? _box;
   bool _isInitialising = false;
@@ -28,6 +32,9 @@ class SettingsManager {
   AppUser? _appUser;
   AppUser? get appUser => _appUser;
 
+  int _themeModeIndex = 1;
+  int get themeModeIndex => _themeModeIndex;
+
   Future<void> initialise() async {
     if (_isInitialising) return;
     _isInitialising = true;
@@ -36,23 +43,25 @@ class SettingsManager {
       if (_box == null || !_box!.isOpen) {
         _box = await Hive.openBox(_boxName);
       }
-      final credentials = _box!.get(_credentialsKey);
 
+      final credentials = _box!.get(_credentialsKey);
       if (credentials != null) {
         _currentCredentials = JiraCredentials.fromMap(Map<String, dynamic>.from(credentials));
       } else {
         _currentCredentials = null;
       }
 
-      _jiraUrl = _box!.get('jiraUrl') ?? '';
+      _jiraUrl = _box!.get(_jiraUrlKey) ?? '';
 
-      _storyPointFieldName = _box!.get('storyPointFieldName');
+      _storyPointFieldName = _box!.get(_storyPointFieldNameKey);
 
-      final appUserMap = _box!.get('appUser');
+      final appUserMap = _box!.get(_appUserKey);
       if (appUserMap != null) {
         final map = jsonDecode(jsonEncode(appUserMap));
         _appUser = AppUser.fromJson(map);
       }
+
+      _themeModeIndex = _box!.get(_themeModeKey) ?? 1;
     } catch (e) {
       if (kDebugMode) {
         print('Error initialising Jira Credentials: $e');
@@ -77,22 +86,27 @@ class SettingsManager {
   }
 
   void updateJiraUrl(String value) {
-    _box!.put('jiraUrl', value);
+    _box!.put(_jiraUrlKey, value);
     _jiraUrl = value;
   }
 
   void updateStoryPointFieldName(String value) {
-    _box!.put('storyPointFieldName', value);
+    _box!.put(_storyPointFieldNameKey, value);
     _storyPointFieldName = value;
   }
 
   void updateAppUser(AppUser value) {
-    _box!.put('appUser', value.toJson());
+    _box!.put(_appUserKey, value.toJson());
     _appUser = value;
   }
 
+  void updateThemeIndex(int value) {
+    _box!.put(_themeModeKey, value);
+    _themeModeIndex = value;
+  }
+
   void deleteAppUser() {
-    _box!.delete('appUser');
+    _box!.delete(_appUserKey);
     _appUser = null;
   }
 }
