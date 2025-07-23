@@ -172,7 +172,7 @@ Future<void> skipStory(Room room, Story story, [Story? currentStory]) async {
 
 Future<void> flipCards(Room room, Story story, List<Vote> votes) async {
   final stories = await getStories(room.id);
-  final validVotes = votes.where((e) => e.value.value != null);
+  final validVotes = votes.where((e) => e.value.value != null).toList();
   final validVotesSum = validVotes.map((e) => e.value.value).reduce((e, t) => e! + t!)!;
   story.estimate = double.parse((validVotesSum / validVotes.length).toStringAsFixed(2));
   story.revisedEstimate = null;

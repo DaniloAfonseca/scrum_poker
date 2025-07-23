@@ -190,158 +190,131 @@ class _EditRoomPageState extends State<EditRoomPage> {
       builder: (context, constraint) {
         return Scaffold(
           appBar: const GiraffeAppBar(),
-          body: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                spacing: 20,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Hyperlink(text: 'Back to list', onTap: () => web.window.history.back()),
-                  Row(
-                    spacing: 10,
-                    children: [
-                      Flexible(
-                        child: TextFormField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(
-                            //hintStyle: theme.textTheme.bodyLarge!.copyWith(color: Colors.grey),
-                            labelText: 'Room description',
-                            //border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            //enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blueGrey.shade200)),
-                            //focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: theme.primaryColor, width: 2.0)),
-                            //filled: true,
-                            //fillColor: theme.primaryColor,
-                          ),
-                          keyboardType: TextInputType.text,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Invalid room description';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          const Text('Deleted'),
-                          Switch(
-                            thumbIcon: thumbIcon,
-                            value: deleted,
-                            //activeColor: Colors.blue[600],
-                            inactiveThumbColor: Colors.grey[500],
-                            trackOutlineColor: borderColor,
-                            onChanged: roomDeleteToggle,
-                          ),
-                        ],
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                          elevation: 5,
-                        ),
-                        onPressed: () => saveRoom(),
-                        child: const Text('Save'),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 150,
-                            child: CheckboxListTile(
-                              // fillColor: WidgetStateProperty.resolveWith((states) {
-                              //   if (states.contains(WidgetState.selected)) {
-                              //     return Colors.blueAccent;
-                              //   }
-                              //   return Colors.white;
-                              // }),
-                              controlAffinity: ListTileControlAffinity.leading,
-                              value: allCards,
-                              title: const Text('Use all cards'),
-                              contentPadding: const EdgeInsets.all(0),
-                              splashRadius: 10,
-                              tristate: false,
-                              checkboxSemanticLabel: 'Use all cards',
-                              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                              onChanged: useAllCardsToggle,
-                            ),
-                          ),
-                          SizedBox(
-                            width: constraint.maxWidth - 40,
-                            child: Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.start,
-                              children:
-                                  VoteEnum.values.mapIndexed((index, value) {
-                                    final selected = index < cardsToUse.length ? cardsToUse[index] : false;
-                                    return SizedBox(
-                                      width: 120,
-                                      child: CheckboxListTile(
-                                        // fillColor: WidgetStateProperty.resolveWith((states) {
-                                        //   if (states.contains(WidgetState.selected)) {
-                                        //     return Colors.blueAccent;
-                                        //   }
-                                        //   return Colors.white;
-                                        // }),
-                                        controlAffinity: ListTileControlAffinity.leading,
-                                        contentPadding: const EdgeInsets.all(0),
-                                        splashRadius: 10,
-                                        tristate: false,
-                                        visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                                        value: selected,
-                                        onChanged: (v) => cardInUse(index, v),
-                                        title: Text(value.label),
-                                      ),
-                                    );
-                                  }).toList(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                          elevation: 5,
-                        ),
-                        onPressed: () => addStory(room.id, stories),
-                        child: const Text('Add Story'),
-                      ),
-                    ],
-                  ),
-                  SingleChildScrollView(
-                    child: Column(
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  spacing: 20,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Hyperlink(text: 'Back to list', onTap: () => web.window.history.back()),
+                    Row(
                       spacing: 10,
-                      children:
-                          stories
-                              .mapIndexed(
-                                (index, story) => EditRoomStory(
-                                  story: story,
-                                  onDelete: () => removeStory(stories, story),
-                                  onMoveUp: index == 0 ? null : () => moveStoryUp(stories, index, story),
-                                  onMoveDown: index >= stories.length - 1 ? null : () => moveStoryDown(stories, index, story),
-                                  nextOrder: stories.length,
-                                  userId: _user.uid,
-                                  roomId: room.id,
-                                ),
-                              )
-                              .toList(),
+                      children: [
+                        Flexible(
+                          child: TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(labelText: 'Room description'),
+                            keyboardType: TextInputType.text,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Invalid room description';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            const Text('Deleted'),
+                            Switch(thumbIcon: thumbIcon, value: deleted, inactiveThumbColor: Colors.grey[500], trackOutlineColor: borderColor, onChanged: roomDeleteToggle),
+                          ],
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                            elevation: 5,
+                          ),
+                          onPressed: () => saveRoom(),
+                          child: const Text('Save'),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 150,
+                              child: CheckboxListTile(
+                                controlAffinity: ListTileControlAffinity.leading,
+                                value: allCards,
+                                title: const Text('Use all cards'),
+                                contentPadding: const EdgeInsets.all(0),
+                                splashRadius: 10,
+                                tristate: false,
+                                checkboxSemanticLabel: 'Use all cards',
+                                visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                                onChanged: useAllCardsToggle,
+                              ),
+                            ),
+                            SizedBox(
+                              width: constraint.maxWidth - 40,
+                              child: Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.start,
+                                children: VoteEnum.values.mapIndexed((index, value) {
+                                  final selected = index < cardsToUse.length ? cardsToUse[index] : false;
+                                  return SizedBox(
+                                    width: 120,
+                                    child: CheckboxListTile(
+                                      controlAffinity: ListTileControlAffinity.leading,
+                                      contentPadding: const EdgeInsets.all(0),
+                                      splashRadius: 10,
+                                      tristate: false,
+                                      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                                      value: selected,
+                                      onChanged: (v) => cardInUse(index, v),
+                                      title: Text(value.label),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                            elevation: 5,
+                          ),
+                          onPressed: () => addStory(room.id, stories),
+                          child: const Text('Add Story'),
+                        ),
+                      ],
+                    ),
+                    SingleChildScrollView(
+                      child: Column(
+                        spacing: 10,
+                        children: stories
+                            .mapIndexed(
+                              (index, story) => EditRoomStory(
+                                story: story,
+                                onDelete: () => removeStory(stories, story),
+                                onMoveUp: index == 0 ? null : () => moveStoryUp(stories, index, story),
+                                onMoveDown: index >= stories.length - 1 ? null : () => moveStoryDown(stories, index, story),
+                                nextOrder: stories.length,
+                                userId: _user.uid,
+                                roomId: room.id,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

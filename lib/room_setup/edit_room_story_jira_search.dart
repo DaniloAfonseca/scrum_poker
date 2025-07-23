@@ -192,8 +192,6 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
       child: SearchBarTheme(
         data: SearchBarThemeData(
           hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
-          //textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!),
-          //backgroundColor: WidgetStateProperty.all(theme.canvasColor),
           shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
           elevation: WidgetStateProperty.all(0),
           side: WidgetStateProperty.resolveWith((states) {
@@ -206,7 +204,6 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
         child: SearchAnchor.bar(
           searchController: _searchController,
           barHintText: 'Story title',
-          //barBackgroundColor: WidgetStateProperty.all(Colors.grey.shade50),
           barOverlayColor: WidgetStateProperty.all(Colors.transparent),
           barLeading: const Icon(Icons.search),
           barTrailing: [],
@@ -251,6 +248,7 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 10),
                                     visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+
                                     leading: !anyHasType
                                         ? null
                                         : t.fields!.issueType?.name == 'Bug'
@@ -261,7 +259,7 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
                                     title: Row(
                                       spacing: 10,
                                       children: [
-                                        Text('${t.key} - ${t.fields!.summary}'),
+                                        Flexible(child: Text('${t.key} - ${t.fields!.summary}')),
                                         if (t.storyPoints != null)
                                           Tooltip(
                                             message: 'Story points',

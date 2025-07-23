@@ -26,7 +26,7 @@ class Hyperlink extends StatelessWidget {
       builder: (context, followLink) {
         return InkWell(
           onTap: onTap ?? followLink, // This triggers the URL launch
-          child: Text(text, style: localTextStyle),
+          child: Text(text, style: localTextStyle, softWrap: true),
         );
       },
     );

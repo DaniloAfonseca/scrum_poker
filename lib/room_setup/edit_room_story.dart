@@ -73,6 +73,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     return Form(
       key: _formKey,
       child: Container(
@@ -94,10 +95,13 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                 children: [
                   if (!_isEditing) ...[
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 5,
                       children: [
                         if (_story.storyType?.icon != null) Icon(_story.storyType!.icon, color: _story.storyType!.color),
-                        Text(_story.fullDescription, style: theme.textTheme.headlineLarge!.copyWith(color: Colors.white)),
+                        Flexible(
+                          child: Text(_story.fullDescription, style: theme.textTheme.headlineSmall!.copyWith(color: Colors.white), softWrap: true),
+                        ),
                         if (_story.estimate != null || _story.revisedEstimate != null) const SizedBox(width: 5),
                         if (_story.estimate != null)
                           Tooltip(

@@ -8,7 +8,7 @@ import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/text_tag.dart';
 
-class VotingStoryItem extends StatelessWidget {
+class VotingListItem extends StatelessWidget {
   final Story? currentStory;
   final Story story;
   final FutureOr<void> Function()? onDelete;
@@ -17,7 +17,7 @@ class VotingStoryItem extends StatelessWidget {
   final FutureOr<void> Function()? onSkip;
   final FutureOr<void> Function()? onMoveToActive;
   final int? reorderIndex;
-  const VotingStoryItem({
+  const VotingListItem({
     super.key,
     required this.currentStory,
     required this.story,
@@ -64,52 +64,37 @@ class VotingStoryItem extends StatelessWidget {
               spacing: 10,
               children: [
                 if (user == null) const SizedBox(width: 10),
-                if (story.url == null || story.url!.isEmpty) Text(story.fullDescription, style: theme.textTheme.bodyLarge),
+                if (story.url == null || story.url!.isEmpty) Flexible(child: Text(story.fullDescription, style: theme.textTheme.bodyLarge, softWrap: true)),
                 if (story.url != null && story.url!.isNotEmpty)
-                  Hyperlink(text: story.fullDescription, textStyle: theme.textTheme.bodyLarge, color: theme.textTheme.bodyLarge?.decorationColor, url: story.url!),
+                  Flexible(
+                    child: Hyperlink(text: story.fullDescription, textStyle: theme.textTheme.bodyLarge, color: theme.textTheme.bodyLarge?.decorationColor, url: story.url!),
+                  ),
 
                 TextTag(text: 'Skipped', backgroundColor: Colors.red, foreColor: Colors.white, display: story.status == StoryStatus.skipped),
               ],
             ),
           ),
-          SizedBox(
-            width: 120,
-            child: story.estimate == null
-                ? null
-                : Row(
-                    children: [
-                      Tooltip(
-                        message: 'Estimated story point',
-                        child: Container(
-                          color: theme.dividerColor,
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                          child: Text(story.estimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
-                        ),
-                      ),
-                      const Spacer(),
-                    ],
-                  ),
-          ),
-          SizedBox(
-            width: 120,
-            child: story.revisedEstimate == null
-                ? null
-                : Row(
-                    children: [
-                      Tooltip(
-                        message: 'Story points',
-                        child: Container(
-                          color: Colors.blueAccent,
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                          child: Text(story.revisedEstimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
-                        ),
-                      ),
-                      const Spacer(),
-                    ],
-                  ),
-          ),
+          if (story.estimate != null)
+            Tooltip(
+              message: 'Estimated story point',
+              child: Container(
+                color: theme.dividerColor,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                child: Text(story.estimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: theme.primaryColor)),
+              ),
+            ),
+
+          if (story.revisedEstimate != null)
+            Tooltip(
+              message: 'Story points',
+              child: Container(
+                color: Colors.blueAccent,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                child: Text(story.revisedEstimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
+              ),
+            ),
         ],
       ),
       trailing: hasMenuItems

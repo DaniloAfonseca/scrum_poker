@@ -12,10 +12,11 @@ import 'package:scrum_poker/shared/models/vote.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
+import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/voting/room_login.dart';
-import 'package:scrum_poker/voting/voting_players.dart';
-import 'package:scrum_poker/voting/voting_story_list.dart';
-import 'package:scrum_poker/voting/voting_story.dart';
+import 'package:scrum_poker/voting/players/voting_players.dart';
+import 'package:scrum_poker/voting/list/voting_list.dart';
+import 'package:scrum_poker/voting/story/voting_story.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web/web.dart' as web;
@@ -171,7 +172,6 @@ class _RoomPageState extends State<RoomPage> {
       _isLoading = true;
     });
 
-
     if (user?.metadata != null) {
       final appUser = AppUser.fromUser(user!, widget.roomId);
       SettingsManager().updateAppUser(appUser);
@@ -243,6 +243,7 @@ class _RoomPageState extends State<RoomPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     return ValueListenableBuilder(
       valueListenable: _appUser,
       builder: (ctx, value, child) {
@@ -289,41 +290,62 @@ class _RoomPageState extends State<RoomPage> {
                         return SingleChildScrollView(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(room.name!, style: theme.textTheme.headlineLarge),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: 20,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
+                            child: mediaQuery.size.width > 900
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(room.name!, style: theme.textTheme.headlineLarge),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         spacing: 20,
                                         children: [
-                                          VotingStory(
-                                            appUser: _appUser.value,
-                                            roomId: room.id,
-                                            votesChanged: (votes) {
-                                              votesVN.value = votes;
-                                            },
+                                          Expanded(
+                                            flex: 3,
+                                            child: Column(
+                                              spacing: 20,
+                                              children: [
+                                                VotingStory(appUser: _appUser.value, roomId: room.id),
+                                                VotingList(room: room),
+                                              ],
+                                            ),
                                           ),
-                                          VotingStoryList(room: room),
+
+                                          Flexible(
+                                            flex: 1,
+                                            child: VotingPlayers(
+                                              currentStoryVN: currentStoryVN,
+                                              room: room,
+                                              appUser: _appUser.value!,
+                                              onUserRenamed: (appUser) => renameUser(appUser, room),
+                                            ),
+                                          ),
                                         ],
                                       ),
-                                    ),
-
-                                    VotingPlayers(
-                                      currentStoryVN: currentStoryVN,
-                                      votesVN: votesVN,
-                                      room: room,
-                                      appUser: _appUser.value!,
-                                      onUserRenamed: (appUser) => renameUser(appUser, room),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                    ],
+                                  )
+                                : ValueListenableBuilder(
+                                    valueListenable: currentStoryVN,
+                                    builder: (context, currentStory, child) {
+                                      return Column(
+                                        spacing: 10,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(room.name!, style: theme.textTheme.headlineLarge),
+                                          if (currentStory?.url == null) Text(currentStory?.fullDescription ?? '', style: theme.textTheme.headlineSmall),
+                                          if (currentStory?.url != null)
+                                            Hyperlink(text: currentStory?.fullDescription ?? '', textStyle: theme.textTheme.headlineSmall!, url: currentStory!.url!),
+                                          VotingPlayers(
+                                            currentStoryVN: currentStoryVN,
+                                            room: room,
+                                            appUser: _appUser.value!,
+                                            onUserRenamed: (appUser) => renameUser(appUser, room),
+                                          ),
+                                          VotingStory(showStoryDescription: false, appUser: _appUser.value, roomId: room.id),
+                                          VotingList(room: room),
+                                        ],
+                                      );
+                                    },
+                                  ),
                           ),
                         );
                       },
