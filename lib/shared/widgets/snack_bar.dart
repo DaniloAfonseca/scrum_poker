@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:scrum_poker/shared/router/go_router.dart';
 
-ScaffoldFeatureController<SnackBar, SnackBarClosedReason> snackbarMessenger(BuildContext context, {required String message, SnackBarType type = SnackBarType.info}) {
+ScaffoldFeatureController<SnackBar, SnackBarClosedReason> snackbarMessenger({required String message, SnackBarType type = SnackBarType.info}) {
   Color? color = switch (type) {
     SnackBarType.info => Colors.blueAccent[200],
     SnackBarType.success => Colors.greenAccent[400],
@@ -15,12 +16,19 @@ ScaffoldFeatureController<SnackBar, SnackBarClosedReason> snackbarMessenger(Buil
     SnackBarType.error => Icons.error_outline_outlined,
   };
 
+  final context = navigatorKey.currentContext!;
   return ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       shape: Border.all(color: color!),
       backgroundColor: Colors.white,
       behavior: SnackBarBehavior.floating,
-      content: Row(spacing: 10, children: [Icon(icon, color: color), Text(message, style: TextStyle(color: color))]),
+      content: Row(
+        spacing: 10,
+        children: [
+          Icon(icon, color: color),
+          Text(message, style: TextStyle(color: color)),
+        ],
+      ),
       action: SnackBarAction(
         label: 'Dismiss',
         onPressed: () {

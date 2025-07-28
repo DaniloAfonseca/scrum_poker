@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/jira_issue_response.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 
 class EditRoomStoryJiraSearch extends StatefulWidget {
   final String currentValue;
-  final void Function({JiraIssue? juraIssue, bool? hasAnyType}) onSelectedChanged;
+  final void Function({JiraIssue? juraIssue, bool? hasAnyType, String? customText}) onSelectedChanged;
   const EditRoomStoryJiraSearch({super.key, required this.currentValue, required this.onSelectedChanged});
 
   @override
@@ -168,11 +167,11 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
       if (response.success) {
         return response.data!;
       } else if (response.message != null && response.message!.isNotEmpty) {
-        snackbarMessenger(navigatorKey.currentContext!, message: response.message!, type: SnackBarType.error);
+        snackbarMessenger(message: response.message!, type: SnackBarType.error);
       }
       return null;
     } catch (e) {
-      snackbarMessenger(navigatorKey.currentContext!, message: 'Error fetching Jira issues: $e', type: SnackBarType.error);
+      snackbarMessenger(message: 'Error fetching Jira issues: $e', type: SnackBarType.error);
       return null;
     }
   }
@@ -304,9 +303,7 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
             ];
           },
           onClose: () {
-            if (_searchController.text.isEmpty) {
-              widget.onSelectedChanged();
-            }
+            widget.onSelectedChanged(customText: _searchController.text);
           },
         ),
       ),

@@ -145,9 +145,9 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                     _integratedWithJira
                         ? EditRoomStoryJiraSearch(
                             currentValue: _descriptionController.text,
-                            onSelectedChanged: ({bool? hasAnyType, JiraIssue? juraIssue}) {
+                            onSelectedChanged: ({bool? hasAnyType, JiraIssue? juraIssue, String? customText}) {
                               if (juraIssue == null) {
-                                _descriptionController.text = '';
+                                _descriptionController.text = customText ?? '';
                                 _urlController.text = '';
                                 setState(() {
                                   _storyType = null;
@@ -193,7 +193,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                       decoration: const InputDecoration(labelText: 'Story URL'),
                       keyboardType: TextInputType.text,
                       validator: (value) {
-                        if (value != null && !Uri.parse(value).isAbsolute) {
+                        if (value != null && value.isNotEmpty && !Uri.parse(value).isAbsolute) {
                           return 'Invalid URL';
                         }
                         return null;

@@ -4,7 +4,6 @@ import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/models/vote.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
@@ -39,7 +38,7 @@ class _VotingResultsState extends State<VotingResults> {
       await room_services.updateRevisedEstimate(story);
       final response = await JiraServices().updateStoryPoints(story.jiraKey!, _storyPointFieldName!, story.revisedEstimate!);
       if (!response.success) {
-        snackbarMessenger(navigatorKey.currentContext!, message: response.message!);
+        snackbarMessenger(message: response.message!);
       }
     }
   }

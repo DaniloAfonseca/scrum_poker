@@ -1,20 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/models/vote.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 
 ////////
 // room
 ////////
 
+/// Save room
+///
+/// [room] room to save
 Future<void> saveRoom(Room room) async {
   final json = room.toJson();
   await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
 
+  // save room under the user
   final dbRoom = await FirebaseFirestore.instance.collection('users').doc(room.userId).collection('rooms').doc(room.id).snapshots().first;
   final userRoom = Room.fromJson(dbRoom.data()!);
   room.status = userRoom.status;
@@ -22,21 +26,45 @@ Future<void> saveRoom(Room room) async {
   await FirebaseFirestore.instance.collection('users').doc(room.userId).collection('rooms').doc(room.id).update(roomMap);
 }
 
-Future<void> updateRoomStatus(Room room, List<Story> stories) async {
-  final roomStatus = room.status;
-  final newRoomStatus = getRoomStatus(stories);
+/// Update room status
+///
+/// [roomId] room identifier
+/// [stories] stories used to update the room status
+Future<void> _updateRoomStatus(String roomId, List<Story> stories) async {
+  final dataRoom = await FirebaseFirestore.instance.collection('rooms').doc(roomId).snapshots().first;
+  final userRoom = Room.fromJson(dataRoom.data()!);
+  final roomStatus = userRoom.status;
+  final newRoomStatus = _getRoomStatus(stories);
+
+  final activeStories = stories.where((t) => t.status.active).length;
+  final skippedStories = stories.where((t) => t.status == StoryStatus.skipped).length;
+  final completedStories = stories.where((t) => !t.status.active).length;
+
   if (newRoomStatus != roomStatus) {
-    await updateRoom(room.id, room.userId, {'status': $RoomStatusEnumMap[roomStatus]});
+    await _updateUserRoom(userRoom.id, userRoom.userId, {
+      'status': $RoomStatusEnumMap[newRoomStatus],
+      'activeStories': activeStories,
+      'skippedStories': skippedStories,
+      'completedStories': completedStories,
+    });
   }
 }
 
-Future<void> updateRoom(String roomId, String userId, Map<String, dynamic> data) async {
+/// Update room in database
+///
+/// [roomId] room identifier
+/// [userId] user identifier
+/// [data] data to update
+Future<void> _updateUserRoom(String roomId, String userId, Map<String, dynamic> data) async {
   final docRef = FirebaseFirestore.instance.collection('users').doc(userId).collection('rooms').doc(roomId);
 
   await docRef.update(data);
 }
 
-RoomStatus getRoomStatus(List<Story> stories) {
+/// Get room status
+///
+/// [stories] list of room stories
+RoomStatus _getRoomStatus(List<Story> stories) {
   final anyStarted = stories.any((t) => [StoryStatus.started, StoryStatus.skipped, StoryStatus.voted, StoryStatus.ended].contains(t.status));
   final allEnded = stories.every((t) => [StoryStatus.ended, StoryStatus.skipped].contains(t.status));
 
@@ -49,29 +77,49 @@ RoomStatus getRoomStatus(List<Story> stories) {
   }
 }
 
-// current users
-Future<void> updateCurrentUser(String roomId, String userId, Map<String, dynamic> data) async {
+/// Update room user
+///
+/// [user] user to update
+Future<void> updateRoomUserObserver(AppUser user) async {
+  await _updateCurrentUser(user.roomId!, user.id, {'observer': user.observer});
+}
+
+/// Update room user on the database
+///
+/// [roomId] room identifier
+/// [userId] user identifier
+/// [data] data to update
+Future<void> _updateCurrentUser(String roomId, String userId, Map<String, dynamic> data) async {
   final docRef = FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('currentUsers').doc(userId);
   await docRef.update(data);
 }
 
-Future<void> addUserToRoom(AppUser? appUser) async {
-  if (appUser == null) {
+/// Add user to room
+///
+/// [user] user to add
+Future<void> addUserToRoom(AppUser? user) async {
+  if (user == null) {
     return;
   }
 
   // add user to room
-  await FirebaseFirestore.instance.collection('rooms').doc(appUser.roomId).collection('currentUsers').doc(appUser.id).set(appUser.toJson(), SetOptions(merge: true));
+  await FirebaseFirestore.instance.collection('rooms').doc(user.roomId).collection('currentUsers').doc(user.id).set(user.toJson(), SetOptions(merge: true));
 }
 
-Future<void> removeUser(String roomId, String userId) async {
-  await FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('currentUsers').doc(userId).delete();
+/// Remove user from room
+///
+/// [user] user to remove
+Future<void> removeUser(AppUser user) async {
+  await FirebaseFirestore.instance.collection('rooms').doc(user.roomId).collection('currentUsers').doc(user.id).delete();
 }
 
 /////////
 // story
 /////////
 
+/// Get room stories
+///
+/// [roomId] room identifier
 Future<List<Story>> getStories(String roomId) async {
   final dbRef = FirebaseFirestore.instance.collection('rooms').doc(roomId).collection('stories');
   final dbStories = await dbRef.get();
@@ -80,63 +128,102 @@ Future<List<Story>> getStories(String roomId) async {
   return maps.map((t) => Story.fromJson(t)).toList();
 }
 
-Future<void> updateStory(Story story, Map<String, dynamic> data) async {
+/// Update story in the database
+///
+/// [story] story to update
+/// [data] data to update
+Future<void> _updateStory(Story story, Map<String, dynamic> data) async {
   final docRef = FirebaseFirestore.instance.collection('rooms').doc(story.roomId).collection('stories').doc(story.id);
 
   await docRef.update(data);
 }
 
+/// Set current story
+///
+/// [stories] all room stories
 Future<void> setCurrentStory(List<Story> stories) async {
   if (stories.any((t) => t.currentStory)) return;
   stories.sort((a, b) => a.order.compareTo(b.order));
+
   final activeStories = stories.where((t) => [StoryStatus.notStarted, StoryStatus.started, StoryStatus.voted].contains(t.status)).toList();
   for (var i = 0; i < activeStories.length; i++) {
     final story = activeStories[i];
     story.currentStory = i == 0;
 
-    await updateStory(story, {'currentStory': story.currentStory});
+    await _updateStory(story, {'currentStory': story.currentStory});
   }
 }
 
-Future<void> storyStart(Room room, Story story) async {
-  final stories = await getStories(room.id);
+/// Start story voting
+///
+/// [story] story that is started
+Future<void> startStory(Story story) async {
+  final stories = await getStories(story.roomId);
   story.status = StoryStatus.started;
 
-  await updateStory(story, {'status': $StoryStatusEnumMap[story.status]});
-  await updateRoomStatus(room, stories);
+  await _updateStory(story, {'status': $StoryStatusEnumMap[story.status]});
+  await _updateRoomStatus(story.roomId, stories);
 }
 
+/// Move story up
+///
+/// [stories] list of stories
+/// [story] story to move up
 Future<void> moveStoryUp(List<Story> stories, Story story) async {
   final index = stories.indexOf(story);
+  if (index == 0) return;
+
   final previousStory = stories[index - 1];
   stories[index - 1] = story;
   stories[index] = previousStory;
-  story.currentStory = false;
-  _setStoriesOrder(stories);
 
-  await updateStory(story, {'order': story.order, 'currentStory': story.currentStory});
-  await updateStory(previousStory, {'order': previousStory.order});
+  await _moveStoryUpdate(stories, story, previousStory);
 }
 
+/// Move story down
+///
+/// [stories] list of stories
+/// [story] story to move down
 Future<void> moveStoryDown(List<Story> stories, Story story) async {
   final index = stories.indexOf(story);
+  if (index == stories.length + 1) return;
+
   final nextStory = stories[index + 1];
   stories[index + 1] = story;
   stories[index] = nextStory;
-  story.currentStory = false;
-  _setStoriesOrder(stories);
 
-  await updateStory(story, {'order': story.order, 'currentStory': story.currentStory});
-  await updateStory(nextStory, {'order': nextStory.order});
+  await _moveStoryUpdate(stories, story, nextStory);
 }
 
+/// Move story down
+///
+/// [stories] list of stories
+/// [story1] story1 to update
+/// [story2] story2 to update
+Future<void> _moveStoryUpdate(List<Story> stories, Story story1, Story story2) async {
+  story1.currentStory = false;
+  story2.currentStory = false;
+  _setStoriesOrder(stories);
+
+  await _updateStory(story1, {'order': story1.order, 'currentStory': story1.currentStory});
+  await _updateStory(story2, {'order': story2.order, 'currentStory': story2.currentStory});
+  await _updateCurrentStory(stories, [story1.id, story2.id]);
+}
+
+/// Set all stories order
+///
+/// [stories] list of stories
 void _setStoriesOrder(List<Story> stories) {
   for (var i = 0; i < stories.length; i++) {
     stories[i].order = i;
   }
 }
 
-Future<void> removeStory(Room room, List<Story> stories, Story story) async {
+/// Remove story from room
+///
+/// [stories] list of stories
+/// [story] story to remove
+Future<void> removeStory(List<Story> stories, Story story) async {
   await FirebaseFirestore.instance.collection('rooms').doc(story.roomId).collection('stories').doc(story.id).delete();
   story.currentStory = false;
   stories.remove(story);
@@ -145,49 +232,58 @@ Future<void> removeStory(Room room, List<Story> stories, Story story) async {
     final story = stories[i];
     if (stories[i].order != i) {
       stories[i].order = i;
-      await updateStory(story, {'order': story.order});
+      await _updateStory(story, {'order': story.order});
     }
   }
 
-  await updateRoomStatus(room, stories);
+  await _updateRoomStatus(story.roomId, stories);
 }
 
-Future<void> skipStory(Room room, Story story, [Story? currentStory]) async {
-  final stories = await getStories(room.id);
+/// Skip story voting
+///
+/// [story] story to skip
+Future<void> skipStory(Story story) async {
+  final stories = await getStories(story.roomId);
   story.estimate = null;
   story.revisedEstimate = null;
   story.status = StoryStatus.skipped;
   story.currentStory = false;
 
   await clearVotes(story);
-  await updateStory(story, {'estimate': story.revisedEstimate, 'revisedEstimate': story.estimate, 'status': $StoryStatusEnumMap[story.status], 'currentStory': story.currentStory});
+  await _updateStory(story, {
+    'estimate': story.revisedEstimate,
+    'revisedEstimate': story.estimate,
+    'status': $StoryStatusEnumMap[story.status],
+    'currentStory': story.currentStory,
+  });
 
-  if (currentStory != null && currentStory.id != story.id) {
-    currentStory.currentStory = false;
-    await updateStory(currentStory, {'currentStory': currentStory.currentStory});
-  }
+  await _updateCurrentStory(stories, [story.id]);
 
-  await updateRoomStatus(room, stories);
+  await _updateRoomStatus(story.roomId, stories);
 }
 
-Future<void> flipCards(Room room, Story story, List<Vote> votes) async {
-  final stories = await getStories(room.id);
+/// Flip story cards
+///
+/// [story] story were cards are flipped
+/// [votes] list of votes
+Future<void> flipCards(Story story, List<Vote> votes) async {
   final validVotes = votes.where((e) => e.value.value != null).toList();
   final validVotesSum = validVotes.map((e) => e.value.value).reduce((e, t) => e! + t!)!;
   story.estimate = double.parse((validVotesSum / validVotes.length).toStringAsFixed(2));
   story.revisedEstimate = null;
   story.status = StoryStatus.voted;
   await updateVotes(votes, story.status);
+  final stories = await getStories(story.roomId);
 
-  await updateStory(story, {'estimate': story.estimate, 'revisedEstimate': story.revisedEstimate, 'status': $StoryStatusEnumMap[story.status]});
-  await updateRoomStatus(room, stories);
+  await _updateStory(story, {'estimate': story.estimate, 'revisedEstimate': story.revisedEstimate, 'status': $StoryStatusEnumMap[story.status]});
+  await _updateRoomStatus(story.roomId, stories);
 }
 
-Future<void> updateRevisedEstimate(Story story) async {
-  await updateStory(story, {'revisedEstimate': story.revisedEstimate});
-}
-
-Future<void> moveStoryToActive(Room room, List<Story> stories, Story story) async {
+/// Move a skipped story to active tab
+///
+/// [stories] list of stories in a room
+/// [story] story to be moved
+Future<void> moveStoryToActive(List<Story> stories, Story story) async {
   if (story.status != StoryStatus.skipped) {
     return;
   }
@@ -195,20 +291,36 @@ Future<void> moveStoryToActive(Room room, List<Story> stories, Story story) asyn
   story.status = StoryStatus.notStarted;
   story.currentStory = false;
 
-  await updateStory(story, {'currentStory': false, 'status': $StoryStatusEnumMap[story.status]});
-  await updateRoomStatus(room, stories);
+  await _updateStory(story, {'currentStory': false, 'status': $StoryStatusEnumMap[story.status]});
+
+  final currentStory = stories.firstWhereOrNull((t) => t.currentStory);
+
+  if (currentStory != null && currentStory.id != story.id) {
+    currentStory.currentStory = false;
+    await _updateStory(currentStory, {'currentStory': currentStory.currentStory});
+  }
+  await _updateRoomStatus(story.roomId, stories);
 }
 
-Future<void> nextStory(Room room, Story story, List<Vote> votes) async {
-  final stories = await getStories(room.id);
+/// Move to next story
+///
+/// [story] story to be ended
+/// [votes] story votes
+Future<void> nextStory(Story story, List<Vote> votes) async {
+  final stories = await getStories(story.roomId);
   story.status = StoryStatus.ended;
   story.currentStory = false;
   await updateVotes(votes, story.status);
 
-  await updateStory(story, {'currentStory': false, 'status': $StoryStatusEnumMap[story.status]});
-  await updateRoomStatus(room, stories);
+  await _updateStory(story, {'currentStory': false, 'status': $StoryStatusEnumMap[story.status]});
+  await _updateRoomStatus(story.roomId, stories);
 }
 
+/// Swap stories
+///
+/// [stories] list of stories in a room
+/// [story1] story 1 to be swapped with story 2
+/// [story2] story 2 to be swapped with story 1
 Future<void> swapStories(List<Story> stories, Story story1, Story story2) async {
   final index1 = stories.indexOf(story1);
   final index2 = stories.indexOf(story2);
@@ -218,14 +330,40 @@ Future<void> swapStories(List<Story> stories, Story story1, Story story2) async 
   story1.currentStory = false;
   story2.currentStory = false;
 
-  await updateStory(story1, {'currentStory': false, 'status': $StoryStatusEnumMap[story1.status]});
-  await updateStory(story2, {'currentStory': false, 'status': $StoryStatusEnumMap[story2.status]});
+  await _updateStory(story1, {'currentStory': false, 'status': $StoryStatusEnumMap[story1.status]});
+  await _updateStory(story2, {'currentStory': false, 'status': $StoryStatusEnumMap[story2.status]});
+
+  await _updateCurrentStory(stories, [story1.id, story2.id]);
+}
+
+/// Update revised estimate
+///
+/// [story] story to be updated
+Future<void> updateRevisedEstimate(Story story) async {
+  await _updateStory(story, {'revisedEstimate': story.revisedEstimate});
+}
+
+/// Update current story field
+///
+/// [stories] list of stories in a room
+/// [storyIds] stories where currentStory field is already updated
+Future<void> _updateCurrentStory(List<Story> stories, List<String>? storyIds) async {
+  final currentStory = stories.firstWhereOrNull((t) => t.currentStory);
+
+  if (currentStory != null && (storyIds == null || !storyIds.contains(currentStory.id))) {
+    currentStory.currentStory = false;
+    await _updateStory(currentStory, {'currentStory': currentStory.currentStory});
+  }
 }
 
 /////////
 // votes
 /////////
 
+/// Update story votes
+///
+/// [votes] list of votes
+/// [storyStatus] story status to update on votes
 Future<void> updateVotes(List<Vote> votes, StoryStatus storyStatus) async {
   for (final vote in votes) {
     vote.storyStatus = storyStatus;
@@ -233,9 +371,12 @@ Future<void> updateVotes(List<Vote> votes, StoryStatus storyStatus) async {
   }
 }
 
+/// Clear current story votes
+///
+/// [story] story to be updated
 Future<void> clearStoryVotes(Story story) async {
   if (![StoryStatus.voted, StoryStatus.started].contains(story.status)) {
-    snackbarMessenger(navigatorKey.currentContext!, message: 'This story is not in progress.', type: SnackBarType.warning);
+    snackbarMessenger(message: 'This story is not in progress.', type: SnackBarType.warning);
     return;
   }
 
@@ -244,9 +385,12 @@ Future<void> clearStoryVotes(Story story) async {
   story.status = StoryStatus.started;
 
   await clearVotes(story);
-  await updateStory(story, {'estimate': story.estimate, 'revisedEstimate': story.revisedEstimate, 'status': $StoryStatusEnumMap[story.status]});
+  await _updateStory(story, {'estimate': story.estimate, 'revisedEstimate': story.revisedEstimate, 'status': $StoryStatusEnumMap[story.status]});
 }
 
+/// Remove votes
+///
+/// [story] story to be updated
 Future<void> clearVotes(Story story) async {
   final collection = FirebaseFirestore.instance.collection('rooms').doc(story.roomId).collection('stories').doc(story.id).collection('votes');
   final snapshots = await collection.get();
@@ -256,6 +400,9 @@ Future<void> clearVotes(Story story) async {
   }
 }
 
+/// Update votes
+///
+/// [vote] vote to be updated
 Future<void> updateVote(Vote vote) async {
   await FirebaseFirestore.instance
       .collection('rooms')

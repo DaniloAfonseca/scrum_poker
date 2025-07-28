@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/jira_field.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
@@ -47,10 +46,10 @@ class _SettingsPageState extends State<SettingsPage> {
           _fieldSearchController.text = _fields.firstWhereOrNull((t) => t.key == storyPointFieldName)?.name ?? '';
         });
       } else if (response.message != null && response.message!.isNotEmpty) {
-        snackbarMessenger(navigatorKey.currentContext!, message: response.message!, type: SnackBarType.error);
+        snackbarMessenger(message: response.message!, type: SnackBarType.error);
       }
     } catch (e) {
-      snackbarMessenger(navigatorKey.currentContext!, message: e.toString(), type: SnackBarType.error);
+      snackbarMessenger(message: e.toString(), type: SnackBarType.error);
     }
 
     setState(() {

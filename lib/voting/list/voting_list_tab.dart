@@ -32,11 +32,11 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
     super.dispose();
   }
 
-  Future<void> removeStory(Room room, List<Story> stories, Story story) async {
+  Future<void> removeStory(List<Story> stories, Story story) async {
     final canDelete = await showConfirm('Delete story', 'You are about to delete story "${story.description}".\nAre you sure?');
 
     if (canDelete) {
-      await room_services.removeStory(room, stories, story);
+      await room_services.removeStory(stories, story);
     }
   }
 
@@ -92,7 +92,7 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
       }
     }
 
-    await room_services.skipStory(room, story, currentStory);
+    await room_services.skipStory(story);
   }
 
   @override
@@ -184,7 +184,7 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
                   return VotingListItem(
                     key: Key('$index'),
                     currentStory: currentStory,
-                    onDelete: () => removeStory(widget.room, widget.stories, t),
+                    onDelete: () => removeStory(widget.stories, t),
                     story: t,
                     onMoveDown: index < activeStories.length - 1 ? () => room_services.moveStoryDown(widget.stories, t) : null,
                     onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(widget.stories, t),
@@ -204,7 +204,7 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
                       (t) => VotingListItem(
                         currentStory: currentStory,
                         story: t,
-                        onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.room, widget.stories, t) : null,
+                        onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.stories, t) : null,
                       ),
                     )
                     .toList(),
@@ -218,7 +218,7 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
                     key: Key('$index'),
                     currentStory: currentStory,
                     story: t,
-                    onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.room, widget.stories, t) : null,
+                    onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.stories, t) : null,
                     reorderIndex: index,
                   );
                 },

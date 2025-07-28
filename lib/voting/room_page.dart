@@ -13,6 +13,7 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
+import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 import 'package:scrum_poker/voting/room_login.dart';
 import 'package:scrum_poker/voting/players/voting_players.dart';
 import 'package:scrum_poker/voting/list/voting_list.dart';
@@ -58,13 +59,13 @@ class _RoomPageState extends State<RoomPage> {
 
     web.window.onbeforeunload = (JSAny data) {
       if (_appUser.value != null) {
-        room_services.removeUser(widget.roomId, _appUser.value!.id);
+        room_services.removeUser(_appUser.value!);
       }
     }.toJS;
 
     web.window.onpopstate = (JSAny data) {
       if (_appUser.value != null) {
-        room_services.removeUser(widget.roomId, _appUser.value!.id);
+        room_services.removeUser(_appUser.value!);
       }
     }.toJS;
 
@@ -203,20 +204,7 @@ class _RoomPageState extends State<RoomPage> {
     for (final message in messages) {
       final duration = Duration(milliseconds: controller == null ? 0 : 1000);
       Future.delayed(duration, () {
-        controller = ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.blueAccent[200],
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-            content: Text(message),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              onPressed: () {
-                ScaffoldMessenger.of(navigatorKey.currentContext!).hideCurrentSnackBar();
-              },
-            ),
-          ),
-        );
+        controller = snackbarMessenger(message: message);
       });
     }
   }
@@ -235,9 +223,9 @@ class _RoomPageState extends State<RoomPage> {
     return messages;
   }
 
-  Future<void> renameUser(AppUser appUser, Room room) async {
+  Future<void> renameUser(AppUser appUser) async {
     _appUser.value = null;
-    await room_services.removeUser(appUser.id, room.id);
+    await room_services.removeUser(appUser);
   }
 
   @override
@@ -253,7 +241,7 @@ class _RoomPageState extends State<RoomPage> {
               ? null
               : GiraffeAppBar(
                   onSignOut: () {
-                    room_services.removeUser(widget.roomId, _appUser.value!.id);
+                    room_services.removeUser(_appUser.value!);
                     setState(() {
                       _appUser.value = null;
                     });
@@ -316,7 +304,7 @@ class _RoomPageState extends State<RoomPage> {
                                               currentStoryVN: currentStoryVN,
                                               room: room,
                                               appUser: _appUser.value!,
-                                              onUserRenamed: (appUser) => renameUser(appUser, room),
+                                              onUserRenamed: (appUser) => renameUser(appUser),
                                             ),
                                           ),
                                         ],
@@ -334,12 +322,7 @@ class _RoomPageState extends State<RoomPage> {
                                           if (currentStory?.url == null) Text(currentStory?.fullDescription ?? '', style: theme.textTheme.headlineSmall),
                                           if (currentStory?.url != null)
                                             Hyperlink(text: currentStory?.fullDescription ?? '', textStyle: theme.textTheme.headlineSmall!, url: currentStory!.url!),
-                                          VotingPlayers(
-                                            currentStoryVN: currentStoryVN,
-                                            room: room,
-                                            appUser: _appUser.value!,
-                                            onUserRenamed: (appUser) => renameUser(appUser, room),
-                                          ),
+                                          VotingPlayers(currentStoryVN: currentStoryVN, room: room, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser)),
                                           VotingStory(showStoryDescription: false, appUser: _appUser.value, roomId: room.id),
                                           VotingList(room: room),
                                         ],

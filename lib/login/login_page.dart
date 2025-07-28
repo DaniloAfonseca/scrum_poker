@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
 
       setState(() => _isLoading = false);
     } catch (e) {
-      snackbarMessenger(navigatorKey.currentContext!, message: 'Error trying to connect to Jira: $e', type: SnackBarType.error);
+      snackbarMessenger(message: 'Error trying to connect to Jira: $e', type: SnackBarType.error);
       setState(() => _isLoading = false);
     }
   }
@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
           }
         })
         .catchError((error) {
-          snackbarMessenger(navigatorKey.currentContext!, message: 'There was an error trying connect by Jira: $error', type: SnackBarType.error);
+          snackbarMessenger(message: 'There was an error trying connect by Jira: $error', type: SnackBarType.error);
           return;
         });
   }
@@ -85,11 +85,11 @@ class _LoginPageState extends State<LoginPage> {
           if (user != null) {
             navigatorKey.currentContext!.go(Routes.home);
           } else {
-            ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(const SnackBar(content: Text('Invalid email or password')));
+            snackbarMessenger(message: 'Invalid email or password');
           }
         })
         .catchError((error) {
-          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(SnackBar(content: Text('Error: $error')));
+          snackbarMessenger(message: 'Error: $error', type: SnackBarType.error);
         })
         .whenComplete(() {
           setState(() => _isLoading = false);
@@ -146,10 +146,7 @@ class _LoginPageState extends State<LoginPage> {
                     ] else ...[
                       TextFormField(
                         controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.email_outlined)
-                        ),
+                        decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -165,11 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                       TextFormField(
                         controller: _passwordController,
                         obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                          hintText: '••••••••',
-                          prefixIcon:  Icon(Icons.lock_outline)
-                        ),
+                        decoration: const InputDecoration(labelText: 'Password', hintText: '••••••••', prefixIcon: Icon(Icons.lock_outline)),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please, introduce your password';

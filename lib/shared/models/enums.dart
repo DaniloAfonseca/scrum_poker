@@ -4,7 +4,16 @@ enum RoomStatus { notStarted, started, ended }
 
 const $RoomStatusEnumMap = {RoomStatus.notStarted: 'notStarted', RoomStatus.started: 'started', RoomStatus.ended: 'ended'};
 
-enum StoryStatus { notStarted, started, skipped, voted, ended }
+enum StoryStatus {
+  notStarted(active: true),
+  started(active: true),
+  skipped,
+  voted(active: true),
+  ended;
+
+  const StoryStatus({this.active = false});
+  final bool active;
+}
 
 const $StoryStatusEnumMap = {
   StoryStatus.notStarted: 'notStarted',

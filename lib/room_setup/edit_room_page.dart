@@ -125,11 +125,15 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
       // save user room
       final userRoom = UserRoom.fromRoom(room);
+      userRoom.activeStories = stories.where((t) => t.status.active).length;
+      userRoom.skippedStories = stories.where((t) => t.status == StoryStatus.skipped).length;
+      userRoom.completedStories = stories.where((t) => !t.status.active).length;
+      userRoom.allStories = stories.length;
       final userRoomsMap = userRoom.toJson();
       await FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').doc(room.id).set(userRoomsMap);
 
       if (stories.any((s) => s.added)) {
-        snackbarMessenger(navigatorKey.currentContext!, message: 'Unsaved story were skipped.');
+        snackbarMessenger(message: 'Unsaved story were skipped.');
         await Future.delayed(const Duration(microseconds: 500));
       }
 

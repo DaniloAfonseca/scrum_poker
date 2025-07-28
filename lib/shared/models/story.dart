@@ -6,7 +6,7 @@ import 'package:scrum_poker/shared/models/vote_result.dart';
 
 part 'story.g.dart';
 
-@JsonSerializable(createToJson: false, includeIfNull: false)
+@JsonSerializable(includeIfNull: false)
 class Story {
   String userId;
   String roomId;
@@ -41,21 +41,6 @@ class Story {
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
   Map<String, dynamic> toJson() => _$StoryToJson(this);
-
-  Map<String, dynamic> _$StoryToJson(Story instance) => <String, dynamic>{
-    'userId': instance.userId,
-    'roomId': instance.roomId,
-    'id': instance.id,
-    'description': instance.description,
-    if (instance.url case final value?) 'url': value,
-    if (instance.estimate case final value?) 'estimate': value,
-    'status': _$StoryStatusEnumMap[instance.status],
-    if (instance.revisedEstimate case final value?) 'revisedEstimate': value,
-    'order': instance.order,
-    'currentStory': instance.currentStory,
-    'storyType': _$StoryTypeEnumMap[instance.storyType],
-    if (instance.jiraKey case final value?) 'jiraKey': value,
-  };
 
   List<VoteResult>? voteResults(List<Vote> votes) {
     if (status != StoryStatus.voted) return null;

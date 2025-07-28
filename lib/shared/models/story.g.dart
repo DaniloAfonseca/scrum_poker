@@ -32,6 +32,22 @@ Story _$StoryFromJson(Map<String, dynamic> json) => $checkedCreate(
       },
     );
 
+Map<String, dynamic> _$StoryToJson(Story instance) => <String, dynamic>{
+      'userId': instance.userId,
+      'roomId': instance.roomId,
+      'id': instance.id,
+      'description': instance.description,
+      if (instance.url case final value?) 'url': value,
+      if (instance.jiraKey case final value?) 'jiraKey': value,
+      if (instance.estimate case final value?) 'estimate': value,
+      'status': _$StoryStatusEnumMap[instance.status]!,
+      if (instance.revisedEstimate case final value?) 'revisedEstimate': value,
+      'order': instance.order,
+      'currentStory': instance.currentStory,
+      if (_$StoryTypeEnumMap[instance.storyType] case final value?)
+        'storyType': value,
+    };
+
 const _$StoryStatusEnumMap = {
   StoryStatus.notStarted: 'notStarted',
   StoryStatus.started: 'started',
