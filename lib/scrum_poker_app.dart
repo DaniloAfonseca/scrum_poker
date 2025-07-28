@@ -15,6 +15,7 @@ class ScrumPokerApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             brightness: Brightness.light,
+            primaryColor: Colors.blueAccent,
             primarySwatch: Colors.blue,
             hintColor: Colors.grey,
             appBarTheme: const AppBarTheme(
@@ -49,6 +50,7 @@ class ScrumPokerApp extends StatelessWidget {
           // Define your dark theme
           darkTheme: ThemeData(
             brightness: Brightness.dark,
+            primaryColor: Colors.blueAccent,
             primarySwatch: Colors.blue, // Darker primary for dark mode
             appBarTheme: const AppBarTheme(
               backgroundColor: Colors.black, // Dark AppBar background

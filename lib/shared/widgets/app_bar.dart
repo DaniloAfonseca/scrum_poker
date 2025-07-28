@@ -39,7 +39,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
     return AppBar(
       backgroundColor: theme.scaffoldBackgroundColor,
       actionsPadding: const EdgeInsets.only(right: 16.0),
-      title: widget.loginIn == true ? null : Text('Scrum Poker', style: theme.textTheme.displayMedium),
+      title: widget.loginIn == true ? null : Image(image: AssetImage('images/logo_giraffe_dark_mode.png'), fit: BoxFit.fitWidth, width: 100),
       actions: [
         IconButton(
           onPressed: () {

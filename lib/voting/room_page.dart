@@ -9,7 +9,6 @@ import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/room.dart';
 import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/models/vote.dart';
-import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
@@ -247,6 +246,7 @@ class _RoomPageState extends State<RoomPage> {
                     });
                   },
                 ),
+
           body: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : (_appUser.value == null)
@@ -275,60 +275,77 @@ class _RoomPageState extends State<RoomPage> {
 
                         currentStoryVN.value = stories.firstWhereOrNull((t) => t.currentStory);
 
-                        return SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                            child: mediaQuery.size.width > 900
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(room.name!, style: theme.textTheme.headlineLarge),
-                                      Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        spacing: 20,
-                                        children: [
-                                          Expanded(
-                                            flex: 3,
-                                            child: Column(
-                                              spacing: 20,
-                                              children: [
-                                                VotingStory(appUser: _appUser.value, roomId: room.id),
-                                                VotingList(room: room),
-                                              ],
+                        return Container(
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('images/logo_giraffe_dark_mode.png'),
+                              alignment: Alignment.bottomLeft,
+                              colorFilter: ColorFilter.matrix([0.2126, 0.7152, 0.0722, 0, 0, 0.2126, 0.7152, 0.0722, 0, 0, 0.2126, 0.7152, 0.0722, 0, 0, 0, 0, 0, 1, 0]),
+                              opacity: 0.2,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                            ),
+                          ),
+                          child: SingleChildScrollView(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                              child: mediaQuery.size.width > 900
+                                  ? Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(room.name!, style: theme.textTheme.headlineLarge),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          spacing: 20,
+                                          children: [
+                                            Expanded(
+                                              flex: 3,
+                                              child: Column(
+                                                spacing: 20,
+                                                children: [
+                                                  VotingStory(appUser: _appUser.value, roomId: room.id),
+                                                  VotingList(room: room),
+                                                ],
+                                              ),
                                             ),
-                                          ),
 
-                                          Flexible(
-                                            flex: 1,
-                                            child: VotingPlayers(
+                                            Flexible(
+                                              flex: 1,
+                                              child: VotingPlayers(
+                                                currentStoryVN: currentStoryVN,
+                                                room: room,
+                                                appUser: _appUser.value!,
+                                                onUserRenamed: (appUser) => renameUser(appUser),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    )
+                                  : ValueListenableBuilder(
+                                      valueListenable: currentStoryVN,
+                                      builder: (context, currentStory, child) {
+                                        return Column(
+                                          spacing: 10,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(room.name!, style: theme.textTheme.headlineLarge),
+                                            if (currentStory?.url == null) Text(currentStory?.fullDescription ?? '', style: theme.textTheme.headlineSmall),
+                                            if (currentStory?.url != null)
+                                              Hyperlink(text: currentStory?.fullDescription ?? '', textStyle: theme.textTheme.headlineSmall!, url: currentStory!.url!),
+                                            VotingPlayers(
                                               currentStoryVN: currentStoryVN,
                                               room: room,
                                               appUser: _appUser.value!,
                                               onUserRenamed: (appUser) => renameUser(appUser),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  )
-                                : ValueListenableBuilder(
-                                    valueListenable: currentStoryVN,
-                                    builder: (context, currentStory, child) {
-                                      return Column(
-                                        spacing: 10,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(room.name!, style: theme.textTheme.headlineLarge),
-                                          if (currentStory?.url == null) Text(currentStory?.fullDescription ?? '', style: theme.textTheme.headlineSmall),
-                                          if (currentStory?.url != null)
-                                            Hyperlink(text: currentStory?.fullDescription ?? '', textStyle: theme.textTheme.headlineSmall!, url: currentStory!.url!),
-                                          VotingPlayers(currentStoryVN: currentStoryVN, room: room, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser)),
-                                          VotingStory(showStoryDescription: false, appUser: _appUser.value, roomId: room.id),
-                                          VotingList(room: room),
-                                        ],
-                                      );
-                                    },
-                                  ),
+                                            VotingStory(showStoryDescription: false, appUser: _appUser.value, roomId: room.id),
+                                            VotingList(room: room),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                            ),
                           ),
                         );
                       },
