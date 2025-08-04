@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/shared/helpers/credentials_helper.dart' as credentials_helper;
 import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
@@ -121,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.lock_person, size: 80, color: Colors.blueAccent),
+                    SvgPicture.asset('images/logo_dark_mode.svg', fit: BoxFit.contain, width: 140),
                     const SizedBox(height: 20),
                     Text(
                       'Welcome Scrum Poker',

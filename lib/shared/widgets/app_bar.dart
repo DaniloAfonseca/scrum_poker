@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
@@ -39,7 +40,16 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
     return AppBar(
       backgroundColor: theme.scaffoldBackgroundColor,
       actionsPadding: const EdgeInsets.only(right: 16.0),
-      title: widget.loginIn == true ? null : const Image(image: AssetImage('images/logo_giraffe_dark_mode.png'), fit: BoxFit.fitWidth, width: 100),
+      title: widget.loginIn == true
+          ? null
+          : Row(
+              spacing: 10,
+              children: [
+                SvgPicture.asset('images/logo_dark_mode.svg', fit: BoxFit.contain, width: 50),
+                Text('Scrum-Poker'),
+              ],
+            ),
+      //Image(image: SvgP('images/logo_giraffe_dark_mode.svg'), fit: BoxFit.fitWidth, width: 100),
       actions: [
         IconButton(
           onPressed: () {
