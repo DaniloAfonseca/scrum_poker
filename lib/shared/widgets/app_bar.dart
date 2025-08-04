@@ -94,13 +94,17 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
                         backgroundColor: theme.primaryColor,
                         key: _avatarKey,
                         backgroundImage: NetworkImage(snapshot.data!),
-                        child: InkWell(onTap: () => _showMenu(context)),
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(onTap: () => _showMenu(context)),
+                        ),
                       );
                     } else {
                       return CircleAvatar(
                         backgroundColor: theme.primaryColor,
                         key: _avatarKey,
                         child: IconButton(
+                          hoverColor: Colors.transparent,
                           icon: const Icon(Icons.person_outline, color: Colors.white),
                           onPressed: () {
                             _showMenu(context);

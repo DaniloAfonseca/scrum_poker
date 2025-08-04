@@ -22,6 +22,7 @@ Future<void> getCredentials(AccessToken access) async {
       'email': userData.email,
       'cloud-id': resourcesData['id'],
       'avatar-url': userData.picture,
+      'jira-url': resourcesData['url'],
     }),
   );
 }
