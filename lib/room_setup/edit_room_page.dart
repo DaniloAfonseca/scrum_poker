@@ -123,6 +123,13 @@ class _EditRoomPageState extends State<EditRoomPage> {
         await FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').doc(story.id).set(story.toJson());
       }
 
+      // remove deleted stories
+      final existingStories = await room_services.getStories(room.id);
+      for (var existingStory in existingStories) {
+        if (stories.any((t) => t.id == existingStory.id)) continue;
+        await FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').doc(existingStory.id).delete();
+      }
+
       // save user room
       final userRoom = UserRoom.fromRoom(room);
       userRoom.activeStories = stories.where((t) => t.status.active).length;

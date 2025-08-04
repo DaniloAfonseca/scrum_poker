@@ -319,21 +319,21 @@ Future<void> nextStory(Story story, List<Vote> votes) async {
 /// Swap stories
 ///
 /// [stories] list of stories in a room
-/// [story1] story 1 to be swapped with story 2
-/// [story2] story 2 to be swapped with story 1
-Future<void> swapStories(List<Story> stories, Story story1, Story story2) async {
-  final index1 = stories.indexOf(story1);
-  final index2 = stories.indexOf(story2);
-  stories[index1] = story2;
-  stories[index2] = story1;
+/// [oldIndex] story 1 to be swapped with story 2
+/// [newIndex] story 2 to be swapped with story 1
+Future<void> swapStories(List<Story> stories, int oldIndex, int newIndex) async {
+  final storyToMove = stories[oldIndex];
+  stories.removeWhere((t) => t.id == storyToMove.id);
+  stories.insert(newIndex, storyToMove);
   _setStoriesOrder(stories);
-  story1.currentStory = false;
-  story2.currentStory = false;
 
-  await _updateStory(story1, {'currentStory': false, 'status': $StoryStatusEnumMap[story1.status]});
-  await _updateStory(story2, {'currentStory': false, 'status': $StoryStatusEnumMap[story2.status]});
-
-  await _updateCurrentStory(stories, [story1.id, story2.id]);
+  for (final story in stories) {
+    if (story.id == storyToMove.id) {
+      await _updateStory(story, {'currentStory': false, 'status': $StoryStatusEnumMap[story.status], 'order:': story.order});
+    } else {
+      await _updateStory(story, {'currentStory': false, 'order:': story.order});
+    }
+  }
 }
 
 /// Update revised estimate

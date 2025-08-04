@@ -52,7 +52,12 @@ class _MainPageRoomState extends State<MainPageRoom> {
                   Row(
                     spacing: 10,
                     children: [
-                      Text(userRoom.name, style: theme.textTheme.headlineLarge!.copyWith(color: Colors.white)),
+                      Text(
+                        userRoom.name,
+                        style: constraint.maxWidth > 900
+                            ? theme.textTheme.headlineLarge!.copyWith(color: Colors.white)
+                            : theme.textTheme.headlineMedium!.copyWith(color: Colors.white),
+                      ),
                       TextTag(
                         text: 'DELETED',
                         backgroundColor: Colors.red,

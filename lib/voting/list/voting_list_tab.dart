@@ -18,6 +18,7 @@ class VotingListTab extends StatefulWidget {
 
 class _VotingListTabState extends State<VotingListTab> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final isReordering = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -172,13 +173,20 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
             ),
           ],
         ),
+        Divider(height: 1, thickness: 1, color: Colors.grey[300]!),
         SizedBox(
-          height: widget.stories.length * 50 + 101,
+          height: widget.stories.length * 50 + 100,
           child: TabBarView(
             controller: _tabController,
             children: <Widget>[
               ReorderableListView.builder(
                 buildDefaultDragHandles: false,
+                onReorderStart: (index) {
+                  isReordering.value = true;
+                },
+                onReorderEnd: (index) {
+                  isReordering.value = false;
+                },
                 itemBuilder: (context, index) {
                   final t = activeStories[index];
                   return VotingListItem(
@@ -190,12 +198,13 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
                     onMoveUp: index == 0 ? null : () => room_services.moveStoryUp(widget.stories, t),
                     onSkip: () => skipStory(widget.room, widget.stories, t, currentStory),
                     reorderIndex: index,
+                    isReordering: isReordering,
                   );
                 },
                 itemCount: activeStories.length,
                 onReorder: (oldIndex, newIndex) {
                   if (newIndex > oldIndex) newIndex--;
-                  room_services.swapStories(widget.stories, widget.stories[oldIndex], widget.stories[newIndex]);
+                  room_services.swapStories(widget.stories, oldIndex, newIndex);
                 },
               ),
               Column(
@@ -209,9 +218,14 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
                     )
                     .toList(),
               ),
-
               ReorderableListView.builder(
                 buildDefaultDragHandles: false,
+                onReorderStart: (index) {
+                  isReordering.value = true;
+                },
+                onReorderEnd: (index) {
+                  isReordering.value = false;
+                },
                 itemBuilder: (context, index) {
                   final t = widget.stories[index];
                   return VotingListItem(
@@ -220,12 +234,13 @@ class _VotingListTabState extends State<VotingListTab> with SingleTickerProvider
                     story: t,
                     onMoveToActive: t.status == StoryStatus.skipped ? () => room_services.moveStoryToActive(widget.stories, t) : null,
                     reorderIndex: index,
+                    isReordering: isReordering,
                   );
                 },
                 itemCount: widget.stories.length,
                 onReorder: (oldIndex, newIndex) {
                   if (newIndex > oldIndex) newIndex--;
-                  room_services.swapStories(widget.stories, widget.stories[oldIndex], widget.stories[newIndex]);
+                  room_services.swapStories(widget.stories, oldIndex, newIndex);
                 },
               ),
             ],
