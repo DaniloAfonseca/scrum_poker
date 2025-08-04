@@ -37,6 +37,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeManager = ThemeManager();
+    final mediaQuery = MediaQuery.of(context);
     return AppBar(
       backgroundColor: theme.scaffoldBackgroundColor,
       actionsPadding: const EdgeInsets.only(right: 16.0),
@@ -46,7 +47,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
               spacing: 10,
               children: [
                 SvgPicture.asset('images/logo_dark_mode.svg', fit: BoxFit.contain, width: 50),
-                Text('Scrum-Poker'),
+                Text('Scrum Poker', style: mediaQuery.size.width > 900 ? theme.textTheme.displayMedium : theme.textTheme.displaySmall),
               ],
             ),
       //Image(image: SvgP('images/logo_giraffe_dark_mode.svg'), fit: BoxFit.fitWidth, width: 100),

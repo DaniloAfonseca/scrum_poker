@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -46,15 +47,19 @@ class _RoomPageState extends State<RoomPage> {
   final currentStoryVN = ValueNotifier<Story?>(null);
   final votesVN = ValueNotifier<List<Vote>>([]);
 
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? roomsStreamSubs;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? storiesStreamSubs;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? currentUsersStreamSubs;
+
   @override
   void initState() {
     final roomsStream = FirebaseFirestore.instance.collection('rooms').snapshots(includeMetadataChanges: true);
     final storiesStream = FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('stories').snapshots(includeMetadataChanges: true);
     final currentUsersStream = FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('currentUsers').snapshots(includeMetadataChanges: true);
 
-    roomsStream.listen(onRoomsData);
-    storiesStream.listen(onStoriesData);
-    currentUsersStream.listen(onCurrentUsersData);
+    roomsStreamSubs = roomsStream.listen(onRoomsData);
+    storiesStreamSubs = storiesStream.listen(onStoriesData);
+    currentUsersStreamSubs = currentUsersStream.listen(onCurrentUsersData);
 
     web.window.onbeforeunload = (JSAny data) {
       if (_appUser.value != null) {
@@ -74,13 +79,40 @@ class _RoomPageState extends State<RoomPage> {
 
   @override
   void dispose() {
+    roomsStreamSubs?.cancel();
+    roomsStreamSubs = null;
+
+    storiesStreamSubs?.cancel();
+    storiesStreamSubs = null;
+
+    currentUsersStreamSubs?.cancel();
+    currentUsersStreamSubs = null;
+
     super.dispose();
   }
 
   void onRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
     if (event.docChanges.isNotEmpty && listenToRoomChanges) {
       final rooms = event.docChanges.where((t) => t.doc.data() != null).map((t) => Room.fromJson(t.doc.data()!)).toList();
-      print(rooms);
+      if (rooms.isNotEmpty) {
+        final messages = <String>[];
+        if (_oldRoom != null) {
+          final room = rooms.first;
+          if (room.name != _oldRoom!.name) {
+            messages.add('Room name changed to ${room.name}.');
+          }
+          if (room.status != _oldRoom!.status) {
+            messages.add('Room status changed to ${room.status.name}.');
+          }
+          if (_oldRoom!.dateDeleted == null && room.dateDeleted != null) {
+            messages.add('Room ${room.name} has been deleted.');
+          }
+        }
+        _oldRoom = rooms.first;
+        showSnackBar(messages);
+      } else {
+        _oldRoom = null;
+      }
     }
     listenToRoomChanges = true;
   }

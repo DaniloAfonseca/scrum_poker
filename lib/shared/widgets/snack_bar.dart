@@ -24,9 +24,12 @@ ScaffoldFeatureController<SnackBar, SnackBarClosedReason> snackbarMessenger({req
       behavior: SnackBarBehavior.floating,
       content: Row(
         spacing: 10,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color),
-          Text(message, style: TextStyle(color: color)),
+          Flexible(
+            child: Text(message, style: TextStyle(color: color), softWrap: true),
+          ),
         ],
       ),
       action: SnackBarAction(

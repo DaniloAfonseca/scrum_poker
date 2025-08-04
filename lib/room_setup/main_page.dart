@@ -111,11 +111,7 @@ class _MainPageState extends State<MainPage> {
                           },
                           borderWidth: 5.0,
                           height: 32.0,
-                          //loadingIconBuilder: (context, global) => CupertinoActivityIndicator(color: Color.lerp(Colors.red[800], green, global.position)),
                           onChanged: (b) => setState(() => showDeleted = b),
-                          // iconBuilder:
-                          //     (value) =>
-                          //         value ? const Icon(Icons.power_outlined, color: Colors.green, size: 32.0) : Icon(Icons.power_settings_new_rounded, color: Colors.red[800], size: 32.0),
                           textBuilder:
                               (value) =>
                                   value
