@@ -308,16 +308,16 @@ class _RoomPageState extends State<RoomPage> {
                         currentStoryVN.value = stories.firstWhereOrNull((t) => t.currentStory);
 
                         return Container(
-                          decoration: const BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('images/logo_giraffe_dark_mode.png'),
-                              alignment: Alignment.bottomLeft,
-                              colorFilter: ColorFilter.matrix([0.2126, 0.7152, 0.0722, 0, 0, 0.2126, 0.7152, 0.0722, 0, 0, 0.2126, 0.7152, 0.0722, 0, 0, 0, 0, 0, 1, 0]),
-                              opacity: 0.2,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
-                            ),
-                          ),
+                          // decoration: const BoxDecoration(
+                          //   image: DecorationImage(
+                          //     image: SvgPicture.asset('images/logo_dark_mode.svg'),
+                          //     alignment: Alignment.bottomLeft,
+                          //     colorFilter: ColorFilter.matrix([0.2126, 0.7152, 0.0722, 0, 0, 0.2126, 0.7152, 0.0722, 0, 0, 0.2126, 0.7152, 0.0722, 0, 0, 0, 0, 0, 1, 0]),
+                          //     opacity: 0.2,
+                          //     fit: BoxFit.contain,
+                          //     filterQuality: FilterQuality.high,
+                          //   ),
+                          // ),
                           child: SingleChildScrollView(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
