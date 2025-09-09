@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/login/login_page.dart';
+import 'package:scrum_poker/auth/auth_page.dart';
+import 'package:scrum_poker/auth/login_page.dart';
+import 'package:scrum_poker/auth/register_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
 import 'package:scrum_poker/room_setup/edit_room_page.dart';
 import 'package:scrum_poker/settings_page.dart';
@@ -20,7 +22,7 @@ Future<String?> authGuard(BuildContext context, GoRouterState state) async {
   bool redirectToLogin = false;
   if (!state.matchedLocation.startsWith(Routes.room)) {
     if (auth.currentUser == null) {
-      if (state.matchedLocation == Routes.login) {
+      if ([Routes.register, Routes.login].contains(state.matchedLocation)) {
         return null;
       }
       redirectToLogin = true;
@@ -59,13 +61,25 @@ class ManagerRouter {
           return const MainPage();
         },
       ),
-      GoRoute(
-        path: Routes.login,
-        builder: (context, state) {
-          final code = state.uri.queryParameters['code'];
-          return LoginPage(authCode: code);
-        },
+      ShellRoute(
+        builder: (context, state, child) => AuthPage(child: child),
+        routes: [
+          GoRoute(
+            path: Routes.login,
+            builder: (context, state) {
+              final code = state.uri.queryParameters['code'];
+              return LoginPage(authCode: code);
+            },
+          ),
+          GoRoute(
+            path: Routes.register,
+            builder: (context, state) {
+              return const RegisterPage();
+            },
+          ),
+        ],
       ),
+
       GoRoute(
         path: Routes.room,
         builder: (context, state) {

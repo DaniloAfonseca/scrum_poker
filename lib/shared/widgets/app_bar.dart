@@ -126,13 +126,13 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
       context: context,
       position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
       items: [
-        PopupMenuItem(
-          child: ListTile(leading: const Icon(Icons.logout_outlined), title: const Text('Sign Out'), onTap: signOut),
-        ),
         if (user != null && widget.loginIn != true)
           PopupMenuItem(
             child: ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () => navigatorKey.currentContext!.go(Routes.settings)),
           ),
+        PopupMenuItem(
+          child: ListTile(leading: const Icon(Icons.logout_outlined), title: const Text('Sign Out'), onTap: signOut),
+        ),
       ],
     );
   }

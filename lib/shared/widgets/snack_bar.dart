@@ -19,25 +19,27 @@ ScaffoldFeatureController<SnackBar, SnackBarClosedReason> snackbarMessenger({req
   final context = navigatorKey.currentContext!;
   return ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      shape: Border.all(color: color!),
-      backgroundColor: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      showCloseIcon: true,
+      backgroundColor: color,
       behavior: SnackBarBehavior.floating,
+      elevation: 4.0,
       content: Row(
         spacing: 10,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color),
+          Icon(icon, color: Colors.white),
           Flexible(
-            child: Text(message, style: TextStyle(color: color), softWrap: true),
+            child: Text(message, style: const TextStyle(color: Colors.white), softWrap: true),
           ),
         ],
       ),
-      action: SnackBarAction(
-        label: 'Dismiss',
-        onPressed: () {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        },
-      ),
+      // action: SnackBarAction(
+      //   label: 'Dismiss',
+      //   onPressed: () {
+      //     ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      //   },
+      // ),
     ),
   );
 }

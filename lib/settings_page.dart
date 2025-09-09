@@ -1,9 +1,11 @@
 import 'package:collection/collection.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/jira_field.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
+import 'package:scrum_poker/shared/widgets/create_password.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 import 'package:web/web.dart' as web;
@@ -21,6 +23,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   final SearchController _fieldSearchController = SearchController();
   bool _isLoadingFields = false;
+
+  final user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -65,21 +69,14 @@ class _SettingsPageState extends State<SettingsPage> {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
             Hyperlink(text: 'Exit settings', onTap: () => web.window.history.back()),
             const SizedBox(height: 10),
-            Flexible(
-              child: TextFormField(
-                controller: _jiraUrlController,
-                decoration: const InputDecoration(labelText: 'Jira URL'),
-                onChanged: (value) {
-                  SettingsManager().updateJiraUrl(value);
-                },
-                keyboardType: TextInputType.url,
-              ),
-            ),
+            const CreateNewPassword(),
+
             _isLoadingFields
                 ? const Center(child: CircularProgressIndicator())
                 : SearchViewTheme(
@@ -124,7 +121,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 _fieldSearchController.text = field.name; // Update text
                                 // Close the search view and pass the selected value
                                 controller.closeView(field.name);
-                                SettingsManager().updateStoryPointFieldName(field.key);// Store the entire JiraField object (or just its ID)
+                                SettingsManager().updateStoryPointFieldName(field.key); // Store the entire JiraField object (or just its ID)
                               },
                             );
                           }).toList();

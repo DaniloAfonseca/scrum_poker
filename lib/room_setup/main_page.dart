@@ -31,9 +31,10 @@ class _MainPageState extends State<MainPage> {
     super.initState();
 
     // Redirect to login if not authenticated
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (user == null) {
         context.go(Routes.login);
+        return;
       }
     });
   }
@@ -82,8 +83,14 @@ class _MainPageState extends State<MainPage> {
                       borderRadius: BorderRadius.circular(6),
                       onPressed: sortToggle,
                       children: [
-                        Tooltip(message: 'Sort by earliest date', child: Transform.rotate(origin: const Offset(-3, -3), angle: -0.5 * pi, child: const Icon(Icons.arrow_back_ios))),
-                        Tooltip(message: 'Sort by latest date', child: Transform.rotate(origin: const Offset(-3, 1), angle: 0.5 * pi, child: const Icon(Icons.arrow_back_ios))),
+                        Tooltip(
+                          message: 'Sort by earliest date',
+                          child: Transform.rotate(origin: const Offset(-3, -3), angle: -0.5 * pi, child: const Icon(Icons.arrow_back_ios)),
+                        ),
+                        Tooltip(
+                          message: 'Sort by latest date',
+                          child: Transform.rotate(origin: const Offset(-3, 1), angle: 0.5 * pi, child: const Icon(Icons.arrow_back_ios)),
+                        ),
                       ],
                     ),
                     Row(
@@ -112,11 +119,13 @@ class _MainPageState extends State<MainPage> {
                           borderWidth: 5.0,
                           height: 32.0,
                           onChanged: (b) => setState(() => showDeleted = b),
-                          textBuilder:
-                              (value) =>
-                                  value
-                                      ? Center(child: Text('All', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)))
-                                      : Center(child: Text('Not deleted', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white))),
+                          textBuilder: (value) => value
+                              ? Center(
+                                  child: Text('All', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                )
+                              : Center(
+                                  child: Text('Not deleted', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                ),
                         ),
 
                         ElevatedButton(
@@ -138,7 +147,10 @@ class _MainPageState extends State<MainPage> {
                 if (user != null)
                   SingleChildScrollView(
                     key: ValueKey(_selectedOrder[0]),
-                    child: Column(spacing: 10, children: rooms.map((room) => MainPageRoom(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList()),
+                    child: Column(
+                      spacing: 10,
+                      children: rooms.map((room) => MainPageRoom(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList(),
+                    ),
                   ),
               ],
             ),
