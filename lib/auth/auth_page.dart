@@ -28,7 +28,7 @@ class AuthPage extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.all(isSmallScreen ? 20.0 : 40.0),
                   child: Container(
-                    constraints: BoxConstraints(maxWidth: isSmallScreen ? screenSize.width * 0.9 : 450.0),
+                    constraints: BoxConstraints(maxWidth: isSmallScreen ? screenSize.width * 0.9 : 450.0, minHeight: 650),
                     child: Column(
                       spacing: 10,
                       children: [

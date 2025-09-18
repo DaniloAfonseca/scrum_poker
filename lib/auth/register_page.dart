@@ -103,9 +103,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         labelText: 'Password',
                         hintText: 'Enter new password',
                         border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
-                        prefixIcon: const Icon(Icons.lock),
+                        prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                          icon: Icon(_isPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                           onPressed: () {
                             setState(() => _isPasswordVisible = !_isPasswordVisible);
                           },
@@ -129,9 +129,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         labelText: 'Verify password',
                         hintText: 'Confirm your new password',
                         border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
-                        prefixIcon: const Icon(Icons.lock),
+                        prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                          icon: Icon(_isConfirmPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                           onPressed: () {
                             setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible);
                           },

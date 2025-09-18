@@ -66,15 +66,31 @@ class ManagerRouter {
         routes: [
           GoRoute(
             path: Routes.login,
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final code = state.uri.queryParameters['code'];
-              return LoginPage(authCode: code);
+              return CustomTransitionPage(
+                transitionsBuilder: (context, firstAnimation, secondAnimation, child) {
+                  return FadeTransition(
+                    opacity: CurveTween(curve: Curves.easeInOutCirc).animate(firstAnimation),
+                    child: child,
+                  );
+                },
+                child: LoginPage(authCode: code),
+              );
             },
           ),
           GoRoute(
             path: Routes.register,
-            builder: (context, state) {
-              return const RegisterPage();
+            pageBuilder: (context, state) {
+              return CustomTransitionPage(
+                transitionsBuilder: (context, firstAnimation, secondAnimation, child) {
+                  return FadeTransition(
+                    opacity: CurveTween(curve: Curves.easeInOutCirc).animate(firstAnimation),
+                    child: child,
+                  );
+                },
+                child: const RegisterPage(),
+              );
             },
           ),
         ],
