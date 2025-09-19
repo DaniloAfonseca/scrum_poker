@@ -141,6 +141,7 @@ class _VotingListItemState extends State<VotingListItem> {
                   child: Text(widget.story.revisedEstimate.toString(), style: theme.textTheme.bodyLarge!.copyWith(color: Colors.white)),
                 ),
               ),
+            const SizedBox(width: 5),
           ],
         ),
         trailing: hasMenuItems
