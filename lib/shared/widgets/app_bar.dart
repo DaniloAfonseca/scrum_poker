@@ -137,7 +137,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
             valueListenable: jira.isConnected,
             builder: (context, value, child) {
               return ListTile(
-                leading: Icon(value ? Icons.logout_outlined : Icons.login_outlined),
+                leading: Image.asset('images/jira.png'),
                 title: Text(value ? 'Disconnect To Jira' : 'Connect to Jira'),
                 onTap: () async {
                   if (!value) {

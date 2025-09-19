@@ -125,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         TextButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Method: "Forgot Password?" not implemented yet')));
+                            context.go(Routes.forgotPassword);
                           },
                           child: const Text('Forgot Password?', style: TextStyle(color: Colors.blueAccent)),
                         ),
@@ -166,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () async {
                           await AuthServices().signInWithJira();
                         },
-                        child: const Text('Login by JIRA'),
+                        child: Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: [Image.asset('images/jira.png'), const Text('Login by JIRA')]),
                       ),
                     ),
                   ],

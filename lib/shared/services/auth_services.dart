@@ -43,6 +43,26 @@ class AuthServices extends BaseServices {
     }
   }
 
+  Future<String?> resetPassword(String email) async {
+    try {
+      await auth.sendPasswordResetEmail(email: email);
+      return 'We\'ve sent an email to reset the password';
+    } on FirebaseAuthException catch (e) {
+      String message = '';
+      if (e.code == 'invalid-email') {
+        message = 'Invalid email format.';
+      } else if (e.code == 'user-not-found') {
+        message = 'The user with this email doesn\'t exist.';
+      }
+      return message;
+    } catch (e) {
+      if (kDebugMode) {
+        print('There was an error: $e');
+      }
+      return null;
+    }
+  }
+
   Future<void> signInWithJira() async {
     final clientId = JiraAuthentication.clientId;
     //final clientSecret = JiraAuthentication.secret2;

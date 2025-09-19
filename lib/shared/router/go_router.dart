@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/auth/auth_page.dart';
+import 'package:scrum_poker/auth/forgot_password_page.dart';
 import 'package:scrum_poker/auth/login_page.dart';
 import 'package:scrum_poker/auth/register_page.dart';
 import 'package:scrum_poker/room_setup/main_page.dart';
@@ -23,7 +24,7 @@ Future<String?> authGuard(BuildContext context, GoRouterState state) async {
   bool redirect = false;
   if (!state.matchedLocation.startsWith(Routes.room)) {
     if (auth.currentUser == null) {
-      if ([Routes.register, Routes.login].contains(state.matchedLocation)) {
+      if ([Routes.register, Routes.login, Routes.forgotPassword].contains(state.matchedLocation)) {
         return null;
       }
       redirect = true;
@@ -90,6 +91,20 @@ class ManagerRouter {
                   );
                 },
                 child: const RegisterPage(),
+              );
+            },
+          ),
+          GoRoute(
+            path: Routes.forgotPassword,
+            pageBuilder: (context, state) {
+              return CustomTransitionPage(
+                transitionsBuilder: (context, firstAnimation, secondAnimation, child) {
+                  return FadeTransition(
+                    opacity: CurveTween(curve: Curves.easeInOutCirc).animate(firstAnimation),
+                    child: child,
+                  );
+                },
+                child: const ForgotPasswordPage(),
               );
             },
           ),
