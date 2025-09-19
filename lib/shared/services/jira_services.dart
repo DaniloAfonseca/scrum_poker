@@ -68,7 +68,7 @@ class JiraServices extends BaseServices {
         "client_id": JiraAuthentication.clientId,
         "client_secret": JiraAuthentication.secret,
         "code": token,
-        "redirect_uri": "${Uri.base.origin}/login",
+        "redirect_uri": "${Uri.base.origin}/redirect",
       }),
     );
 

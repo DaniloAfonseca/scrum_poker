@@ -9,6 +9,7 @@ import 'package:scrum_poker/room_setup/edit_room_page.dart';
 import 'package:scrum_poker/settings_page.dart';
 import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/managers/settings_manager.dart';
+import 'package:scrum_poker/shared/pages/redirect_page.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
@@ -19,13 +20,13 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<String?> authGuard(BuildContext context, GoRouterState state) async {
   final auth = FirebaseAuth.instance;
 
-  bool redirectToLogin = false;
+  bool redirect = false;
   if (!state.matchedLocation.startsWith(Routes.room)) {
     if (auth.currentUser == null) {
       if ([Routes.register, Routes.login].contains(state.matchedLocation)) {
         return null;
       }
-      redirectToLogin = true;
+      redirect = true;
     } else {
       if (JiraCredentialsManager().currentCredentials != null) {
         final response = await JiraServices().checkCredentials();
@@ -33,17 +34,17 @@ Future<String?> authGuard(BuildContext context, GoRouterState state) async {
           SettingsManager().deleteAppUser();
           AuthServices().signOut();
           JiraCredentialsManager().clearCredentials();
-          redirectToLogin = true;
+          redirect = true;
         }
       }
     }
   }
 
-  if (redirectToLogin) {
+  if (redirect) {
     final currentUri = state.uri;
 
-    final loginUri = Uri(path: Routes.login, queryParameters: currentUri.queryParameters);
-    return loginUri.toString();
+    final redirectUri = Uri(path: Routes.redirect, queryParameters: currentUri.queryParameters);
+    return redirectUri.toString();
   }
 
   return null;
@@ -67,7 +68,6 @@ class ManagerRouter {
           GoRoute(
             path: Routes.login,
             pageBuilder: (context, state) {
-              final code = state.uri.queryParameters['code'];
               return CustomTransitionPage(
                 transitionsBuilder: (context, firstAnimation, secondAnimation, child) {
                   return FadeTransition(
@@ -75,7 +75,7 @@ class ManagerRouter {
                     child: child,
                   );
                 },
-                child: LoginPage(authCode: code),
+                child: const LoginPage(),
               );
             },
           ),
@@ -95,7 +95,13 @@ class ManagerRouter {
           ),
         ],
       ),
-
+      GoRoute(
+        path: Routes.redirect,
+        builder: (context, state) {
+          final redirectCode = state.uri.queryParameters['code'];
+          return RedirectPage(code: redirectCode);
+        },
+      ),
       GoRoute(
         path: Routes.room,
         builder: (context, state) {

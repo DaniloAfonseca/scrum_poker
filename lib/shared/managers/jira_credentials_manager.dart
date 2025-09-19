@@ -11,6 +11,8 @@ class JiraCredentialsManager {
 
   bool _isInitialising = false;
 
+  final isConnected = ValueNotifier<bool>(false);
+
   Future<void> initialise() async {
     if (_isInitialising) return;
     _isInitialising = true;
@@ -26,6 +28,7 @@ class JiraCredentialsManager {
       }
     } finally {
       _isInitialising = false;
+      isConnected.value = _currentCredentials != null;
     }
   }
 
@@ -33,12 +36,14 @@ class JiraCredentialsManager {
     await initialise();
     await SettingsManager().setCredentials(credentials);
     _currentCredentials = credentials;
+    isConnected.value = _currentCredentials != null;
   }
 
   Future<void> clearCredentials() async {
     await initialise();
     await SettingsManager().clearCredentials();
     _currentCredentials = null;
+    isConnected.value = _currentCredentials != null;
   }
 
   JiraCredentials? get currentCredentials {

@@ -3,6 +3,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
@@ -122,6 +123,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
   void _showMenu<T>(BuildContext context) {
     RenderBox box = _avatarKey.currentContext!.findRenderObject() as RenderBox;
     Offset position = box.localToGlobal(Offset.zero);
+    final jira = JiraCredentialsManager();
     showMenu(
       context: context,
       position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
@@ -130,6 +132,24 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
           PopupMenuItem(
             child: ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () => navigatorKey.currentContext!.go(Routes.settings)),
           ),
+        PopupMenuItem(
+          child: ValueListenableBuilder(
+            valueListenable: jira.isConnected,
+            builder: (context, value, child) {
+              return ListTile(
+                leading: Icon(value ? Icons.logout_outlined : Icons.login_outlined),
+                title: Text(value ? 'Disconnect To Jira' : 'Connect to Jira'),
+                onTap: () async {
+                  if (!value) {
+                    await AuthServices().signInWithJira();
+                  } else {
+                    jira.clearCredentials();
+                  }
+                },
+              );
+            },
+          ),
+        ),
         PopupMenuItem(
           child: ListTile(leading: const Icon(Icons.logout_outlined), title: const Text('Sign Out'), onTap: signOut),
         ),

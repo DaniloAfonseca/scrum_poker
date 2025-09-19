@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:scrum_poker/shared/helpers/credentials_helper.dart' as credentials_helper;
-import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
-import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,55 +17,12 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final _jiraServices = JiraServices();
 
   bool _isLoading = false;
-  late JiraCredentialsManager jiraManager;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      jiraManager = JiraCredentialsManager();
-      signInByJira();
-    });
-  }
 
   void _setLoading(bool isLoading) {
     if (_isLoading == isLoading) return;
     setState(() => _isLoading = isLoading);
-  }
-
-  Future<void> signInByJira() async {
-    if (widget.authCode == null) return;
-    try {
-      _setLoading(true);
-
-      //If we don't have an access token we need to get a new one.
-      //After that we are check
-      await accessToken(widget.authCode!);
-
-      _setLoading(false);
-    } catch (e) {
-      snackbarMessenger(message: 'Error trying to connect to Jira: $e', type: SnackBarType.error);
-      _setLoading(false);
-    }
-  }
-
-  Future<void> accessToken(String authCode) async {
-    await _jiraServices
-        .accessToken(authCode)
-        .then((response) async {
-          if (response.success && response.data != null) {
-            await credentials_helper.getCredentials(response.data!);
-            await AuthServices().signInWithCredentials(jiraManager.currentCredentials!.email!, jiraManager.currentCredentials!.avatarUrl!);
-            navigatorKey.currentContext!.go(Routes.home);
-          }
-        })
-        .catchError((error) {
-          snackbarMessenger(message: 'There was an error trying connect by Jira: $error', type: SnackBarType.error);
-          return;
-        });
   }
 
   @override
@@ -210,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(
                       child: ElevatedButton(
                         onPressed: () async {
-                          await AuthServices().signInWithJira(context);
+                          await AuthServices().signInWithJira();
                         },
                         child: const Text('Login by JIRA'),
                       ),
