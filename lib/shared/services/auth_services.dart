@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:scrum_poker/jira_authentication.dart';
 import 'package:scrum_poker/shared/managers/jira_credentials_manager.dart';
 import 'package:scrum_poker/shared/services/base_services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -27,7 +26,7 @@ class AuthServices extends BaseServices {
   Future<void> signInWithCredentials(String email, String photoUrl) async {
     try {
       final response = await http.post(
-        Uri.parse('$firebaseApiUrl/generateTokeFromEmail'),
+        Uri.parse('$firebaseApiUrl/generateTokenFromEmail'),
         body: json.encode({'email': email, 'photoUrl': photoUrl}),
         headers: {'Content-Type': 'application/json'},
       );
@@ -64,7 +63,6 @@ class AuthServices extends BaseServices {
   }
 
   Future<void> signInWithJira() async {
-    final clientId = JiraAuthentication.clientId;
     //final clientSecret = JiraAuthentication.secret2;
 
     final redirectUri = Uri.encodeComponent('${Uri.base.origin}/redirect');

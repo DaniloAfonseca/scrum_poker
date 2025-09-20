@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:scrum_poker/jira_authentication.dart';
 import 'package:scrum_poker/shared/helpers/credentials_helper.dart' as credentials_helper;
 import 'package:scrum_poker/shared/models/app_user.dart';
 import 'package:scrum_poker/shared/models/base_response.dart';
@@ -60,16 +59,9 @@ class JiraServices extends BaseServices {
     }
 
     final response = await http.post(
-      jiraApiAuthUrl('oauth/token'),
+      Uri.parse('$firebaseJiraApiUrl/accessToken'),
+      body: json.encode({'code': token, 'redirect_uri': "${Uri.base.origin}/redirect"}),
       headers: {'Content-Type': 'application/json'},
-
-      body: json.encode({
-        "grant_type": "authorization_code",
-        "client_id": JiraAuthentication.clientId,
-        "client_secret": JiraAuthentication.secret,
-        "code": token,
-        "redirect_uri": "${Uri.base.origin}/redirect",
-      }),
     );
 
     return BaseResponse<AccessToken>(success: response.statusCode == 200, data: AccessToken.fromJson(json.decode(response.body)));
@@ -81,16 +73,9 @@ class JiraServices extends BaseServices {
     }
 
     final response = await http.post(
-      jiraApiAuthUrl('oauth/token'),
+      Uri.parse('$firebaseJiraApiUrl/refreshToken'),
+      body: json.encode({'refresh_token': token, 'redirect_uri': "${Uri.base.origin}/redirect"}),
       headers: {'Content-Type': 'application/json'},
-
-      body: json.encode({
-        "grant_type": "refresh_token",
-        "client_id": JiraAuthentication.clientId,
-        "client_secret": JiraAuthentication.secret,
-        "refresh_token": token,
-        "redirect_uri": "${Uri.base.origin}/redirect",
-      }),
     );
 
     return BaseResponse<AccessToken>(success: response.statusCode == 200, data: AccessToken.fromJson(json.decode(response.body)));
