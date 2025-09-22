@@ -60,7 +60,7 @@ class JiraServices extends BaseServices {
 
     final response = await http.post(
       Uri.parse('$firebaseJiraApiUrl/accessToken'),
-      body: json.encode({'code': token, 'redirect_uri': "${Uri.base.origin}/redirect"}),
+      body: json.encode({'code': token, 'redirect_uri': redirectUri}),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -74,7 +74,7 @@ class JiraServices extends BaseServices {
 
     final response = await http.post(
       Uri.parse('$firebaseJiraApiUrl/refreshToken'),
-      body: json.encode({'refresh_token': token, 'redirect_uri': "${Uri.base.origin}/redirect"}),
+      body: json.encode({'refresh_token': token, 'redirect_uri': redirectUri}),
       headers: {'Content-Type': 'application/json'},
     );
 

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class BaseServices {
   // String get baseUrl {
   //   final uri = Uri.base;
@@ -10,6 +12,9 @@ class BaseServices {
 
   final String firebaseApiUrl = 'https://generatetokenfromemail-fvxqqvi45a-uc.a.run.app';
   final String firebaseJiraApiUrl = 'https://jiraauth-fvxqqvi45a-uc.a.run.app';
+
+  // The redirection is handle it in functions, here we need to say which url should return.
+  String get redirectUri => '$firebaseJiraApiUrl?env=${kDebugMode ? 'dev' : 'prod'}';
 
   Uri jiraApiAuthUrl(String url) => Uri.parse('https://api.atlassian.com/$url');
   //Note if you want use confluence instead of /jira/ put /confluence/

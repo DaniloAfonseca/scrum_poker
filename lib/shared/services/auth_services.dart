@@ -65,14 +65,13 @@ class AuthServices extends BaseServices {
   Future<void> signInWithJira() async {
     //final clientSecret = JiraAuthentication.secret2;
 
-    final redirectUri = Uri.encodeComponent('${Uri.base.origin}/redirect');
     final scope = Uri.encodeComponent(
       'offline_access read:me read:account read:jira-work manage:jira-project manage:jira-configuration read:jira-user write:jira-work manage:jira-webhook manage:jira-data-provider',
     );
     final state = 'random_string_to_protect_against_csrf';
 
     final authUrl =
-        'https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=$clientId&scope=$scope&redirect_uri=$redirectUri&state=$state&response_type=code&prompt=consent';
+        'https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=$clientId&scope=$scope&redirect_uri=${Uri.encodeComponent(redirectUri)}&state=$state&response_type=code&prompt=consent';
 
     final uri = Uri.parse(authUrl);
 
