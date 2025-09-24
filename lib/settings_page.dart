@@ -23,6 +23,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   final SearchController _fieldSearchController = SearchController();
   bool _isLoadingFields = false;
+  bool _showStoryPointsField = false;
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -48,9 +49,14 @@ class _SettingsPageState extends State<SettingsPage> {
         final storyPointFieldName = SettingsManager().storyPointFieldName;
         setState(() {
           _fieldSearchController.text = _fields.firstWhereOrNull((t) => t.key == storyPointFieldName)?.name ?? '';
+          _showStoryPointsField = true;
         });
       } else if (response.message != null && response.message!.isNotEmpty) {
-        snackbarMessenger(message: response.message!, type: SnackBarType.error);
+        if (response.message == 'You don\'t have access token.') {
+          snackbarMessenger(message: 'Please connect to jira to set story points field.', type: SnackBarType.error);
+        } else {
+          snackbarMessenger(message: response.message!, type: SnackBarType.error);
+        }
       }
     } catch (e) {
       snackbarMessenger(message: e.toString(), type: SnackBarType.error);
@@ -76,9 +82,11 @@ class _SettingsPageState extends State<SettingsPage> {
             Hyperlink(text: 'Exit settings', onTap: () => web.window.history.back()),
             const SizedBox(height: 10),
             const CreateNewPassword(),
-
+            const SizedBox(height: 20),
             _isLoadingFields
                 ? const Center(child: CircularProgressIndicator())
+                : !_showStoryPointsField
+                ? const SizedBox.shrink()
                 : SearchViewTheme(
                     data: SearchViewThemeData(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
