@@ -159,10 +159,11 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
       return null;
     }
 
+    value = value.replaceAll('"', '');
+
     try {
       final response = await JiraServices().searchIssues(
-        query:
-            '(summary ~ "${value.replaceAll('"', '').replaceAll('-', '')}*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress") order by key',
+        query: '(summary ~ "${value.replaceAll('-', ' ')}*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress") order by key',
         fields: [if (_storyPointFieldName != null) '$_storyPointFieldName', '-comment', 'summary', 'statusCategory', 'issuetype'],
         nextPageToken: nextPageToken,
         maxResults: maxResults,

@@ -216,7 +216,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                   spacing: 20,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Hyperlink(text: 'Back to list', onTap: () => web.window.history.back()),
+                    Hyperlink(text: 'Back to list', onTap: () => context.go(Routes.home)),
                     Row(
                       spacing: 10,
                       children: [
