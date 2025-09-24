@@ -153,8 +153,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                         _integratedWithJira
                             ? EditRoomStoryJiraSearch(
                                 currentValue: _descriptionController.text,
-                                onSelectedChanged: ({bool? hasAnyType, JiraIssue? juraIssue, String? customText}) {
-                                  if (juraIssue == null) {
+                                onSelectedChanged: ({bool? hasAnyType, JiraIssue? jiraIssue, String? customText}) {
+                                  if (jiraIssue == null) {
                                     _descriptionController.text = customText ?? '';
                                     _urlController.text = '';
                                     setState(() {
@@ -162,23 +162,23 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                                       _jiraKey = null;
                                     });
                                   } else {
-                                    _descriptionController.text = '${juraIssue.fields!.summary}';
+                                    _descriptionController.text = '${jiraIssue.fields!.summary}';
                                     if (_jiraUrl?.endsWith('/') == true) {
                                       _jiraUrl = _jiraUrl!.substring(0, _jiraUrl!.length - 1);
                                     }
                                     if (_jiraUrl != null && _jiraUrl!.isNotEmpty) {
-                                      _urlController.text = '$_jiraUrl/${juraIssue.key}';
+                                      _urlController.text = '$_jiraUrl/${jiraIssue.key}';
                                     }
 
                                     setState(() {
                                       _storyType = !(hasAnyType ?? false)
                                           ? null
-                                          : juraIssue.fields!.issueType?.name == 'Bug'
+                                          : jiraIssue.fields!.issueType?.name == 'Bug'
                                           ? StoryType.bug
-                                          : juraIssue.fields!.issueType?.name == 'Story'
+                                          : jiraIssue.fields!.issueType?.name == 'Story'
                                           ? StoryType.workItem
                                           : StoryType.others;
-                                      _jiraKey = juraIssue.key;
+                                      _jiraKey = jiraIssue.key;
                                     });
                                   }
                                 },

@@ -8,7 +8,7 @@ import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 
 class EditRoomStoryJiraSearch extends StatefulWidget {
   final String currentValue;
-  final void Function({JiraIssue? juraIssue, bool? hasAnyType, String? customText}) onSelectedChanged;
+  final void Function({JiraIssue? jiraIssue, bool? hasAnyType, String? customText}) onSelectedChanged;
   const EditRoomStoryJiraSearch({super.key, required this.currentValue, required this.onSelectedChanged});
 
   @override
@@ -19,6 +19,9 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
   final _searchController = SearchController();
   late ValueNotifier<Future<JiraIssueResponse?>> _suggestionsFutureNotifier;
   final searching = ValueNotifier<bool>(false);
+
+  var hasAnyType = false;
+  JiraIssue? jiraIssue;
 
   // A completer to manage the asynchronous search results for the FutureBuilder
   // This completer is specifically for the *current* debounced search request.
@@ -158,7 +161,8 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
 
     try {
       final response = await JiraServices().searchIssues(
-        query: '(summary ~ "$value*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress") order by key',
+        query:
+            '(summary ~ "${value.replaceAll('"', '').replaceAll('-', '')}*" OR key = "$value") AND issuetype in ("Story", "Bug") AND statusCategory not in ("Done", "In Progress") order by key',
         fields: [if (_storyPointFieldName != null) '$_storyPointFieldName', '-comment', 'summary', 'statusCategory', 'issuetype'],
         nextPageToken: nextPageToken,
         maxResults: maxResults,
@@ -271,8 +275,11 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
                                       ],
                                     ),
                                     onTap: () {
-                                      widget.onSelectedChanged(juraIssue: t, hasAnyType: anyHasType);
-                                      controller.closeView('${t.fields!.summary}');
+                                      setState(() {
+                                        jiraIssue = t;
+                                        hasAnyType = anyHasType;
+                                        controller.closeView('${t.fields!.summary}');
+                                      });
                                     },
                                   ),
                                 ),
@@ -302,8 +309,14 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
               ),
             ];
           },
+          onOpen: () {
+            setState(() {
+              jiraIssue = null;
+              hasAnyType = false;
+            });
+          },
           onClose: () {
-            widget.onSelectedChanged(customText: _searchController.text);
+            widget.onSelectedChanged(jiraIssue: jiraIssue, hasAnyType: hasAnyType, customText: _searchController.text);
           },
         ),
       ),
