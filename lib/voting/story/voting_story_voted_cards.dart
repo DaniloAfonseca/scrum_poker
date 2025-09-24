@@ -76,7 +76,8 @@ class _VotingStoryVotedCardsState extends State<VotingStoryVotedCards> {
                       front: FlipCard(
                         height: isLarge ? 200 : 100,
                         width: isLarge ? 150 : 75,
-                        borderColorInside: Colors.blueAccent,
+                        borderColorInside: Colors.grey,
+                        borderColorOutside: Colors.grey,
                         child: Center(child: SvgPicture.asset('images/logo_disable_mode.svg', fit: BoxFit.contain, width: 90)),
                       ),
                     ),

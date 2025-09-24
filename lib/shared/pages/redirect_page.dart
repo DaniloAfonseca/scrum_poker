@@ -9,6 +9,7 @@ import 'package:scrum_poker/shared/router/go_router.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
+import 'package:scrum_poker/shared/widgets/bottom_bar.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 
 class RedirectPage extends StatefulWidget {
@@ -78,6 +79,7 @@ class _RedirectPageState extends State<RedirectPage> {
           ],
         ),
       ),
+      bottomSheet: bottomBar(),
     );
   }
 }

@@ -9,6 +9,7 @@ import 'package:scrum_poker/room_setup/main_page_room.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
+import 'package:scrum_poker/shared/widgets/bottom_bar.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -157,6 +158,7 @@ class _MainPageState extends State<MainPage> {
           );
         },
       ),
+      bottomSheet: bottomBar(),
     );
   }
 }

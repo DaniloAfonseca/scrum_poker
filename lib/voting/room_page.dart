@@ -12,6 +12,7 @@ import 'package:scrum_poker/shared/models/story.dart';
 import 'package:scrum_poker/shared/models/vote.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
+import 'package:scrum_poker/shared/widgets/bottom_bar.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 import 'package:scrum_poker/voting/room_login.dart';
@@ -379,6 +380,7 @@ class _RoomPageState extends State<RoomPage> {
                     );
                   },
                 ),
+          bottomSheet: bottomBar(),
         );
       },
     );

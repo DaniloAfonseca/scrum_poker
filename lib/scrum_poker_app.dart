@@ -56,6 +56,7 @@ class ScrumPokerApp extends StatelessWidget {
               backgroundColor: Colors.black, // Dark AppBar background
               foregroundColor: Colors.white,
             ),
+
             scaffoldBackgroundColor: Colors.grey[900], // Dark background for scaffolds
             cardColor: Colors.grey[850], // Darker cards
             colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(secondary: Colors.tealAccent), // Accent color for dark mode

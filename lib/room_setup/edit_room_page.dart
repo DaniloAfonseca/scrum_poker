@@ -14,11 +14,11 @@ import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/services/auth_services.dart';
 import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
+import 'package:scrum_poker/shared/widgets/bottom_bar.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 import 'package:uuid/uuid.dart';
 import 'package:collection/collection.dart';
-import 'package:web/web.dart' as web;
 
 class EditRoomPage extends StatefulWidget {
   final String? roomId;
@@ -342,6 +342,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
               ),
             ),
           ),
+          bottomSheet: bottomBar(),
         );
       },
     );

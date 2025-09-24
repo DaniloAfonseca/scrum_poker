@@ -5,6 +5,7 @@ import 'package:scrum_poker/shared/managers/settings_manager.dart';
 import 'package:scrum_poker/shared/models/jira_field.dart';
 import 'package:scrum_poker/shared/services/jira_services.dart';
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
+import 'package:scrum_poker/shared/widgets/bottom_bar.dart';
 import 'package:scrum_poker/shared/widgets/create_password.dart';
 import 'package:scrum_poker/shared/widgets/hyperlink.dart';
 import 'package:scrum_poker/shared/widgets/snack_bar.dart';
@@ -147,6 +148,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
       ),
+      bottomSheet: bottomBar(),
     );
   }
 }
