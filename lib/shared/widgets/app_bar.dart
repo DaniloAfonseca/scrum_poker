@@ -12,8 +12,9 @@ import 'package:scrum_poker/shared/managers/theme_manager.dart';
 
 class GiraffeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final GestureTapCallback? onSignOut;
+  final Function(bool connected)? onJiraConnection;
   final bool? loginIn;
-  const GiraffeAppBar({super.key, this.onSignOut, this.loginIn = false});
+  const GiraffeAppBar({super.key, this.onSignOut, this.loginIn = false, this.onJiraConnection});
 
   @override
   State<GiraffeAppBar> createState() => _GiraffeAppBarState();
@@ -138,13 +139,14 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
             builder: (context, value, child) {
               return ListTile(
                 leading: Image.asset('images/jira.png'),
-                title: Text(value ? 'Disconnect To Jira' : 'Connect to Jira'),
+                title: Text(value ? 'Disconnect from Jira' : 'Connect to Jira'),
                 onTap: () async {
                   if (!value) {
                     await AuthServices().signInWithJira();
                   } else {
-                    jira.clearCredentials();
+                    await jira.clearCredentials();
                   }
+                  widget.onJiraConnection?.call(value);
                 },
               );
             },

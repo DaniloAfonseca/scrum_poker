@@ -39,6 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     setState(() {
       _isLoadingFields = true;
+      _showStoryPointsField = false;
     });
 
     try {
@@ -71,7 +72,13 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: const GiraffeAppBar(),
+      appBar: GiraffeAppBar(
+        onJiraConnection: (connected) {
+          if (connected) {
+            initialise();
+          }
+        },
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
