@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -24,7 +23,6 @@ class VotingStory extends StatefulWidget {
 }
 
 class _VotingStoryState extends State<VotingStory> {
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -68,17 +66,24 @@ class _VotingStoryState extends State<VotingStory> {
                         final userVote = votes.firstWhereOrNull((t) => t.userId == widget.appUser?.id);
 
                         return currentStory == null || (user == null && currentStory.status == StoryStatus.notStarted)
-                            ? Center(child: Text('Waiting', style: theme.textTheme.displayLarge))
+                            ? VotingStoryCards(
+                                userVote: userVote,
+                                cardsToUse: room.cardsToUse,
+                                currentStory: currentStory,
+                                votes: votes,
+                                appUser: widget.appUser,
+                                flipCards: ValueNotifier<bool>(currentStory == null ? false : currentStory.status != StoryStatus.notStarted),
+                              )
                             : currentStory.status == StoryStatus.voted
-                            ? VotingResults(currentStory: currentStory, votes: votes) 
+                            ? VotingResults(currentStory: currentStory, votes: votes)
                             : VotingStoryCards(
                                 userVote: userVote,
                                 cardsToUse: room.cardsToUse,
                                 currentStory: currentStory,
                                 votes: votes,
                                 appUser: widget.appUser,
+                                flipCards: ValueNotifier<bool>(currentStory.status != StoryStatus.notStarted),
                               );
-
                       },
                     ),
                   ),
