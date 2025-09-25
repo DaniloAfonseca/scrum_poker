@@ -33,7 +33,7 @@ class RoomPage extends StatefulWidget {
 }
 
 class _RoomPageState extends State<RoomPage> {
-  final user = FirebaseAuth.instance.currentUser;
+  var user = FirebaseAuth.instance.currentUser;
   final _appUser = ValueNotifier<AppUser?>(null);
 
   bool _isLoading = true;
@@ -75,6 +75,7 @@ class _RoomPageState extends State<RoomPage> {
     }.toJS;
 
     loadUser();
+    checkUser();
     super.initState();
   }
 
@@ -198,6 +199,20 @@ class _RoomPageState extends State<RoomPage> {
       showSnackBar(messages);
     }
     listenToUserChanges = true;
+  }
+
+  Future<void> checkUser() async {
+    if (user != null) {
+      // get user rooms
+      final rooms = await room_services.getUserRooms(user!.uid);
+      final roomId = widget.roomId;
+
+      // logout the user if invited to a different room
+      if (!rooms.any((r) => r.id == roomId)) {
+        user = null;
+        _appUser.value = null;
+      }
+    }
   }
 
   Future<void> loadUser() async {

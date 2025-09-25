@@ -11,6 +11,17 @@ import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 // room
 ////////
 
+/// Get user rooms
+/// 
+/// [userId] the user Id
+Future<List<Room>> getUserRooms(String userId) async {
+  final dbRef = FirebaseFirestore.instance.collection('rooms');
+  final dbRooms = await dbRef.get();
+  final maps = dbRooms.docs.map((t) => t.data());
+
+  return maps.map((t) => Room.fromJson(t)).where((r) => r.userId == userId).toList();
+}
+
 /// Save room
 ///
 /// [room] room to save
