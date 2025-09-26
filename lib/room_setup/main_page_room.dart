@@ -67,9 +67,9 @@ class _MainPageRoomState extends State<MainPageRoom> {
                           toolTipText: userRoom.dateDeleted != null ? 'Delete on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateDeleted!)}' : null,
                         ),
                       if (userRoom.status == RoomStatus.started)
-                        TextTag(text: 'Started', backgroundColor: Colors.green, foreColor: Colors.white, display: userRoom.status == RoomStatus.started),
+                        TextTag(text: 'STARTED', backgroundColor: Colors.green, foreColor: Colors.white, display: userRoom.status == RoomStatus.started),
                       if (userRoom.status == RoomStatus.ended)
-                        TextTag(text: 'Ended', backgroundColor: Colors.white, foreColor: Colors.red, display: userRoom.status == RoomStatus.ended),
+                        TextTag(text: 'CLOSED', backgroundColor: Colors.white, foreColor: Colors.red, display: userRoom.status == RoomStatus.ended),
                     ],
                   ),
                   Text('Added on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateAdded!)}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
