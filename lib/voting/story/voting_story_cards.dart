@@ -71,6 +71,7 @@ class _VotingStoryCardsState extends State<VotingStoryCards> {
                   width: isLarge ? 150 : 75,
                   borderColorInside: Colors.grey[300],
                   borderColorOutside: Colors.grey[300],
+                  isFront: false,
                   child: Center(child: SvgPicture.asset('images/logo_disable_mode.svg', fit: BoxFit.contain, width: 90)),
                 ),
                 back: AnimatedContainer(
@@ -94,6 +95,7 @@ class _VotingStoryCardsState extends State<VotingStoryCards> {
                     height: isLarge ? 205 : 105,
                     width: isLarge ? 155 : 80,
                     containerColor: votedCard ? Colors.blueAccent[100] : null,
+                    isFront: true,
                     borderColorOutside: votedCard
                         ? Colors.white
                         : _hoveredCard == e

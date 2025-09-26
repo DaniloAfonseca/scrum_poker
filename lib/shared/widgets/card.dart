@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class FlipCard extends StatefulWidget {
   final double height;
@@ -6,8 +7,18 @@ class FlipCard extends StatefulWidget {
   final Color? borderColorOutside;
   final Color? borderColorInside;
   final Color? containerColor;
-  final Widget? child;
-  const FlipCard({super.key, required this.height, required this.width, this.borderColorOutside, this.borderColorInside, this.containerColor, this.child});
+  final Widget child;
+  final bool isFront;
+  const FlipCard({
+    super.key,
+    required this.height,
+    required this.width,
+    this.borderColorOutside,
+    this.borderColorInside,
+    this.containerColor,
+    required this.child,
+    required this.isFront,
+  });
 
   @override
   State<FlipCard> createState() => _FlipCardState();
@@ -31,8 +42,28 @@ class _FlipCardState extends State<FlipCard> {
             border: Border.all(width: 1, color: widget.borderColorOutside ?? Colors.blueAccent),
             borderRadius: BorderRadius.circular(6),
           ),
-          child: CustomPaint(size: Size(widget.width, widget.height), painter: LinePainter(widget.borderColorInside), child: widget.child),
+          child: widget.isFront ? widget.child : CustomPaint(size: Size(widget.width, widget.height), painter: LinePainter(widget.borderColorInside), child: widget.child),
         ),
+        if (widget.isFront) ...[
+          Positioned(
+            top: 10,
+            left: 10,
+            child: Transform.scale(
+              scale: 0.3, // < 1.0 shrinks, > 1.0 enlarges
+              alignment: Alignment.topLeft,
+              child: widget.child,
+            ),
+          ),
+          Positioned(
+            bottom: 10,
+            right: 10,
+            child: Transform.scale(
+              scale: 0.3, // < 1.0 shrinks, > 1.0 enlarges
+              alignment: Alignment.bottomRight,
+              child: Transform.rotate(angle: math.pi, child: widget.child),
+            ),
+          ),
+        ],
       ],
     );
   }

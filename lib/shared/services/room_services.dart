@@ -12,7 +12,7 @@ import 'package:scrum_poker/shared/widgets/snack_bar.dart';
 ////////
 
 /// Get user rooms
-/// 
+///
 /// [userId] the user Id
 Future<List<Room>> getUserRooms(String userId) async {
   final dbRef = FirebaseFirestore.instance.collection('rooms');
@@ -169,10 +169,10 @@ Future<void> setCurrentStory(List<Story> stories) async {
 ///
 /// [story] story that is started
 Future<void> startStory(Story story) async {
-  final stories = await getStories(story.roomId);
   story.status = StoryStatus.started;
 
   await _updateStory(story, {'status': $StoryStatusEnumMap[story.status]});
+  final stories = await getStories(story.roomId);
   await _updateRoomStatus(story.roomId, stories);
 }
 
@@ -254,7 +254,6 @@ Future<void> removeStory(List<Story> stories, Story story) async {
 ///
 /// [story] story to skip
 Future<void> skipStory(Story story) async {
-  final stories = await getStories(story.roomId);
   story.estimate = null;
   story.revisedEstimate = null;
   story.status = StoryStatus.skipped;
@@ -268,6 +267,7 @@ Future<void> skipStory(Story story) async {
     'currentStory': story.currentStory,
   });
 
+  final stories = await getStories(story.roomId);
   await _updateCurrentStory(stories, [story.id]);
 
   await _updateRoomStatus(story.roomId, stories);
@@ -284,9 +284,9 @@ Future<void> flipCards(Story story, List<Vote> votes) async {
   story.revisedEstimate = null;
   story.status = StoryStatus.voted;
   await updateVotes(votes, story.status);
-  final stories = await getStories(story.roomId);
 
   await _updateStory(story, {'estimate': story.estimate, 'revisedEstimate': story.revisedEstimate, 'status': $StoryStatusEnumMap[story.status]});
+  final stories = await getStories(story.roomId);
   await _updateRoomStatus(story.roomId, stories);
 }
 
@@ -318,12 +318,12 @@ Future<void> moveStoryToActive(List<Story> stories, Story story) async {
 /// [story] story to be ended
 /// [votes] story votes
 Future<void> nextStory(Story story, List<Vote> votes) async {
-  final stories = await getStories(story.roomId);
   story.status = StoryStatus.ended;
   story.currentStory = false;
   await updateVotes(votes, story.status);
 
   await _updateStory(story, {'currentStory': false, 'status': $StoryStatusEnumMap[story.status]});
+  final stories = await getStories(story.roomId);
   await _updateRoomStatus(story.roomId, stories);
 }
 

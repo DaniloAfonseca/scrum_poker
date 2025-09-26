@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,8 +17,9 @@ class VotingPlayers extends StatelessWidget {
   final Room room;
   final ValueNotifier<Story?> currentStoryVN;
   final FutureOr<void> Function(AppUser appUser) onUserRenamed;
+  final FutureOr<void> Function(List<AppUser> users, List<Vote> votes)? onVotingChange;
   final AppUser appUser;
-  const VotingPlayers({super.key, required this.room, required this.appUser, required this.onUserRenamed, required this.currentStoryVN});
+  const VotingPlayers({super.key, required this.room, required this.appUser, required this.onUserRenamed, required this.currentStoryVN, this.onVotingChange});
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +39,11 @@ class VotingPlayers extends StatelessWidget {
           stream: FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('currentUsers').snapshots(),
           builder: (context, snapshot) {
             final maps = snapshot.data?.docs.map((t) => t.data());
-            final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList();
+            final currentUsers = maps?.map((t) => AppUser.fromJson(t)).toList() ?? <AppUser>[];
 
-            final numPlayers = currentUsers?.where((t) => !t.observer).length ?? 0;
+            onVotingChange?.call(currentUsers, votes);
+
+            final numPlayers = currentUsers.where((t) => !t.observer).length;
 
             final numPlayersWhoVoted = votes.length;
             final notVoted = numPlayers - numPlayersWhoVoted;
@@ -183,7 +185,7 @@ class VotingPlayers extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text('Players:', style: isLarge ? theme.textTheme.headlineSmall : theme.textTheme.titleLarge),
                 ),
-                if (currentUsers != null && (currentUsers.isNotEmpty))
+                if (currentUsers.isNotEmpty)
                   ...currentUsers.mapIndexed(
                     (index, u) => Container(
                       constraints: const BoxConstraints(minHeight: 50),

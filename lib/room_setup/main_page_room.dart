@@ -58,14 +58,18 @@ class _MainPageRoomState extends State<MainPageRoom> {
                             ? theme.textTheme.headlineLarge!.copyWith(color: Colors.white)
                             : theme.textTheme.headlineMedium!.copyWith(color: Colors.white),
                       ),
-                      TextTag(
-                        text: 'DELETED',
-                        backgroundColor: Colors.red,
-                        foreColor: Colors.white,
-                        display: userRoom.dateDeleted != null,
-                        toolTipText: userRoom.dateDeleted != null ? 'Delete on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateDeleted!)}' : null,
-                      ),
-                      TextTag(text: 'Started', backgroundColor: Colors.green, foreColor: Colors.white, display: userRoom.status == RoomStatus.started),
+                      if (userRoom.dateDeleted != null)
+                        TextTag(
+                          text: 'DELETED',
+                          backgroundColor: Colors.red,
+                          foreColor: Colors.white,
+                          display: userRoom.dateDeleted != null,
+                          toolTipText: userRoom.dateDeleted != null ? 'Delete on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateDeleted!)}' : null,
+                        ),
+                      if (userRoom.status == RoomStatus.started)
+                        TextTag(text: 'Started', backgroundColor: Colors.green, foreColor: Colors.white, display: userRoom.status == RoomStatus.started),
+                      if (userRoom.status == RoomStatus.ended)
+                        TextTag(text: 'Ended', backgroundColor: Colors.white, foreColor: Colors.red, display: userRoom.status == RoomStatus.ended),
                     ],
                   ),
                   Text('Added on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateAdded!)}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),

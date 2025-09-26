@@ -9,6 +9,7 @@ const String _boxName = 'ScrumPoker';
 const String _credentialsKey = 'jira-credentials';
 const String _jiraUrlKey = 'jiraUrl';
 const String _storyPointFieldNameKey = 'storyPointFieldName';
+const String _autoFlipKey = 'autoFlip';
 const String _appUserKey = 'appUser';
 const String _themeModeKey = 'themeMode';
 
@@ -28,6 +29,9 @@ class SettingsManager {
 
   String? _storyPointFieldName;
   String? get storyPointFieldName => _storyPointFieldName;
+
+  bool _autoFlip = false;
+  bool get autoFlip => _autoFlip;
 
   AppUser? _appUser;
   AppUser? get appUser => _appUser;
@@ -54,6 +58,8 @@ class SettingsManager {
       _jiraUrl = _box!.get(_jiraUrlKey) ?? '';
 
       _storyPointFieldName = _box!.get(_storyPointFieldNameKey);
+
+      _autoFlip = _box!.get(_autoFlipKey);
 
       final appUserMap = _box!.get(_appUserKey);
       if (appUserMap != null) {
@@ -93,6 +99,11 @@ class SettingsManager {
   void updateStoryPointFieldName(String value) {
     _box!.put(_storyPointFieldNameKey, value);
     _storyPointFieldName = value;
+  }
+
+  void updateAutoFlip(bool value) {
+    _box!.put(_autoFlipKey, value);
+    _autoFlip = value;
   }
 
   void updateAppUser(AppUser value) {

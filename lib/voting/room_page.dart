@@ -95,7 +95,7 @@ class _RoomPageState extends State<RoomPage> {
 
   void onRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
     if (event.docChanges.isNotEmpty && listenToRoomChanges) {
-      final rooms = event.docChanges.where((t) => t.doc.data() != null).map((t) => Room.fromJson(t.doc.data()!)).toList();
+      final rooms = event.docChanges.where((t) => t.doc.data() != null).map((t) => Room.fromJson(t.doc.data()!)).where((r) => r.id == widget.roomId).toList();
       if (rooms.isNotEmpty) {
         final messages = <String>[];
         if (_oldRoom != null) {
@@ -157,6 +157,7 @@ class _RoomPageState extends State<RoomPage> {
           }
         }
       }
+
       _oldStories.clear();
       _oldStories.addAll(stories);
       showSnackBar(messages);
@@ -199,6 +200,16 @@ class _RoomPageState extends State<RoomPage> {
       showSnackBar(messages);
     }
     listenToUserChanges = true;
+  }
+
+  void handleCurrentStoryChanges(final List<AppUser> users, final List<Vote> votes) {
+    if (currentStoryVN.value == null) {
+      return;
+    }
+    final currentStory = currentStoryVN.value!;
+    if (currentStory.status == StoryStatus.started && SettingsManager().autoFlip && users.length == votes.length) {
+      room_services.flipCards(currentStory, votes);
+    }
   }
 
   Future<void> checkUser() async {
@@ -360,10 +371,11 @@ class _RoomPageState extends State<RoomPage> {
                                             Flexible(
                                               flex: 1,
                                               child: VotingPlayers(
+                                                onVotingChange: handleCurrentStoryChanges,
                                                 currentStoryVN: currentStoryVN,
                                                 room: room,
                                                 appUser: _appUser.value!,
-                                                onUserRenamed: (appUser) => renameUser(appUser),
+                                                onUserRenamed: renameUser,
                                               ),
                                             ),
                                           ],

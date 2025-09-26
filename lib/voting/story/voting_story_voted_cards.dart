@@ -57,6 +57,7 @@ class _VotingStoryVotedCardsState extends State<VotingStoryVotedCards> {
                         height: isLarge ? 200 : 100,
                         width: isLarge ? 150 : 75,
                         borderColorOutside: Colors.grey[300],
+                        isFront: true,
                         child: Center(
                           child: e.value.icon != null
                               ? Icon(
@@ -76,6 +77,7 @@ class _VotingStoryVotedCardsState extends State<VotingStoryVotedCards> {
                       front: FlipCard(
                         height: isLarge ? 200 : 100,
                         width: isLarge ? 150 : 75,
+                        isFront: false,
                         borderColorInside: Colors.grey,
                         borderColorOutside: Colors.grey,
                         child: Center(child: SvgPicture.asset('images/logo_disable_mode.svg', fit: BoxFit.contain, width: 90)),

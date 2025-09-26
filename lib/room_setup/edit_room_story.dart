@@ -211,7 +211,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                           DropdownButtonHideUnderline(
                             child: DropdownButtonFormField<StoryType>(
                               decoration: const InputDecoration(labelText: 'Story type'),
-                              value: _storyType,
+                              initialValue: _storyType,
                               items: StoryType.values
                                   .map(
                                     (t) => DropdownMenuItem<StoryType>(

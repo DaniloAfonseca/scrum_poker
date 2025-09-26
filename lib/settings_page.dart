@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +23,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final TextEditingController _userNameController = TextEditingController();
   final _jiraUrlController = TextEditingController();
   final _fields = <JiraField>[];
 
@@ -27,6 +32,8 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showStoryPointsField = false;
 
   final user = FirebaseAuth.instance.currentUser;
+  Timer? _debounce;
+  bool autoFlip = false;
 
   @override
   void initState() {
@@ -35,6 +42,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> initialise() async {
+    _userNameController.text = user!.displayName ?? '';
     _jiraUrlController.text = SettingsManager().jiraUrl ?? '';
     _fields.clear();
 
@@ -69,6 +77,17 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
+  Future<void> _updateUsername() async {
+    if (_userNameController.text.isEmpty) {
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    user!.updateDisplayName(_userNameController.text);
+
+    snackbarMessenger(message: 'User name updated', type: SnackBarType.success);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -89,8 +108,35 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             Hyperlink(text: 'Exit settings', onTap: () => web.window.history.back()),
             const SizedBox(height: 10),
+            TextFormField(
+              controller: _userNameController,
+              onFieldSubmitted: (value) => _updateUsername(),
+              decoration: const InputDecoration(
+                hintText: 'User name',
+                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
+                prefixIcon: Icon(Icons.person),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'User name cannot be empty';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                if (_debounce?.isActive == true) {
+                  _debounce?.cancel();
+                }
+                _debounce = Timer(const Duration(milliseconds: 500), () {
+                  _updateUsername();
+                  _debounce!.cancel();
+                });
+              },
+            ),
+
+            const SizedBox(height: 10),
             const CreateNewPassword(),
             const SizedBox(height: 20),
+
             _isLoadingFields
                 ? const Center(child: CircularProgressIndicator())
                 : !_showStoryPointsField
@@ -106,8 +152,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: SearchBarTheme(
                       data: SearchBarThemeData(
                         hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
-                        //textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!),
-                        //backgroundColor: WidgetStateProperty.all(theme.canvasColor),
                         shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                         elevation: WidgetStateProperty.all(0),
                         side: WidgetStateProperty.resolveWith((states) {
@@ -145,6 +189,42 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ),
+            AnimatedToggleSwitch<bool>.dual(
+              current: autoFlip,
+              first: false,
+              second: true,
+              spacing: 100.0,
+              indicatorSize: const Size(22, 22),
+              animationDuration: const Duration(milliseconds: 600),
+              style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
+              customStyleBuilder: (context, local, global) {
+                if (global.position <= 0.0) {
+                  return ToggleStyle(backgroundColor: theme.primaryColor);
+                }
+                if (global.position == 1) {
+                  return const ToggleStyle(backgroundColor: Colors.green);
+                }
+                return ToggleStyle(
+                  backgroundGradient: LinearGradient(
+                    colors: [Colors.green, theme.primaryColor],
+                    stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
+                  ),
+                );
+              },
+              borderWidth: 5.0,
+              height: 32.0,
+              onChanged: (b) => setState(() {
+                autoFlip = b;
+                SettingsManager().updateAutoFlip(autoFlip);
+              }),
+              textBuilder: (value) => value
+                  ? Center(
+                      child: Text('Auto-flip', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                    )
+                  : Center(
+                      child: Text('Do not auto-flip', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                    ),
+            ),
           ],
         ),
       ),

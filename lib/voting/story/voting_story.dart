@@ -52,12 +52,7 @@ class _VotingStoryState extends State<VotingStory> {
                   Container(
                     width: constraint.maxWidth,
                     constraints: widget.showStoryDescription ? const BoxConstraints(minHeight: 420) : null,
-                    decoration: currentStory == null || (user == null && currentStory.status == StoryStatus.notStarted)
-                        ? BoxDecoration(
-                            border: Border.all(width: 2, color: Colors.grey[300]!),
-                            borderRadius: BorderRadius.circular(6),
-                          )
-                        : null,
+
                     child: StreamBuilder(
                       stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('stories').doc(currentStory?.id ?? '-1').collection('votes').snapshots(),
                       builder: (context, snapshot) {
