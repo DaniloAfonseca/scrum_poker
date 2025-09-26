@@ -27,6 +27,8 @@ Future<List<Room>> getUserRooms(String userId) async {
 /// [room] room to save
 Future<void> saveRoom(Room room) async {
   final json = room.toJson();
+  final stories = await getStories(room.id);
+  await _updateRoomStatus(room.id, stories);
   await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
 
   // save room under the user

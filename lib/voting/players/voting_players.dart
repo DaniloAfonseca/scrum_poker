@@ -19,7 +19,8 @@ class VotingPlayers extends StatelessWidget {
   final FutureOr<void> Function(AppUser appUser) onUserRenamed;
   final FutureOr<void> Function(List<AppUser> users, List<Vote> votes)? onVotingChange;
   final AppUser appUser;
-  const VotingPlayers({super.key, required this.room, required this.appUser, required this.onUserRenamed, required this.currentStoryVN, this.onVotingChange});
+  final int openStoryCount;
+  const VotingPlayers({super.key, required this.room, required this.appUser, required this.onUserRenamed, required this.currentStoryVN, this.onVotingChange, required this.openStoryCount});
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +119,7 @@ class VotingPlayers extends StatelessWidget {
                                   elevation: 5,
                                 ),
                                 onPressed: currentStory != null ? () => room_services.nextStory(currentStory, votes) : null,
-                                child: const Text('Next story'),
+                                child: Text(openStoryCount == 1 ? 'Close room' : 'Next story'),
                               ),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(

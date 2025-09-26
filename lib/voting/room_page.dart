@@ -376,6 +376,7 @@ class _RoomPageState extends State<RoomPage> {
                                                 room: room,
                                                 appUser: _appUser.value!,
                                                 onUserRenamed: renameUser,
+                                                openStoryCount: stories.where((t) => [StoryStatus.notStarted, StoryStatus.started, StoryStatus.voted].contains(t.status)).length,
                                               ),
                                             ),
                                           ],
@@ -393,7 +394,13 @@ class _RoomPageState extends State<RoomPage> {
                                             if (currentStory?.url == null) Text(currentStory?.fullDescription ?? '', style: theme.textTheme.headlineSmall),
                                             if (currentStory?.url != null)
                                               Hyperlink(text: currentStory?.fullDescription ?? '', textStyle: theme.textTheme.headlineSmall!, url: currentStory!.url!),
-                                            VotingPlayers(currentStoryVN: currentStoryVN, room: room, appUser: _appUser.value!, onUserRenamed: (appUser) => renameUser(appUser)),
+                                            VotingPlayers(
+                                              currentStoryVN: currentStoryVN,
+                                              room: room,
+                                              appUser: _appUser.value!,
+                                              onUserRenamed: (appUser) => renameUser(appUser),
+                                              openStoryCount: stories.where((t) => [StoryStatus.notStarted, StoryStatus.started, StoryStatus.voted].contains(t.status)).length,
+                                            ),
                                             VotingStory(showStoryDescription: false, appUser: _appUser.value, roomId: room.id),
                                             VotingList(room: room),
                                           ],
