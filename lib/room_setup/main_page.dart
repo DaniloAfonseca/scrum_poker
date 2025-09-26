@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/room_setup/main_page_room.dart';
+import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
@@ -24,6 +25,10 @@ class _MainPageState extends State<MainPage> {
   final user = FirebaseAuth.instance.currentUser;
 
   bool showDeleted = false;
+  bool showClosed = false;
+
+  bool hasDeleted = false;
+  bool hasClosed = false;
 
   final List<bool> _selectedOrder = <bool>[true, false];
 
@@ -60,8 +65,14 @@ class _MainPageState extends State<MainPage> {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           var rooms = snapshot.data!.docs.map((t) => UserRoom.fromJson(t.data())).toList();
 
+          hasDeleted = rooms.any((t) => t.dateDeleted != null);
           if (!showDeleted) {
             rooms = rooms.where((t) => t.dateDeleted == null).toList();
+          }
+
+          hasClosed = rooms.any((t) => t.status == RoomStatus.ended);
+          if (!showClosed) {
+            rooms = rooms.where((t) => t.status != RoomStatus.ended).toList();
           }
 
           if (_selectedOrder[0]) {
@@ -98,35 +109,73 @@ class _MainPageState extends State<MainPage> {
                       spacing: 10,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        AnimatedToggleSwitch<bool>.dual(
-                          current: showDeleted,
-                          first: false,
-                          second: true,
-                          spacing: 70.0,
-                          indicatorSize: const Size(22, 22),
-                          animationDuration: const Duration(milliseconds: 600),
-                          style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
-                          customStyleBuilder: (context, local, global) {
-                            if (global.position <= 0.0) {
-                              return const ToggleStyle(backgroundColor: Colors.red);
-                            }
-                            return ToggleStyle(
-                              backgroundGradient: LinearGradient(
-                                colors: [theme.primaryColor, Colors.red],
-                                stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
-                              ),
-                            );
-                          },
-                          borderWidth: 5.0,
-                          height: 32.0,
-                          onChanged: (b) => setState(() => showDeleted = b),
-                          textBuilder: (value) => value
-                              ? Center(
-                                  child: Text('All', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
-                                )
-                              : Center(
-                                  child: Text('Not deleted', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                        Tooltip(
+                          message: !hasDeleted ? 'There\'s no deleted room' : '',
+                          child: AnimatedToggleSwitch<bool>.dual(
+                            current: showDeleted,
+                            first: false,
+                            second: true,
+                            active: hasDeleted,
+                            spacing: 95.0,
+                            indicatorSize: const Size(22, 22),
+                            animationDuration: const Duration(milliseconds: 600),
+                            style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
+                            customStyleBuilder: (context, local, global) {
+                              if (global.position <= 0.0) {
+                                return ToggleStyle(backgroundColor: hasDeleted ? Colors.red : Colors.grey);
+                              }
+                              return ToggleStyle(
+                                backgroundGradient: LinearGradient(
+                                  colors: [theme.primaryColor, Colors.red],
+                                  stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
                                 ),
+                              );
+                            },
+                            borderWidth: 5.0,
+                            height: 32.0,
+                            onChanged: hasDeleted ? (b) => setState(() => showDeleted = b) : null,
+                            textBuilder: (value) => value
+                                ? Center(
+                                    child: Text('Include deleted', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                  )
+                                : Center(
+                                    child: Text('Not deleted', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                  ),
+                          ),
+                        ),
+                        Tooltip(
+                          message: !hasClosed ? 'There\'s no closed room' : '',
+                          child: AnimatedToggleSwitch<bool>.dual(
+                            current: showClosed,
+                            first: false,
+                            second: true,
+                            active: hasClosed,
+                            spacing: 95.0,
+                            indicatorSize: const Size(22, 22),
+                            animationDuration: const Duration(milliseconds: 600),
+                            style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
+                            customStyleBuilder: (context, local, global) {
+                              if (global.position <= 0.0) {
+                                return const ToggleStyle(backgroundColor: Colors.red);
+                              }
+                              return ToggleStyle(
+                                backgroundGradient: LinearGradient(
+                                  colors: [theme.primaryColor, Colors.red],
+                                  stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
+                                ),
+                              );
+                            },
+                            borderWidth: 5.0,
+                            height: 32.0,
+                            onChanged: (b) => setState(() => showClosed = b),
+                            textBuilder: (value) => value
+                                ? Center(
+                                    child: Text('Include closed', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                  )
+                                : Center(
+                                    child: Text('Not closed', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                  ),
+                          ),
                         ),
 
                         ElevatedButton(
