@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
@@ -6,11 +7,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrum_poker/room_setup/main_page_room.dart';
-import 'package:scrum_poker/shared/models/enums.dart';
 import 'package:scrum_poker/shared/models/user_room.dart';
 import 'package:scrum_poker/shared/router/routes.dart';
 import 'package:scrum_poker/shared/widgets/app_bar.dart';
 import 'package:scrum_poker/shared/widgets/bottom_bar.dart';
+import 'package:scrum_poker/shared/services/room_services.dart' as room_services;
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -27,13 +28,23 @@ class _MainPageState extends State<MainPage> {
   bool showDeleted = false;
   bool showClosed = false;
 
-  bool hasDeleted = false;
-  bool hasClosed = false;
+  bool hasDeleted = true;
+  bool hasClosed = true;
 
   final List<bool> _selectedOrder = <bool>[true, false];
 
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? hasDeletedStreamSubs;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? hasClosedStreamSubs;
+
   @override
   void initState() {
+    final hasDeletedStream = FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').where('isDeleted', isEqualTo: true).limit(1).snapshots();
+    hasDeletedStreamSubs = hasDeletedStream.listen(onHasDeletedRoomsData);
+
+    final hasClosedStream = FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').where('status', isEqualTo: 'closed').limit(1).snapshots();
+    hasClosedStreamSubs = hasClosedStream.listen(onHasClosedRoomsData);
+
+    checkFlags();
     super.initState();
 
     // Redirect to login if not authenticated
@@ -43,6 +54,24 @@ class _MainPageState extends State<MainPage> {
         return;
       }
     });
+  }
+
+  /// sets hasDeleted and hasClosed flags
+  void checkFlags() {
+    setState(() {
+      room_services.hasDeletedRooms(user!.uid).then((v) => hasDeleted = v);
+      room_services.hasClosedRooms(user!.uid).then((v) => hasClosed = v);
+    });
+  }
+
+  /// updates has deleted flag when the value changes in the database
+  void onHasDeletedRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
+    hasDeleted = event.docs.isNotEmpty;
+  }
+
+  /// updates has closed flag when the value changes in the database
+  void onHasClosedRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
+    hasClosed = event.docs.isNotEmpty;
   }
 
   void sortToggle(int index) {
@@ -60,20 +89,32 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       appBar: const GiraffeAppBar(),
       body: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots(),
+        stream: !showDeleted
+            ? !showClosed
+                  ? FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user!.uid)
+                        .collection('rooms')
+                        .where('isDeleted', isEqualTo: false)
+                        .where('status', whereIn: ['notStarted', 'started'])
+                        .snapshots()
+                  : FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').where('isDeleted', isEqualTo: false).snapshots()
+            : !showClosed
+            ? FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').where('status', whereIn: ['notStarted', 'started']).snapshots()
+            : FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           var rooms = snapshot.data!.docs.map((t) => UserRoom.fromJson(t.data())).toList();
 
-          hasDeleted = rooms.any((t) => t.dateDeleted != null);
-          if (!showDeleted) {
-            rooms = rooms.where((t) => t.dateDeleted == null).toList();
-          }
+          //hasDeleted = rooms.any((t) => t.dateDeleted != null);
+          // if (!showDeleted) {
+          //   rooms = rooms.where((t) => t.dateDeleted == null).toList();
+          // }
 
-          hasClosed = rooms.any((t) => t.status == RoomStatus.ended);
-          if (!showClosed) {
-            rooms = rooms.where((t) => t.status != RoomStatus.ended).toList();
-          }
+          //hasClosed = rooms.any((t) => t.status == RoomStatus.ended);
+          // if (!showClosed) {
+          //   rooms = rooms.where((t) => t.status != RoomStatus.ended).toList();
+          // }
 
           if (_selectedOrder[0]) {
             rooms.sort((a, b) => a.dateAdded!.compareTo(b.dateAdded!));
@@ -122,11 +163,11 @@ class _MainPageState extends State<MainPage> {
                             style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
                             customStyleBuilder: (context, local, global) {
                               if (global.position <= 0.0) {
-                                return ToggleStyle(backgroundColor: hasDeleted ? Colors.red : Colors.grey);
+                                return ToggleStyle(backgroundColor: hasDeleted ? Colors.green : Colors.grey);
                               }
                               return ToggleStyle(
                                 backgroundGradient: LinearGradient(
-                                  colors: [theme.primaryColor, Colors.red],
+                                  colors: [Colors.red, Colors.green],
                                   stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
                                 ),
                               );
@@ -156,11 +197,11 @@ class _MainPageState extends State<MainPage> {
                             style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
                             customStyleBuilder: (context, local, global) {
                               if (global.position <= 0.0) {
-                                return const ToggleStyle(backgroundColor: Colors.red);
+                                return ToggleStyle(backgroundColor: theme.primaryColor);
                               }
                               return ToggleStyle(
                                 backgroundGradient: LinearGradient(
-                                  colors: [theme.primaryColor, Colors.red],
+                                  colors: [Colors.red, theme.primaryColor],
                                   stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
                                 ),
                               );

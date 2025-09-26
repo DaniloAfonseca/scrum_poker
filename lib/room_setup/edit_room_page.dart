@@ -110,6 +110,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
       room.name = _nameController.value.text;
       room.cardsToUse.clear();
       room.dateDeleted = deleted ? DateTime.now() : null;
+      room.isDeleted = deleted;
       for (var index = 0; index < VoteEnum.values.length; index++) {
         if (cardsToUse[index] || allCards) {
           room.cardsToUse.add(VoteEnum.values[index]);
@@ -136,6 +137,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
       userRoom.skippedStories = stories.where((t) => t.status == StoryStatus.skipped).length;
       userRoom.completedStories = stories.where((t) => !t.status.active).length;
       userRoom.allStories = stories.length;
+      userRoom.isDeleted = room.isDeleted;
       final userRoomsMap = userRoom.toJson();
       await FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').doc(room.id).set(userRoomsMap);
 

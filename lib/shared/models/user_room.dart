@@ -16,6 +16,7 @@ class UserRoom {
   int? skippedStories;
   int? completedStories;
   int? allStories;
+  bool isDeleted;
 
   UserRoom({
     required this.userId,
@@ -27,6 +28,7 @@ class UserRoom {
     this.activeStories,
     this.completedStories,
     this.skippedStories,
+    this.isDeleted = false
   });
 
   factory UserRoom.fromJson(Map<String, dynamic> json) => _$UserRoomFromJson(json);

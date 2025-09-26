@@ -6,29 +6,34 @@ part of 'room.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Room _$RoomFromJson(Map<String, dynamic> json) => $checkedCreate(
-      'Room',
-      json,
-      ($checkedConvert) {
-        final val = Room(
-          name: $checkedConvert('name', (v) => v as String?),
-          id: $checkedConvert('id', (v) => v as String),
-          dateAdded: $checkedConvert('dateAdded',
-              (v) => v == null ? null : DateTime.parse(v as String)),
-          dateDeleted: $checkedConvert('dateDeleted',
-              (v) => v == null ? null : DateTime.parse(v as String)),
-          cardsToUse: $checkedConvert(
-              'cardsToUse',
-              (v) => (v as List<dynamic>)
-                  .map((e) => $enumDecode(_$VoteEnumEnumMap, e))
-                  .toList()),
-          userId: $checkedConvert('userId', (v) => v as String),
-          status: $checkedConvert(
-              'status', (v) => $enumDecode(_$RoomStatusEnumMap, v)),
-        );
-        return val;
-      },
-    );
+Room _$RoomFromJson(Map<String, dynamic> json) =>
+    $checkedCreate('Room', json, ($checkedConvert) {
+      final val = Room(
+        name: $checkedConvert('name', (v) => v as String?),
+        id: $checkedConvert('id', (v) => v as String),
+        dateAdded: $checkedConvert(
+          'dateAdded',
+          (v) => v == null ? null : DateTime.parse(v as String),
+        ),
+        dateDeleted: $checkedConvert(
+          'dateDeleted',
+          (v) => v == null ? null : DateTime.parse(v as String),
+        ),
+        cardsToUse: $checkedConvert(
+          'cardsToUse',
+          (v) => (v as List<dynamic>)
+              .map((e) => $enumDecode(_$VoteEnumEnumMap, e))
+              .toList(),
+        ),
+        userId: $checkedConvert('userId', (v) => v as String),
+        status: $checkedConvert(
+          'status',
+          (v) => $enumDecode(_$RoomStatusEnumMap, v),
+        ),
+        isDeleted: $checkedConvert('isDeleted', (v) => v as bool? ?? false),
+      );
+      return val;
+    });
 
 const _$VoteEnumEnumMap = {
   VoteEnum.zero: 'zero',

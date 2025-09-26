@@ -12,16 +12,9 @@ class Room {
   final List<VoteEnum> cardsToUse;
   String userId;
   RoomStatus status;
+  bool isDeleted;
 
-  Room({
-    this.name,
-    required this.id,
-    this.dateAdded,
-    this.dateDeleted,
-    required this.cardsToUse,
-    required this.userId,
-    required this.status,
-  });
+  Room({this.name, required this.id, this.dateAdded, this.dateDeleted, required this.cardsToUse, required this.userId, required this.status, this.isDeleted = false});
 
   factory Room.fromJson(Map<String, dynamic> json) => _$RoomFromJson(json);
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -32,5 +25,6 @@ class Room {
     'cardsToUse': cardsToUse.map((card) => _$VoteEnumEnumMap[card]!),
     'userId': userId,
     'status': _$RoomStatusEnumMap[status],
+    'isDeleted': isDeleted,
   };
 }

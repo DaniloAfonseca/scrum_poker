@@ -126,6 +126,38 @@ Future<void> removeUser(AppUser user) async {
   await FirebaseFirestore.instance.collection('rooms').doc(user.roomId).collection('currentUsers').doc(user.id).delete();
 }
 
+/// Returns true if there is at least one room document
+/// with isDeleted == true for the current user.
+///
+/// [userId] the user identifier
+Future<bool> hasDeletedRooms(String userId) async {
+  final query = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('rooms')
+      .where('isDeleted', isEqualTo: true)
+      .limit(1) // we only need to know if one exists
+      .get();
+
+  return query.docs.isNotEmpty;
+}
+
+/// Returns true if there is at least one room document
+/// with isDeleted == true for the current user.
+///
+/// [userId] the user identifier
+Future<bool> hasClosedRooms(String userId) async {
+  final query = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('rooms')
+      .where('status', isEqualTo: 'ended')
+      .limit(1) // we only need to know if one exists
+      .get();
+
+  return query.docs.isNotEmpty;
+}
+
 /////////
 // story
 /////////
