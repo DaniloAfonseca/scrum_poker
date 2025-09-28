@@ -30,7 +30,7 @@ class EditRoomPage extends StatefulWidget {
 
 class _EditRoomPageState extends State<EditRoomPage> {
   final _user = FirebaseAuth.instance.currentUser!;
-  final TextEditingController _nameController = TextEditingController();
+  final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   late Room _room;
@@ -52,7 +52,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
   @override
   void initState() {
-    loadRoom();
+    _loadRoom();
     super.initState();
   }
 
@@ -62,7 +62,8 @@ class _EditRoomPageState extends State<EditRoomPage> {
     super.dispose();
   }
 
-  Future<void> loadRoom() async {
+  /// Loads the room
+  Future<void> _loadRoom() async {
     if (widget.roomId == null) {
       setState(() {
         _room = Room(dateAdded: DateTime.now(), id: const Uuid().v4(), cardsToUse: [...VoteEnum.values], userId: _user.uid, status: RoomStatus.notStarted);
@@ -92,19 +93,17 @@ class _EditRoomPageState extends State<EditRoomPage> {
     setState(() {});
   }
 
-  void signOut() {
-    AuthServices().signOut().then((_) {
-      navigatorKey.currentContext!.go(Routes.login);
-    });
-  }
-
-  void roomDeleteToggle(bool value) {
+  /// Changes delete flag
+  /// 
+  /// [value] the new deleted value
+  void _roomDeleteToggle(bool value) {
     setState(() {
       _deleted = value;
     });
   }
 
-  Future<void> saveRoom() async {
+  /// Save current room
+  Future<void> _saveRoom() async {
     if (_formKey.currentState!.validate()) {
       // save room
       _room.name = _nameController.value.text;
@@ -150,7 +149,10 @@ class _EditRoomPageState extends State<EditRoomPage> {
     }
   }
 
-  void useAllCardsToggle(bool? value) {
+  /// Toggle to use all cards
+  /// 
+  /// [value] if true, all cards will be used, if not only selected cards can be used
+  void _useAllCardsToggle(bool? value) {
     setState(() {
       _allCards = value == true;
       for (var index = 0; index < VoteEnum.values.length; index++) {
@@ -159,44 +161,69 @@ class _EditRoomPageState extends State<EditRoomPage> {
     });
   }
 
-  void cardInUse(int index, bool? value) {
+  /// Set the cards to use
+  /// 
+  /// [index] the index of the card
+  /// [value] if true the card will be added, if false the card will not be added
+  void _cardInUse(int index, bool? value) {
     setState(() {
       _allCards = false;
       _cardsToUse[index] = value == true;
     });
   }
 
-  void addStory(String roomId, List<Story> stories) {
+  /// Add story to room
+  /// 
+  /// [roomId] the room identifier
+  /// [stories] the current list of stories
+  void _addStory(String roomId, List<Story> stories) {
     setState(() {
       stories.add(Story(id: const Uuid().v4(), description: '', status: StoryStatus.notStarted, added: true, order: stories.length, userId: _user.uid, roomId: roomId));
     });
   }
 
-  void removeStory(List<Story> stories, Story story) {
+  /// Removes story from the room
+  /// 
+  /// [stories] list of all stories
+  /// [story] story to be removed
+  void _removeStory(List<Story> stories, Story story) {
     setState(() {
       stories.remove(story);
     });
   }
 
-  void moveStoryUp(List<Story> stories, int index, Story story) {
+  /// Moves the story once up
+  /// 
+  /// [stories] list of all stories
+  /// [index] current index
+  /// [story] story to move up, it moves to index-1
+  void _moveStoryUp(List<Story> stories, int index, Story story) {
     setState(() {
       final previousStory = stories[index - 1];
       stories[index - 1] = story;
       stories[index] = previousStory;
-      setStoriesOrder(stories);
+      _setStoriesOrder(stories);
     });
   }
 
-  void moveStoryDown(List<Story> stories, int index, Story story) {
+  /// Moves the story once down
+  /// 
+  /// [stories] list of all stories
+  /// [index] current index
+  /// [story] story to move down, it moves to index+1
+  void _moveStoryDown(List<Story> stories, int index, Story story) {
     setState(() {
       final nextStory = stories[index + 1];
       stories[index + 1] = story;
       stories[index] = nextStory;
-      setStoriesOrder(stories);
+      _setStoriesOrder(stories);
     });
   }
 
-  void setStoriesOrder(List<Story> stories) {
+  /// Sets the stories order
+  /// 
+  /// [stories] list of all stories
+  void _setStoriesOrder(List<Story> stories) {
     for (var i = 0; i < stories.length; i++) {
       stories[i].order = i;
     }
@@ -238,7 +265,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                         Row(
                           children: [
                             const Text('Deleted'),
-                            Switch(thumbIcon: _thumbIcon, value: _deleted, inactiveThumbColor: Colors.grey[500], trackOutlineColor: _borderColor, onChanged: roomDeleteToggle),
+                            Switch(thumbIcon: _thumbIcon, value: _deleted, inactiveThumbColor: Colors.grey[500], trackOutlineColor: _borderColor, onChanged: _roomDeleteToggle),
                           ],
                         ),
                         ElevatedButton(
@@ -248,7 +275,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
                           ),
-                          onPressed: () => saveRoom(),
+                          onPressed: () => _saveRoom(),
                           child: const Text('Save'),
                         ),
                       ],
@@ -270,7 +297,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                                 tristate: false,
                                 checkboxSemanticLabel: 'Use all cards',
                                 visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                                onChanged: useAllCardsToggle,
+                                onChanged: _useAllCardsToggle,
                               ),
                             ),
                             SizedBox(
@@ -288,7 +315,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                                       tristate: false,
                                       visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                                       value: selected,
-                                      onChanged: (v) => cardInUse(index, v),
+                                      onChanged: (v) => _cardInUse(index, v),
                                       title: Text(value.label),
                                     ),
                                   );
@@ -309,7 +336,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
                           ),
-                          onPressed: () => addStory(_room.id, _stories),
+                          onPressed: () => _addStory(_room.id, _stories),
                           child: const Text('Add Story'),
                         ),
                       ],
@@ -321,9 +348,9 @@ class _EditRoomPageState extends State<EditRoomPage> {
                             .mapIndexed(
                               (index, story) => EditRoomStory(
                                 story: story,
-                                onDelete: () => removeStory(_stories, story),
-                                onMoveUp: index == 0 ? null : () => moveStoryUp(_stories, index, story),
-                                onMoveDown: index >= _stories.length - 1 ? null : () => moveStoryDown(_stories, index, story),
+                                onDelete: () => _removeStory(_stories, story),
+                                onMoveUp: index == 0 ? null : () => _moveStoryUp(_stories, index, story),
+                                onMoveDown: index >= _stories.length - 1 ? null : () => _moveStoryDown(_stories, index, story),
                                 nextOrder: _stories.length,
                                 userId: _user.uid,
                                 roomId: _room.id,

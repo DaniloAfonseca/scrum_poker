@@ -12,15 +12,17 @@ class JiraCredentialsManager {
   bool _isInitialising = false;
 
   final isConnected = ValueNotifier<bool>(false);
+  final settingsManager = SettingsManager();
 
+  /// Initialises jira credentials manager
   Future<void> initialise() async {
     if (_isInitialising) return;
     _isInitialising = true;
 
     try {
-      await SettingsManager().initialise();
+      await settingsManager.initialise();
 
-      _currentCredentials = SettingsManager().currentCredentials;
+      _currentCredentials = settingsManager.currentCredentials;
     } catch (e) {
       if (kDebugMode) {
         print('Error initialising Jira Credentials: $e');
@@ -32,20 +34,25 @@ class JiraCredentialsManager {
     }
   }
 
+  /// Sets credentials
+  /// 
+  /// [credentials] the credentials to set
   Future<void> setCredentials(JiraCredentials credentials) async {
     await initialise();
-    await SettingsManager().setCredentials(credentials);
+    await settingsManager.setCredentials(credentials);
     _currentCredentials = credentials;
     isConnected.value = _currentCredentials != null;
   }
 
+  /// Clears credentials
   Future<void> clearCredentials() async {
     await initialise();
-    await SettingsManager().clearCredentials();
+    await settingsManager.clearCredentials();
     _currentCredentials = null;
     isConnected.value = _currentCredentials != null;
   }
 
+  /// The current jira credentials
   JiraCredentials? get currentCredentials {
     return _currentCredentials;
   }

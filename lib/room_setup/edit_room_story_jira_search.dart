@@ -66,6 +66,7 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
     super.dispose();
   }
 
+  /// called when search text changes to perform the search in jira
   void _onSearchControllerTextChanged() {
     // Only trigger a new debounced search if the search view is active
     // and the text has actually changed (to prevent unnecessary calls on e.g. focus)
@@ -74,8 +75,10 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
     }
   }
 
-  // This method will be called by the `_onSearchControllerTextChanged` and pagination.
-  // It triggers the actual search with debouncing.
+  /// This method will be called by the `_onSearchControllerTextChanged` and pagination.
+  /// It triggers the actual search with debouncing.
+  /// 
+  /// [value] the value to search for
   Future<JiraIssueResponse?> _debouncedSearchInJira(String value) {
     // If the query has changed, reset the page to the first page
     if (_currentSearchValue != value) {
@@ -118,7 +121,7 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
     return _searchCompleter!.future; // This future is what the completer will resolve
   }
 
-  // Function to navigate to the previous page
+  /// Function to navigate to the previous page
   void _goToPreviousPage() {
     setState(() {
       if (_previousPageTokens.isNotEmpty) {
@@ -137,7 +140,9 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
     });
   }
 
-  // Function to navigate to the next page
+  /// Function to navigate to the next page
+  /// 
+  /// [currentNextPageToken] token used to get next page
   void _goToNextPage(String? currentNextPageToken) {
     if (currentNextPageToken == null) return;
     setState(() {
@@ -154,6 +159,11 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
     });
   }
 
+  /// Perform search in jira
+  /// 
+  /// [value] the value to search for
+  /// [nextPageToken] optional, token used for paging
+  /// [maxResults] the maximum number of results per page
   Future<JiraIssueResponse?> _performJiraSearch(String value, {String? nextPageToken, int maxResults = 50}) async {
     if (value.isEmpty) {
       return null;
@@ -324,7 +334,9 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
     );
   }
 
-  // Helper method to build pagination controls
+  /// Helper method to build pagination controls
+  /// 
+  /// [currentNextPageToken] token used for paging
   Widget _buildPaginationControls(String? currentNextPageToken) {
     final bool canGoPrevious = _previousPageTokens.isNotEmpty;
     final bool canGoNext = currentNextPageToken != null;

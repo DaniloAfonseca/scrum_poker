@@ -76,7 +76,8 @@ class _EditRoomStoryState extends State<EditRoomStory> {
     super.dispose();
   }
 
-  void edit() async {
+  /// Toggles story to be edited
+  void _edit() async {
     _descriptionController.text = _story.description;
     _urlController.text = _story.url ?? '';
     setState(() {
@@ -288,7 +289,7 @@ class _EditRoomStoryState extends State<EditRoomStory> {
                         context: context,
                         items: [
                           PopupMenuItem(
-                            onTap: edit,
+                            onTap: _edit,
                             child: const Row(
                               children: [
                                 Icon(Icons.edit, color: Colors.blueAccent),

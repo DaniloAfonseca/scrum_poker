@@ -10,16 +10,21 @@ class ThemeManager extends ChangeNotifier {
 
   ThemeMode get themeMode => _themeMode;
 
+  /// Initialises theme manager
   void initialise() {
     _loadThemeMode(); // Load theme when manager is created
   }
 
+  /// Loads theme mode
   Future<void> _loadThemeMode() async {
     final themeModeIndex = SettingsManager().themeModeIndex; // 0 for system, 1 for light, 2 for dark
     _themeMode = ThemeMode.values[themeModeIndex];
     notifyListeners(); // Notify listeners after loading
   }
 
+  /// Sets theme mode
+  /// 
+  /// [mode] mode to be set
   Future<void> setThemeMode(ThemeMode mode) async {
     if (_themeMode == mode) return; // No change
     _themeMode = mode;

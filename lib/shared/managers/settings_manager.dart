@@ -43,7 +43,7 @@ class SettingsManager extends ChangeNotifier {
   int _themeModeIndex = 1;
   int get themeModeIndex => _themeModeIndex;
 
-  /// Initialise settings manager
+  /// Initialises settings manager
   Future<void> initialise() async {
     if (_isInitialising) return;
     _isInitialising = true;
@@ -112,7 +112,7 @@ class SettingsManager extends ChangeNotifier {
     }
   }
 
-  /// Set settings values
+  /// Sets settings values
   void setValues() {
     bool hasValuesChanged = false;
     for (SettingsValueEnum enumValue in SettingsValueEnum.values) {
@@ -127,7 +127,7 @@ class SettingsManager extends ChangeNotifier {
     }
   }
 
-  /// Set credentials value and update hive
+  /// Sets credentials value and update hive
   ///
   /// [credentials] credentials to be saved in hive
   Future<void> setCredentials(JiraCredentials credentials) async {
@@ -144,7 +144,7 @@ class SettingsManager extends ChangeNotifier {
     _currentCredentials = null;
   }
 
-  /// update jira url
+  /// Updates jira url
   ///
   /// [value] the URL value
   void updateJiraUrl(String value) {
@@ -152,7 +152,7 @@ class SettingsManager extends ChangeNotifier {
     _jiraUrl = value;
   }
 
-  /// update current app user
+  /// Updates current app user
   ///
   /// [value] the app user
   void updateAppUser(AppUser value) {
@@ -160,7 +160,7 @@ class SettingsManager extends ChangeNotifier {
     _appUser = value;
   }
 
-  /// update theme
+  /// Updates theme
   ///
   /// [value] the theme value to be used
   void updateThemeIndex(int value) {
@@ -168,7 +168,7 @@ class SettingsManager extends ChangeNotifier {
     _themeModeIndex = value;
   }
 
-  /// update settings values
+  /// Updates settings values
   ///
   /// [setting] the setting enum value
   /// [value] the value to set
@@ -177,7 +177,7 @@ class SettingsManager extends ChangeNotifier {
     web.window.localStorage.setItem(setting.key, value.toString());
   }
 
-  /// delete current user
+  /// Deletes current user
   void deleteAppUser() {
     _box!.delete(_appUserKey);
     _appUser = null;

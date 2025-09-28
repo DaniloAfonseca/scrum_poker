@@ -34,10 +34,10 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void initState() {
-    FirebaseFirestore.instance.collection('users').doc(_user!.uid).collection('rooms').where('isDeleted', isEqualTo: true).limit(1).snapshots().listen(onHasDeletedRoomsData);
-    FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').where('status', isEqualTo: 'closed').limit(1).snapshots().listen(onHasClosedRoomsData);
+    FirebaseFirestore.instance.collection('users').doc(_user!.uid).collection('rooms').where('isDeleted', isEqualTo: true).limit(1).snapshots().listen(_onHasDeletedRoomsData);
+    FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').where('status', isEqualTo: 'closed').limit(1).snapshots().listen(_onHasClosedRoomsData);
 
-    checkFlags();
+    _checkFlags();
     super.initState();
 
     // Redirect to login if not authenticated
@@ -49,25 +49,32 @@ class _MainPageState extends State<MainPage> {
     // });
   }
 
-  /// sets hasDeleted and hasClosed flags
-  void checkFlags() {
+  /// Sets hasDeleted and hasClosed flags
+  void _checkFlags() {
     setState(() {
       room_services.hasDeletedRooms(_user!.uid).then((v) => _hasDeleted = v);
       room_services.hasClosedRooms(_user.uid).then((v) => _hasClosed = v);
     });
   }
 
-  /// updates has deleted flag when the value changes in the database
-  void onHasDeletedRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
+  /// Updates has deleted flag when the value changes in the database
+  /// 
+  /// [event] the event containing the data
+  void _onHasDeletedRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
     _hasDeleted = event.docs.isNotEmpty;
   }
 
-  /// updates has closed flag when the value changes in the database
-  void onHasClosedRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
+  /// Updates has closed flag when the value changes in the database
+  /// 
+  /// [event] the event containing the data
+  void _onHasClosedRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
     _hasClosed = event.docs.isNotEmpty;
   }
 
-  void sortToggle(int index) {
+  /// Toggles sort
+  /// 
+  /// [index] the index used to set the order
+  void _sortToggle(int index) {
     setState(() {
       // The button that is tapped is set to true, and the others to false.
       for (int i = 0; i < _selectedOrder.length; i++) {
@@ -127,7 +134,7 @@ class _MainPageState extends State<MainPage> {
                     ToggleButtons(
                       isSelected: _selectedOrder,
                       borderRadius: BorderRadius.circular(6),
-                      onPressed: sortToggle,
+                      onPressed: _sortToggle,
                       children: [
                         Tooltip(
                           message: 'Sort by earliest date',

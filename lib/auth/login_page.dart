@@ -14,12 +14,15 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
 
+  /// Changes loading flag
+  ///
+  /// [isLoading] value to update
   void _setLoading(bool isLoading) {
     if (_isLoading == isLoading) return;
     setState(() => _isLoading = isLoading);
@@ -32,6 +35,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  /// Perform login
   void _login() {
     if (_formKey.currentState!.validate()) {
       _setLoading(true);
@@ -40,6 +44,7 @@ class _LoginPageState extends State<LoginPage> {
     AuthServices()
         .signInWithEmailAndPassword(_emailController.text, _passwordController.text)
         .then((user) {
+          // user goes to home page after successful login
           if (user != null) {
             navigatorKey.currentContext!.go(Routes.home);
           } else {

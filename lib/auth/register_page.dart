@@ -13,10 +13,11 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -28,6 +29,7 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  /// Perform new register
   void _register() {
     if (_formKey.currentState!.validate()) {
       _setLoading(true);
@@ -36,6 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
     AuthServices().auth
         .createUserWithEmailAndPassword(email: _emailController.text, password: _passwordController.text)
         .then((credential) {
+          // user goes to home page after successful register
           if (credential.user != null) {
             navigatorKey.currentContext!.go(Routes.home);
           } else {
@@ -50,6 +53,9 @@ class _RegisterPageState extends State<RegisterPage> {
         });
   }
 
+  /// Changes loading flag
+  ///
+  /// [isLoading] value to update
   void _setLoading(bool isLoading) {
     if (_isLoading == isLoading) return;
     setState(() => _isLoading = isLoading);

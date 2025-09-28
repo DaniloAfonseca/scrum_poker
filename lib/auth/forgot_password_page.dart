@@ -25,12 +25,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
+  /// Changes loading flag
+  /// 
+  /// [isLoading] value to update
   void _setLoading(bool isLoading) {
     if (_isLoading == isLoading) return;
     setState(() => _isLoading = isLoading);
   }
 
-  Future<void> sentEmail() async {
+  /// Send password reset e-mail
+  Future<void> _sendEmail() async {
     _setLoading(true);
     final message = await AuthServices().resetPassword(_emailController.text);
     bool isSuccess = false;
@@ -74,7 +78,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             return null;
           },
           onFieldSubmitted: (value) async {
-            await sentEmail();
+            await _sendEmail();
           },
         ),
         const SizedBox(height: 20),
@@ -82,7 +86,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: _isLoading ? null : sentEmail,
+            onPressed: _isLoading ? null : _sendEmail,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blueAccent,
               foregroundColor: Colors.white,
