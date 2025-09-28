@@ -20,12 +20,12 @@ class MainPageRoom extends StatefulWidget {
 
 class _MainPageRoomState extends State<MainPageRoom> {
   final _menuKey = GlobalKey();
-  final user = FirebaseAuth.instance.currentUser;
-  late UserRoom userRoom;
+  final _user = FirebaseAuth.instance.currentUser;
+  late UserRoom _userRoom;
 
   @override
   void initState() {
-    userRoom = widget.userRoom;
+    _userRoom = widget.userRoom;
     super.initState();
   }
 
@@ -53,36 +53,36 @@ class _MainPageRoomState extends State<MainPageRoom> {
                     spacing: 10,
                     children: [
                       Text(
-                        userRoom.name,
+                        _userRoom.name,
                         style: constraint.maxWidth > 900
                             ? theme.textTheme.headlineLarge!.copyWith(color: Colors.white)
                             : theme.textTheme.headlineMedium!.copyWith(color: Colors.white),
                       ),
-                      if (userRoom.dateDeleted != null)
+                      if (_userRoom.dateDeleted != null)
                         TextTag(
                           text: 'DELETED',
                           backgroundColor: Colors.red,
                           foreColor: Colors.white,
-                          display: userRoom.dateDeleted != null,
-                          toolTipText: userRoom.dateDeleted != null ? 'Delete on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateDeleted!)}' : null,
+                          display: _userRoom.dateDeleted != null,
+                          toolTipText: _userRoom.dateDeleted != null ? 'Delete on ${DateFormat('yyyy-MM-dd - kk:mm').format(_userRoom.dateDeleted!)}' : null,
                         ),
-                      if (userRoom.status == RoomStatus.started)
-                        TextTag(text: 'STARTED', backgroundColor: Colors.green, foreColor: Colors.white, display: userRoom.status == RoomStatus.started),
-                      if (userRoom.status == RoomStatus.ended)
-                        TextTag(text: 'CLOSED', backgroundColor: Colors.white, foreColor: Colors.red, display: userRoom.status == RoomStatus.ended),
+                      if (_userRoom.status == RoomStatus.started)
+                        TextTag(text: 'STARTED', backgroundColor: Colors.green, foreColor: Colors.white, display: _userRoom.status == RoomStatus.started),
+                      if (_userRoom.status == RoomStatus.ended)
+                        TextTag(text: 'CLOSED', backgroundColor: Colors.white, foreColor: Colors.red, display: _userRoom.status == RoomStatus.ended),
                     ],
                   ),
-                  Text('Added on ${DateFormat('yyyy-MM-dd - kk:mm').format(userRoom.dateAdded!)}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+                  Text('Added on ${DateFormat('yyyy-MM-dd - kk:mm').format(_userRoom.dateAdded!)}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
                   SizedBox(
                     width: constraint.maxWidth - 80,
                     child: Wrap(
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        Text('Total number of stories: ${userRoom.allStories ?? 0},', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
-                        Text('Active stories: ${userRoom.activeStories ?? 0},', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
-                        Text('Skipped stories: ${userRoom.skippedStories ?? 0},', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
-                        Text('Completed stories: ${userRoom.completedStories ?? 0}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+                        Text('Total number of stories: ${_userRoom.allStories ?? 0},', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+                        Text('Active stories: ${_userRoom.activeStories ?? 0},', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+                        Text('Skipped stories: ${_userRoom.skippedStories ?? 0},', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
+                        Text('Completed stories: ${_userRoom.completedStories ?? 0}', style: theme.textTheme.bodyMedium!.copyWith(color: Colors.white)),
                       ],
                     ),
                   ),
@@ -106,7 +106,7 @@ class _MainPageRoomState extends State<MainPageRoom> {
                           ],
                         ),
                         onTap: () {
-                          context.go(Routes.editRoom, extra: userRoom.roomId);
+                          context.go(Routes.editRoom, extra: _userRoom.roomId);
                         },
                       ),
                       PopupMenuItem(
@@ -118,7 +118,7 @@ class _MainPageRoomState extends State<MainPageRoom> {
                           ],
                         ),
                         onTap: () async {
-                          context.go('${Routes.room}/${userRoom.roomId}');
+                          context.go('${Routes.room}/${_userRoom.roomId}');
                         },
                       ),
                       PopupMenuItem(
@@ -130,15 +130,15 @@ class _MainPageRoomState extends State<MainPageRoom> {
                           ],
                         ),
                         onTap: () async {
-                          userRoom.dateDeleted = DateTime.now();
-                          final json = userRoom.toJson();
-                          await FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').doc(userRoom.roomId).set(json);
-                          final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(userRoom.roomId).snapshots().first;
+                          _userRoom.dateDeleted = DateTime.now();
+                          final json = _userRoom.toJson();
+                          await FirebaseFirestore.instance.collection('users').doc(_user!.uid).collection('rooms').doc(_userRoom.roomId).set(json);
+                          final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(_userRoom.roomId).snapshots().first;
 
                           final room = Room.fromJson(dbRoom.data()!);
-                          room.dateDeleted = userRoom.dateDeleted;
+                          room.dateDeleted = _userRoom.dateDeleted;
                           final roomMap = room.toJson();
-                          await FirebaseFirestore.instance.collection('rooms').doc(userRoom.roomId).set(roomMap);
+                          await FirebaseFirestore.instance.collection('rooms').doc(_userRoom.roomId).set(roomMap);
 
                           widget.deletedChanged();
                         },

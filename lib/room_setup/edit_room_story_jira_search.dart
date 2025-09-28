@@ -20,8 +20,8 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
   late ValueNotifier<Future<JiraIssueResponse?>> _suggestionsFutureNotifier;
   final searching = ValueNotifier<bool>(false);
 
-  var hasAnyType = false;
-  JiraIssue? jiraIssue;
+  var _hasAnyType = false;
+  JiraIssue? _jiraIssue;
 
   // A completer to manage the asynchronous search results for the FutureBuilder
   // This completer is specifically for the *current* debounced search request.
@@ -277,8 +277,8 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
                                     ),
                                     onTap: () {
                                       setState(() {
-                                        jiraIssue = t;
-                                        hasAnyType = anyHasType;
+                                        _jiraIssue = t;
+                                        _hasAnyType = anyHasType;
                                         controller.closeView('${t.fields!.summary}');
                                       });
                                     },
@@ -312,12 +312,12 @@ class _EditRoomStoryJiraSearchState extends State<EditRoomStoryJiraSearch> {
           },
           onOpen: () {
             setState(() {
-              jiraIssue = null;
-              hasAnyType = false;
+              _jiraIssue = null;
+              _hasAnyType = false;
             });
           },
           onClose: () {
-            widget.onSelectedChanged(jiraIssue: jiraIssue, hasAnyType: hasAnyType, customText: _searchController.text);
+            widget.onSelectedChanged(jiraIssue: _jiraIssue, hasAnyType: _hasAnyType, customText: _searchController.text);
           },
         ),
       ),

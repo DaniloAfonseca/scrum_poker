@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
@@ -23,55 +22,49 @@ class MainPage extends StatefulWidget {
 enum SortOrder { ascending, descending }
 
 class _MainPageState extends State<MainPage> {
-  final user = FirebaseAuth.instance.currentUser;
+  final _user = FirebaseAuth.instance.currentUser;
 
-  bool showDeleted = false;
-  bool showClosed = false;
+  bool _showDeleted = false;
+  bool _showClosed = false;
 
-  bool hasDeleted = true;
-  bool hasClosed = true;
+  bool _hasDeleted = true;
+  bool _hasClosed = true;
 
   final List<bool> _selectedOrder = <bool>[true, false];
 
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? hasDeletedStreamSubs;
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? hasClosedStreamSubs;
-
   @override
   void initState() {
-    final hasDeletedStream = FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').where('isDeleted', isEqualTo: true).limit(1).snapshots();
-    hasDeletedStreamSubs = hasDeletedStream.listen(onHasDeletedRoomsData);
-
-    final hasClosedStream = FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').where('status', isEqualTo: 'closed').limit(1).snapshots();
-    hasClosedStreamSubs = hasClosedStream.listen(onHasClosedRoomsData);
+    FirebaseFirestore.instance.collection('users').doc(_user!.uid).collection('rooms').where('isDeleted', isEqualTo: true).limit(1).snapshots().listen(onHasDeletedRoomsData);
+    FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').where('status', isEqualTo: 'closed').limit(1).snapshots().listen(onHasClosedRoomsData);
 
     checkFlags();
     super.initState();
 
     // Redirect to login if not authenticated
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (user == null) {
-        context.go(Routes.login);
-        return;
-      }
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) async {
+    //   if (_user == null) {
+    //     context.go(Routes.login);
+    //     return;
+    //   }
+    // });
   }
 
   /// sets hasDeleted and hasClosed flags
   void checkFlags() {
     setState(() {
-      room_services.hasDeletedRooms(user!.uid).then((v) => hasDeleted = v);
-      room_services.hasClosedRooms(user!.uid).then((v) => hasClosed = v);
+      room_services.hasDeletedRooms(_user!.uid).then((v) => _hasDeleted = v);
+      room_services.hasClosedRooms(_user.uid).then((v) => _hasClosed = v);
     });
   }
 
   /// updates has deleted flag when the value changes in the database
   void onHasDeletedRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
-    hasDeleted = event.docs.isNotEmpty;
+    _hasDeleted = event.docs.isNotEmpty;
   }
 
   /// updates has closed flag when the value changes in the database
   void onHasClosedRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
-    hasClosed = event.docs.isNotEmpty;
+    _hasClosed = event.docs.isNotEmpty;
   }
 
   void sortToggle(int index) {
@@ -89,19 +82,19 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       appBar: const GiraffeAppBar(),
       body: StreamBuilder(
-        stream: !showDeleted
-            ? !showClosed
+        stream: !_showDeleted
+            ? !_showClosed
                   ? FirebaseFirestore.instance
                         .collection('users')
-                        .doc(user!.uid)
+                        .doc(_user!.uid)
                         .collection('rooms')
                         .where('isDeleted', isEqualTo: false)
                         .where('status', whereIn: ['notStarted', 'started'])
                         .snapshots()
-                  : FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').where('isDeleted', isEqualTo: false).snapshots()
-            : !showClosed
-            ? FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').where('status', whereIn: ['notStarted', 'started']).snapshots()
-            : FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('rooms').snapshots(),
+                  : FirebaseFirestore.instance.collection('users').doc(_user!.uid).collection('rooms').where('isDeleted', isEqualTo: false).snapshots()
+            : !_showClosed
+            ? FirebaseFirestore.instance.collection('users').doc(_user!.uid).collection('rooms').where('status', whereIn: ['notStarted', 'started']).snapshots()
+            : FirebaseFirestore.instance.collection('users').doc(_user!.uid).collection('rooms').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           var rooms = snapshot.data!.docs.map((t) => UserRoom.fromJson(t.data())).toList();
@@ -151,19 +144,19 @@ class _MainPageState extends State<MainPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Tooltip(
-                          message: !hasDeleted ? 'There\'s no deleted room' : '',
+                          message: !_hasDeleted ? 'There\'s no deleted room' : '',
                           child: AnimatedToggleSwitch<bool>.dual(
-                            current: showDeleted,
+                            current: _showDeleted,
                             first: false,
                             second: true,
-                            active: hasDeleted,
+                            active: _hasDeleted,
                             spacing: 95.0,
                             indicatorSize: const Size(22, 22),
                             animationDuration: const Duration(milliseconds: 600),
                             style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
                             customStyleBuilder: (context, local, global) {
                               if (global.position <= 0.0) {
-                                return ToggleStyle(backgroundColor: hasDeleted ? Colors.green : Colors.grey);
+                                return ToggleStyle(backgroundColor: _hasDeleted ? Colors.green : Colors.grey);
                               }
                               return ToggleStyle(
                                 backgroundGradient: LinearGradient(
@@ -174,7 +167,7 @@ class _MainPageState extends State<MainPage> {
                             },
                             borderWidth: 5.0,
                             height: 32.0,
-                            onChanged: hasDeleted ? (b) => setState(() => showDeleted = b) : null,
+                            onChanged: _hasDeleted ? (b) => setState(() => _showDeleted = b) : null,
                             textBuilder: (value) => value
                                 ? Center(
                                     child: Text('Include deleted', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
@@ -185,12 +178,12 @@ class _MainPageState extends State<MainPage> {
                           ),
                         ),
                         Tooltip(
-                          message: !hasClosed ? 'There\'s no closed room' : '',
+                          message: !_hasClosed ? 'There\'s no closed room' : '',
                           child: AnimatedToggleSwitch<bool>.dual(
-                            current: showClosed,
+                            current: _showClosed,
                             first: false,
                             second: true,
-                            active: hasClosed,
+                            active: _hasClosed,
                             spacing: 95.0,
                             indicatorSize: const Size(22, 22),
                             animationDuration: const Duration(milliseconds: 600),
@@ -208,7 +201,7 @@ class _MainPageState extends State<MainPage> {
                             },
                             borderWidth: 5.0,
                             height: 32.0,
-                            onChanged: (b) => setState(() => showClosed = b),
+                            onChanged: (b) => setState(() => _showClosed = b),
                             textBuilder: (value) => value
                                 ? Center(
                                     child: Text('Include closed', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
@@ -235,14 +228,13 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ],
                 ),
-                if (user != null)
-                  SingleChildScrollView(
-                    key: ValueKey(_selectedOrder[0]),
-                    child: Column(
-                      spacing: 10,
-                      children: rooms.map((room) => MainPageRoom(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList(),
-                    ),
+                SingleChildScrollView(
+                  key: ValueKey(_selectedOrder[0]),
+                  child: Column(
+                    spacing: 10,
+                    children: rooms.map((room) => MainPageRoom(key: ValueKey(room), userRoom: room, deletedChanged: () => setState(() {}))).toList(),
                   ),
+                ),
               ],
             ),
           );

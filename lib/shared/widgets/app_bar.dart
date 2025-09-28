@@ -26,7 +26,7 @@ class GiraffeAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _GiraffeAppBarState extends State<GiraffeAppBar> {
   final _avatarKey = GlobalKey();
 
-  final user = FirebaseAuth.instance.currentUser;
+  final _user = FirebaseAuth.instance.currentUser;
   late Future<String?> _avatar;
 
   @override
@@ -63,7 +63,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
         ),
         if (widget.loginIn != true) ...[
           const SizedBox(width: 10),
-          user == null
+          _user == null
               ? CircleAvatar(
                   backgroundColor: theme.primaryColor,
                   key: _avatarKey,
@@ -129,29 +129,30 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
       context: context,
       position: RelativeRect.fromLTRB(position.dx - 60, position.dy + 40, position.dx, position.dy),
       items: [
-        if (user != null && widget.loginIn != true)
+        if (_user != null && widget.loginIn != true)
           PopupMenuItem(
             child: ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () => navigatorKey.currentContext!.go(Routes.settings)),
           ),
-        PopupMenuItem(
-          child: ValueListenableBuilder(
-            valueListenable: jira.isConnected,
-            builder: (context, value, child) {
-              return ListTile(
-                leading: Image.asset('images/jira.png'),
-                title: Text(value ? 'Disconnect from Jira' : 'Connect to Jira'),
-                onTap: () async {
-                  if (!value) {
-                    await AuthServices().signInWithJira();
-                  } else {
-                    await jira.clearCredentials();
-                  }
-                  widget.onJiraConnection?.call(value);
-                },
-              );
-            },
+        if (_user != null)
+          PopupMenuItem(
+            child: ValueListenableBuilder(
+              valueListenable: jira.isConnected,
+              builder: (context, value, child) {
+                return ListTile(
+                  leading: Image.asset('images/jira.png'),
+                  title: Text(value ? 'Disconnect from Jira' : 'Connect to Jira'),
+                  onTap: () async {
+                    if (!value) {
+                      await AuthServices().signInWithJira();
+                    } else {
+                      await jira.clearCredentials();
+                    }
+                    widget.onJiraConnection?.call(value);
+                  },
+                );
+              },
+            ),
           ),
-        ),
         PopupMenuItem(
           child: ListTile(leading: const Icon(Icons.logout_outlined), title: const Text('Sign Out'), onTap: signOut),
         ),
@@ -162,7 +163,7 @@ class _GiraffeAppBarState extends State<GiraffeAppBar> {
   void signOut() async {
     SettingsManager().deleteAppUser();
     widget.onSignOut?.call();
-    if (user != null) {
+    if (_user != null) {
       AuthServices().signOut().then((_) {
         navigatorKey.currentContext!.go(Routes.login);
       });

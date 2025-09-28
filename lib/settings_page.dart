@@ -31,24 +31,44 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isLoadingFields = false;
   bool _showStoryPointsField = false;
 
-  final user = FirebaseAuth.instance.currentUser;
+  final _user = FirebaseAuth.instance.currentUser;
+  final _settingsManager = SettingsManager();
   Timer? _debounce;
-  bool autoFlip = false;
+  bool _autoFlip = false;
 
   @override
   void initState() {
+    _settingsManager.addListener(onSettingsChanged);
     initialise();
     super.initState();
   }
 
+  @override
+  void dispose() {
+    _settingsManager.removeListener(onSettingsChanged);
+    super.dispose();
+  }
+
+  /// listens for setting change
+  void onSettingsChanged() {
+    setState(() {
+      if (_autoFlip != _settingsManager.autoFlip) {
+        _autoFlip = _settingsManager.autoFlip;
+        snackbarMessenger(message: 'Auto flip rooms is ${_autoFlip ? 'ON' : 'OFF'}');
+      }
+    });
+  }
+
   Future<void> initialise() async {
-    _userNameController.text = user!.displayName ?? '';
-    _jiraUrlController.text = SettingsManager().jiraUrl ?? '';
+    _userNameController.text = _user!.displayName ?? '';
+    _jiraUrlController.text = _settingsManager.jiraUrl ?? '';
     _fields.clear();
 
     setState(() {
       _isLoadingFields = true;
       _showStoryPointsField = false;
+
+      _autoFlip = _settingsManager.autoFlip;
     });
 
     try {
@@ -56,7 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (response.success) {
         _fields.addAll(response.data!);
         _fields.sortBy((t) => t.name);
-        final storyPointFieldName = SettingsManager().storyPointFieldName;
+        final storyPointFieldName = _settingsManager.storyPointFieldName;
         setState(() {
           _fieldSearchController.text = _fields.firstWhereOrNull((t) => t.key == storyPointFieldName)?.name ?? '';
           _showStoryPointsField = true;
@@ -101,131 +121,136 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 10,
-          children: [
-            Hyperlink(text: 'Exit settings', onTap: () => web.window.history.back()),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _userNameController,
-              onFieldSubmitted: (value) => _updateUsername(),
-              decoration: const InputDecoration(
-                hintText: 'User name',
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
-                prefixIcon: Icon(Icons.person),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 10,
+            children: [
+              Hyperlink(text: 'Exit settings', onTap: () => web.window.history.back()),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _userNameController,
+                onFieldSubmitted: (value) => _updateUsername(),
+                decoration: const InputDecoration(
+                  hintText: 'User name',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
+                  prefixIcon: Icon(Icons.person),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'User name cannot be empty';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  if (_debounce?.isActive == true) {
+                    _debounce?.cancel();
+                  }
+                  _debounce = Timer(const Duration(milliseconds: 500), () {
+                    _updateUsername();
+                    _debounce!.cancel();
+                  });
+                },
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'User name cannot be empty';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                if (_debounce?.isActive == true) {
-                  _debounce?.cancel();
-                }
-                _debounce = Timer(const Duration(milliseconds: 500), () {
-                  _updateUsername();
-                  _debounce!.cancel();
-                });
-              },
-            ),
 
-            const SizedBox(height: 10),
-            const CreateNewPassword(),
-            const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              const CreateNewPassword(),
+              const SizedBox(height: 20),
 
-            _isLoadingFields
-                ? const Center(child: CircularProgressIndicator())
-                : !_showStoryPointsField
-                ? const SizedBox.shrink()
-                : SearchViewTheme(
-                    data: SearchViewThemeData(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      backgroundColor: theme.canvasColor,
-                      dividerColor: theme.dividerColor,
-                      headerHeight: 46,
-                      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
-                    ),
-                    child: SearchBarTheme(
-                      data: SearchBarThemeData(
-                        hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
-                        shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                        elevation: WidgetStateProperty.all(0),
-                        side: WidgetStateProperty.resolveWith((states) {
-                          if (states.contains(WidgetState.focused)) {
-                            return const BorderSide(color: Colors.blueAccent, width: 2.0);
-                          }
-                          return BorderSide(color: Colors.blueGrey.shade200);
-                        }),
+              _isLoadingFields
+                  ? const Center(child: CircularProgressIndicator())
+                  : !_showStoryPointsField
+                  ? const SizedBox.shrink()
+                  : SearchViewTheme(
+                      data: SearchViewThemeData(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: theme.canvasColor,
+                        dividerColor: theme.dividerColor,
+                        headerHeight: 46,
+                        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4, minWidth: MediaQuery.of(context).size.width - 32), // Match width
                       ),
-                      child: SearchAnchor.bar(
-                        searchController: _fieldSearchController,
-                        barHintText: 'Search Story points field',
-                        barBackgroundColor: WidgetStateProperty.all(theme.canvasColor),
-                        barOverlayColor: WidgetStateProperty.all(Colors.transparent),
-                        barLeading: const Icon(Icons.search),
-                        barTrailing: [], // No trailing icon by default
-                        constraints: const BoxConstraints(minHeight: 46),
-                        suggestionsBuilder: (context, controller) {
-                          final filteredFields = _fields.where((e) => e.name.toLowerCase().contains(controller.text.toLowerCase()));
-                          if (filteredFields.isEmpty) {
-                            return [const ListTile(title: Text('No matching fields found'))];
-                          }
-                          return filteredFields.map((field) {
-                            return ListTile(
-                              title: Text(field.name),
-                              onTap: () {
-                                _fieldSearchController.text = field.name; // Update text
-                                // Close the search view and pass the selected value
-                                controller.closeView(field.name);
-                                SettingsManager().updateStoryPointFieldName(field.key); // Store the entire JiraField object (or just its ID)
-                              },
-                            );
-                          }).toList();
-                        },
+                      child: SearchBarTheme(
+                        data: SearchBarThemeData(
+                          hintStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge!.copyWith(color: theme.textTheme.bodyLarge!.decorationColor)),
+                          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                          elevation: WidgetStateProperty.all(0),
+                          side: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.focused)) {
+                              return const BorderSide(color: Colors.blueAccent, width: 2.0);
+                            }
+                            return BorderSide(color: Colors.blueGrey.shade200);
+                          }),
+                        ),
+                        child: SearchAnchor.bar(
+                          searchController: _fieldSearchController,
+                          barHintText: 'Search Story points field',
+                          barBackgroundColor: WidgetStateProperty.all(theme.canvasColor),
+                          barOverlayColor: WidgetStateProperty.all(Colors.transparent),
+                          barLeading: const Icon(Icons.search),
+                          barTrailing: [], // No trailing icon by default
+                          constraints: const BoxConstraints(minHeight: 46),
+                          suggestionsBuilder: (context, controller) {
+                            final filteredFields = _fields.where((e) => e.name.toLowerCase().contains(controller.text.toLowerCase()));
+                            if (filteredFields.isEmpty) {
+                              return [const ListTile(title: Text('No matching fields found'))];
+                            }
+                            return filteredFields.map((field) {
+                              return ListTile(
+                                title: Text(field.name),
+                                onTap: () {
+                                  _fieldSearchController.text = field.name; // Update text
+                                  // Close the search view and pass the selected value
+                                  controller.closeView(field.name);
+                                  _settingsManager.updateSettingValue(SettingsValueEnum.storyPointsField, field.key); // Store the entire JiraField object (or just its ID)
+                                },
+                              );
+                            }).toList();
+                          },
+                        ),
                       ),
                     ),
-                  ),
-            AnimatedToggleSwitch<bool>.dual(
-              current: autoFlip,
-              first: false,
-              second: true,
-              spacing: 100.0,
-              indicatorSize: const Size(22, 22),
-              animationDuration: const Duration(milliseconds: 600),
-              style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
-              customStyleBuilder: (context, local, global) {
-                if (global.position <= 0.0) {
-                  return ToggleStyle(backgroundColor: theme.primaryColor);
-                }
-                if (global.position == 1) {
-                  return const ToggleStyle(backgroundColor: Colors.green);
-                }
-                return ToggleStyle(
-                  backgroundGradient: LinearGradient(
-                    colors: [Colors.green, theme.primaryColor],
-                    stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
-                  ),
-                );
-              },
-              borderWidth: 5.0,
-              height: 32.0,
-              onChanged: (b) => setState(() {
-                autoFlip = b;
-                SettingsManager().updateAutoFlip(autoFlip);
-              }),
-              textBuilder: (value) => value
-                  ? Center(
-                      child: Text('Auto-flip', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
-                    )
-                  : Center(
-                      child: Text('Do not auto-flip', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
-                    ),
-            ),
-          ],
+              Tooltip(
+                message: 'When auto-flip is turned on, players cards will flip when all players finish voting',
+                child: AnimatedToggleSwitch<bool>.dual(
+                  current: _autoFlip,
+                  first: false,
+                  second: true,
+                  spacing: 120.0,
+                  indicatorSize: const Size(22, 22),
+                  animationDuration: const Duration(milliseconds: 600),
+                  style: const ToggleStyle(borderColor: Colors.transparent, indicatorColor: Colors.white, backgroundColor: Colors.black),
+                  customStyleBuilder: (context, local, global) {
+                    if (global.position <= 0.0) {
+                      return ToggleStyle(backgroundColor: theme.primaryColor);
+                    }
+                    if (global.position == 1) {
+                      return const ToggleStyle(backgroundColor: Colors.green);
+                    }
+                    return ToggleStyle(
+                      backgroundGradient: LinearGradient(
+                        colors: [Colors.green, theme.primaryColor],
+                        stops: [global.position - (1 - 2 * max(0, global.position - 0.5)) * 0.7, global.position + max(0, 2 * (global.position - 0.5)) * 0.7],
+                      ),
+                    );
+                  },
+                  borderWidth: 5.0,
+                  height: 32.0,
+                  onChanged: (b) => setState(() {
+                    _autoFlip = b;
+                    _settingsManager.updateSettingValue(SettingsValueEnum.autoFlip, _autoFlip);
+                  }),
+                  textBuilder: (value) => value
+                      ? Center(
+                          child: Text('Auto-flip', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                        )
+                      : Center(
+                          child: Text('Do not auto-flip', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white)),
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       bottomSheet: bottomBar(),

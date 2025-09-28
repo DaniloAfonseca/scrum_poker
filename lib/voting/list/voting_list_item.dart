@@ -36,14 +36,14 @@ class VotingListItem extends StatefulWidget {
 }
 
 class _VotingListItemState extends State<VotingListItem> {
-  bool isHovered = false;
+  bool _isHovered = false;
 
-  ValueNotifier<bool> isReordering = ValueNotifier<bool>(false);
+  ValueNotifier<bool> _isReordering = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     if (widget.isReordering != null) {
-      isReordering = widget.isReordering!;
+      _isReordering = widget.isReordering!;
     }
 
     super.initState();
@@ -59,26 +59,26 @@ class _VotingListItemState extends State<VotingListItem> {
     return MouseRegion(
       onEnter: (event) {
         setState(() {
-          isHovered = true;
+          _isHovered = true;
         });
       },
       onExit: (event) {
         setState(() {
-          isHovered = false;
+          _isHovered = false;
         });
       },
       child: ListTile(
-        tileColor: isHovered ? theme.hoverColor : null,
+        tileColor: _isHovered ? theme.hoverColor : null,
         contentPadding: const EdgeInsets.all(0),
         minVerticalPadding: 0,
-        selectedTileColor: isHovered ? Color.lerp(theme.hoverColor, theme.primaryColor.withAlpha(50), 0.2) : theme.primaryColor.withAlpha(50),
+        selectedTileColor: _isHovered ? Color.lerp(theme.hoverColor, theme.primaryColor.withAlpha(50), 0.2) : theme.primaryColor.withAlpha(50),
         selectedColor: theme.textTheme.bodyLarge?.color,
         selected: widget.currentStory?.id == widget.story.id,
         visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
         leading: widget.reorderIndex == null || user == null
             ? null
             : ValueListenableBuilder(
-                valueListenable: isReordering,
+                valueListenable: _isReordering,
                 builder: (context, value, child) {
                   return MouseRegion(
                     cursor: value ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,

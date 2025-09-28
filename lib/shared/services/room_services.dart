@@ -158,6 +158,14 @@ Future<bool> hasClosedRooms(String userId) async {
   return query.docs.isNotEmpty;
 }
 
+/// Close room, this will flag the room as ended if all stories are ended
+/// 
+/// [roomId] the room identifier
+Future<void> closeRoom(String roomId) async {
+  final stories = await getStories(roomId);
+  await _updateRoomStatus(roomId, stories);
+}
+
 /////////
 // story
 /////////

@@ -33,34 +33,29 @@ class RoomPage extends StatefulWidget {
 }
 
 class _RoomPageState extends State<RoomPage> {
-  var user = FirebaseAuth.instance.currentUser;
-  final _appUser = ValueNotifier<AppUser?>(null);
+  var _user = FirebaseAuth.instance.currentUser;
 
-  bool _isLoading = true;
-  bool invalidRoom = false;
-  Room? _oldRoom;
+  final _appUser = ValueNotifier<AppUser?>(null);
   final _oldCurrentUsers = <AppUser>[];
   final _oldStories = <Story>[];
-  bool listenToRoomChanges = false;
-  bool listenToStoryChanges = false;
-  bool listenToUserChanges = false;
+  final _currentStoryVN = ValueNotifier<Story?>(null);
+  final _settingsManager = SettingsManager();
 
-  final currentStoryVN = ValueNotifier<Story?>(null);
-  final votesVN = ValueNotifier<List<Vote>>([]);
+  bool _isLoading = true;
+  Room? _oldRoom;
+  bool _listenToRoomChanges = false;
+  bool _listenToStoryChanges = false;
+  bool _listenToUserChanges = false;
 
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? roomsStreamSubs;
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? storiesStreamSubs;
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? currentUsersStreamSubs;
+  bool _autoFlip = false;
 
   @override
   void initState() {
-    final roomsStream = FirebaseFirestore.instance.collection('rooms').snapshots(includeMetadataChanges: true);
-    final storiesStream = FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('stories').snapshots(includeMetadataChanges: true);
-    final currentUsersStream = FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('currentUsers').snapshots(includeMetadataChanges: true);
+    FirebaseFirestore.instance.collection('rooms').snapshots(includeMetadataChanges: true).listen(onRoomsData);
+    FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('stories').snapshots(includeMetadataChanges: true).listen(onStoriesData);
+    FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).collection('currentUsers').snapshots(includeMetadataChanges: true).listen(onCurrentUsersData);
 
-    roomsStreamSubs = roomsStream.listen(onRoomsData);
-    storiesStreamSubs = storiesStream.listen(onStoriesData);
-    currentUsersStreamSubs = currentUsersStream.listen(onCurrentUsersData);
+    _autoFlip = _settingsManager.autoFlip;
 
     web.window.onbeforeunload = (JSAny data) {
       if (_appUser.value != null) {
@@ -74,6 +69,8 @@ class _RoomPageState extends State<RoomPage> {
       }
     }.toJS;
 
+    _settingsManager.addListener(onSettingChanged);
+
     loadUser();
     checkUser();
     super.initState();
@@ -81,20 +78,26 @@ class _RoomPageState extends State<RoomPage> {
 
   @override
   void dispose() {
-    roomsStreamSubs?.cancel();
-    roomsStreamSubs = null;
-
-    storiesStreamSubs?.cancel();
-    storiesStreamSubs = null;
-
-    currentUsersStreamSubs?.cancel();
-    currentUsersStreamSubs = null;
+    _settingsManager.removeListener(onSettingChanged);
 
     super.dispose();
   }
 
+  /// listens for setting change
+  void onSettingChanged() {
+    setState(() {
+      if (_autoFlip != _settingsManager.autoFlip) {
+        _autoFlip = _settingsManager.autoFlip;
+        snackbarMessenger(message: 'Auto flip rooms is ${_autoFlip ? 'ON' : 'OFF'}');
+      }
+    });
+  }
+
+  /// listens for room changes
   void onRoomsData(QuerySnapshot<Map<String, dynamic>> event) {
-    if (event.docChanges.isNotEmpty && listenToRoomChanges) {
+    // changes were found
+    if (event.docChanges.isNotEmpty && _listenToRoomChanges) {
+      // list of changed rooms
       final rooms = event.docChanges.where((t) => t.doc.data() != null).map((t) => Room.fromJson(t.doc.data()!)).where((r) => r.id == widget.roomId).toList();
       if (rooms.isNotEmpty) {
         final messages = <String>[];
@@ -116,13 +119,18 @@ class _RoomPageState extends State<RoomPage> {
         _oldRoom = null;
       }
     }
-    listenToRoomChanges = true;
+    _listenToRoomChanges = true;
   }
 
-  void onStoriesData(QuerySnapshot<Map<String, dynamic>> event) {
-    if (event.docChanges.isNotEmpty && listenToStoryChanges) {
+  /// listens for story changes
+  Future<void> onStoriesData(QuerySnapshot<Map<String, dynamic>> event) async {
+    // get all stories
+    final stories = event.docs.map((t) => Story.fromJson(t.data())).toList();
+
+    // story changes were found
+    if (event.docChanges.isNotEmpty && _listenToStoryChanges) {
       final messages = <String>[];
-      final stories = event.docs.map((t) => Story.fromJson(t.data())).toList();
+
       for (final change in event.docChanges) {
         if (change.doc.exists) {
           final story = Story.fromJson(change.doc.data()!);
@@ -162,11 +170,18 @@ class _RoomPageState extends State<RoomPage> {
       _oldStories.addAll(stories);
       showSnackBar(messages);
     }
-    listenToStoryChanges = true;
+    _listenToStoryChanges = true;
+
+    // auto closes the room
+    if (stories.where((t) => [StoryStatus.ended, StoryStatus.skipped].contains(t.status)).length == stories.length) {
+      await room_services.closeRoom(stories.first.roomId);
+    }
   }
 
+  /// listens to users changes
   void onCurrentUsersData(QuerySnapshot<Map<String, dynamic>> event) {
-    if (event.docChanges.isNotEmpty && listenToUserChanges) {
+    // user changes were found
+    if (event.docChanges.isNotEmpty && _listenToUserChanges) {
       final messages = <String>[];
       final users = event.docs.map((t) => AppUser.fromJson(t.data())).toList();
       for (final change in event.docChanges) {
@@ -199,62 +214,70 @@ class _RoomPageState extends State<RoomPage> {
       _oldCurrentUsers.addAll(users);
       showSnackBar(messages);
     }
-    listenToUserChanges = true;
+    _listenToUserChanges = true;
   }
 
+  /// listens to current story changes
   void handleCurrentStoryChanges(final List<AppUser> users, final List<Vote> votes) {
-    if (currentStoryVN.value == null) {
+    if (_currentStoryVN.value == null) {
       return;
     }
-    final currentStory = currentStoryVN.value!;
-    if (currentStory.status == StoryStatus.started && SettingsManager().autoFlip && users.length == votes.length) {
+    final currentStory = _currentStoryVN.value!;
+    if (currentStory.status == StoryStatus.started && _autoFlip && users.length == votes.length) {
       room_services.flipCards(currentStory, votes);
     }
   }
 
+  /// check if current stored user is a moderator for the room
+  /// if not this user will not be a moderator
   Future<void> checkUser() async {
-    if (user != null) {
+    if (_user != null) {
       // get user rooms
-      final rooms = await room_services.getUserRooms(user!.uid);
+      final rooms = await room_services.getUserRooms(_user!.uid);
       final roomId = widget.roomId;
 
       // logout the user if invited to a different room
       if (!rooms.any((r) => r.id == roomId)) {
-        user = null;
+        _user = null;
         _appUser.value = null;
       }
     }
   }
 
+  /// load user
   Future<void> loadUser() async {
     setState(() {
       _isLoading = true;
     });
 
-    if (user?.metadata != null) {
-      final appUser = AppUser.fromUser(user!, widget.roomId);
-      SettingsManager().updateAppUser(appUser);
+    if (_user?.metadata != null) {
+      final appUser = AppUser.fromUser(_user!, widget.roomId);
+      _settingsManager.updateAppUser(appUser);
     }
 
-    _appUser.value = SettingsManager().appUser;
+    _appUser.value = _settingsManager.appUser;
 
     setState(() {
       _isLoading = false;
     });
   }
 
+  /// log in into the room
   Future<void> logIn(String username) async {
-    if (user != null && user!.displayName != username) {
-      await user!.updateDisplayName(username);
+    if (_user != null && _user!.displayName != username) {
+      await _user!.updateDisplayName(username);
     }
 
-    final appUser = user == null ? AppUser(name: username, id: const Uuid().v4()) : AppUser.fromUser(user!, widget.roomId);
+    final appUser = _user == null ? AppUser(name: username, id: const Uuid().v4()) : AppUser.fromUser(_user!, widget.roomId);
 
-    SettingsManager().updateAppUser(appUser);
+    _settingsManager.updateAppUser(appUser);
 
     _appUser.value = appUser;
   }
 
+  /// show snackbar messages
+  ///
+  /// [messages] list of messages
   void showSnackBar(List<String> messages) {
     ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? controller;
 
@@ -309,7 +332,7 @@ class _RoomPageState extends State<RoomPage> {
           body: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : (_appUser.value == null)
-              ? RoomLogin(isModerator: user != null, login: logIn)
+              ? RoomLogin(isModerator: _user != null, login: logIn)
               : StreamBuilder(
                   stream: FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots(),
                   builder: (context, snapshot) {
@@ -328,11 +351,11 @@ class _RoomPageState extends State<RoomPage> {
                         final stories = maps?.map((t) => Story.fromJson(t)).toList() ?? <Story>[];
                         stories.sortBy((t) => t.order);
 
-                        if (user != null) {
+                        if (_user != null) {
                           room_services.setCurrentStory(stories);
                         }
 
-                        currentStoryVN.value = stories.firstWhereOrNull((t) => t.currentStory);
+                        _currentStoryVN.value = stories.firstWhereOrNull((t) => t.currentStory);
 
                         return Container(
                           // decoration: const BoxDecoration(
@@ -372,7 +395,7 @@ class _RoomPageState extends State<RoomPage> {
                                               flex: 1,
                                               child: VotingPlayers(
                                                 onVotingChange: handleCurrentStoryChanges,
-                                                currentStoryVN: currentStoryVN,
+                                                currentStoryVN: _currentStoryVN,
                                                 room: room,
                                                 appUser: _appUser.value!,
                                                 onUserRenamed: renameUser,
@@ -384,7 +407,7 @@ class _RoomPageState extends State<RoomPage> {
                                       ],
                                     )
                                   : ValueListenableBuilder(
-                                      valueListenable: currentStoryVN,
+                                      valueListenable: _currentStoryVN,
                                       builder: (context, currentStory, child) {
                                         return Column(
                                           spacing: 10,
@@ -395,7 +418,7 @@ class _RoomPageState extends State<RoomPage> {
                                             if (currentStory?.url != null)
                                               Hyperlink(text: currentStory?.fullDescription ?? '', textStyle: theme.textTheme.headlineSmall!, url: currentStory!.url!),
                                             VotingPlayers(
-                                              currentStoryVN: currentStoryVN,
+                                              currentStoryVN: _currentStoryVN,
                                               room: room,
                                               appUser: _appUser.value!,
                                               onUserRenamed: (appUser) => renameUser(appUser),

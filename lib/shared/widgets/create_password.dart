@@ -14,7 +14,7 @@ class CreateNewPassword extends StatefulWidget {
 class _CreateNewPasswordState extends State<CreateNewPassword> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-  final user = FirebaseAuth.instance.currentUser;
+  final _user = FirebaseAuth.instance.currentUser;
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -86,7 +86,7 @@ class _CreateNewPasswordState extends State<CreateNewPassword> {
             mainAxisSize: MainAxisSize.min,
             spacing: 16,
             children: [
-              Text('${!user!.providerData.any((pd) => pd.providerId == 'password') ? 'Create new' : 'Update'} password'),
+              Text('${!_user!.providerData.any((pd) => pd.providerId == 'password') ? 'Create new' : 'Update'} password'),
               TextFormField(
                 controller: _passwordController,
                 obscureText: !_isPasswordVisible,

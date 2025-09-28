@@ -33,19 +33,19 @@ class _EditRoomPageState extends State<EditRoomPage> {
   final TextEditingController _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  late Room room;
+  late Room _room;
 
-  bool deleted = false;
-  bool allCards = true;
-  final cardsToUse = <bool>[];
-  final stories = <Story>[];
+  bool _deleted = false;
+  bool _allCards = true;
+  final _cardsToUse = <bool>[];
+  final _stories = <Story>[];
 
-  static const WidgetStateProperty<Icon> thumbIcon = WidgetStateProperty<Icon>.fromMap(<WidgetStatesConstraint, Icon>{
+  static const WidgetStateProperty<Icon> _thumbIcon = WidgetStateProperty<Icon>.fromMap(<WidgetStatesConstraint, Icon>{
     WidgetState.selected: Icon(Icons.check),
     WidgetState.any: Icon(Icons.close),
   });
 
-  static const WidgetStateProperty<Color> borderColor = WidgetStateProperty<Color>.fromMap(<WidgetStatesConstraint, Color>{
+  static const WidgetStateProperty<Color> _borderColor = WidgetStateProperty<Color>.fromMap(<WidgetStatesConstraint, Color>{
     WidgetState.selected: Colors.transparent,
     WidgetState.any: Colors.transparent,
   });
@@ -65,7 +65,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
   Future<void> loadRoom() async {
     if (widget.roomId == null) {
       setState(() {
-        room = Room(dateAdded: DateTime.now(), id: const Uuid().v4(), cardsToUse: [...VoteEnum.values], userId: _user.uid, status: RoomStatus.notStarted);
+        _room = Room(dateAdded: DateTime.now(), id: const Uuid().v4(), cardsToUse: [...VoteEnum.values], userId: _user.uid, status: RoomStatus.notStarted);
       });
     } else {
       final dbUserRooms = await FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').doc(widget.roomId).snapshots().first;
@@ -77,18 +77,18 @@ class _EditRoomPageState extends State<EditRoomPage> {
       final dbRoom = await FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().first;
       final json = dbRoom.data()!;
       setState(() {
-        room = Room.fromJson(json);
+        _room = Room.fromJson(json);
       });
     }
 
-    deleted = room.dateDeleted != null;
-    _nameController.text = room.name ?? '';
-    allCards = widget.roomId == null || room.cardsToUse.length == VoteEnum.values.length;
-    cardsToUse.addAll(VoteEnum.values.map((v) => allCards ? false : room.cardsToUse.contains(v)));
+    _deleted = _room.dateDeleted != null;
+    _nameController.text = _room.name ?? '';
+    _allCards = widget.roomId == null || _room.cardsToUse.length == VoteEnum.values.length;
+    _cardsToUse.addAll(VoteEnum.values.map((v) => _allCards ? false : _room.cardsToUse.contains(v)));
 
-    final roomStories = await room_services.getStories(room.id);
+    final roomStories = await room_services.getStories(_room.id);
 
-    stories.addAll(roomStories);
+    _stories.addAll(roomStories);
     setState(() {});
   }
 
@@ -100,48 +100,48 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
   void roomDeleteToggle(bool value) {
     setState(() {
-      deleted = value;
+      _deleted = value;
     });
   }
 
   Future<void> saveRoom() async {
     if (_formKey.currentState!.validate()) {
       // save room
-      room.name = _nameController.value.text;
-      room.cardsToUse.clear();
-      room.dateDeleted = deleted ? DateTime.now() : null;
-      room.isDeleted = deleted;
+      _room.name = _nameController.value.text;
+      _room.cardsToUse.clear();
+      _room.dateDeleted = _deleted ? DateTime.now() : null;
+      _room.isDeleted = _deleted;
       for (var index = 0; index < VoteEnum.values.length; index++) {
-        if (cardsToUse[index] || allCards) {
-          room.cardsToUse.add(VoteEnum.values[index]);
+        if (_cardsToUse[index] || _allCards) {
+          _room.cardsToUse.add(VoteEnum.values[index]);
         }
       }
-      final json = room.toJson();
-      await FirebaseFirestore.instance.collection('rooms').doc(room.id).set(json);
+      final json = _room.toJson();
+      await FirebaseFirestore.instance.collection('rooms').doc(_room.id).set(json);
 
       // save story
-      for (var story in stories.where((s) => s.added == false)) {
-        await FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').doc(story.id).set(story.toJson());
+      for (var story in _stories.where((s) => s.added == false)) {
+        await FirebaseFirestore.instance.collection('rooms').doc(_room.id).collection('stories').doc(story.id).set(story.toJson());
       }
 
       // remove deleted stories
-      final existingStories = await room_services.getStories(room.id);
+      final existingStories = await room_services.getStories(_room.id);
       for (var existingStory in existingStories) {
-        if (stories.any((t) => t.id == existingStory.id)) continue;
-        await FirebaseFirestore.instance.collection('rooms').doc(room.id).collection('stories').doc(existingStory.id).delete();
+        if (_stories.any((t) => t.id == existingStory.id)) continue;
+        await FirebaseFirestore.instance.collection('rooms').doc(_room.id).collection('stories').doc(existingStory.id).delete();
       }
 
       // save user room
-      final userRoom = UserRoom.fromRoom(room);
-      userRoom.activeStories = stories.where((t) => t.status.active).length;
-      userRoom.skippedStories = stories.where((t) => t.status == StoryStatus.skipped).length;
-      userRoom.completedStories = stories.where((t) => !t.status.active).length;
-      userRoom.allStories = stories.length;
-      userRoom.isDeleted = room.isDeleted;
+      final userRoom = UserRoom.fromRoom(_room);
+      userRoom.activeStories = _stories.where((t) => t.status.active).length;
+      userRoom.skippedStories = _stories.where((t) => t.status == StoryStatus.skipped).length;
+      userRoom.completedStories = _stories.where((t) => !t.status.active).length;
+      userRoom.allStories = _stories.length;
+      userRoom.isDeleted = _room.isDeleted;
       final userRoomsMap = userRoom.toJson();
-      await FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').doc(room.id).set(userRoomsMap);
+      await FirebaseFirestore.instance.collection('users').doc(_user.uid).collection('rooms').doc(_room.id).set(userRoomsMap);
 
-      if (stories.any((s) => s.added)) {
+      if (_stories.any((s) => s.added)) {
         snackbarMessenger(message: 'Unsaved story were skipped.');
         await Future.delayed(const Duration(microseconds: 500));
       }
@@ -152,17 +152,17 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
   void useAllCardsToggle(bool? value) {
     setState(() {
-      allCards = value == true;
+      _allCards = value == true;
       for (var index = 0; index < VoteEnum.values.length; index++) {
-        cardsToUse[index] = false;
+        _cardsToUse[index] = false;
       }
     });
   }
 
   void cardInUse(int index, bool? value) {
     setState(() {
-      allCards = false;
-      cardsToUse[index] = value == true;
+      _allCards = false;
+      _cardsToUse[index] = value == true;
     });
   }
 
@@ -238,7 +238,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                         Row(
                           children: [
                             const Text('Deleted'),
-                            Switch(thumbIcon: thumbIcon, value: deleted, inactiveThumbColor: Colors.grey[500], trackOutlineColor: borderColor, onChanged: roomDeleteToggle),
+                            Switch(thumbIcon: _thumbIcon, value: _deleted, inactiveThumbColor: Colors.grey[500], trackOutlineColor: _borderColor, onChanged: roomDeleteToggle),
                           ],
                         ),
                         ElevatedButton(
@@ -263,7 +263,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                               width: 150,
                               child: CheckboxListTile(
                                 controlAffinity: ListTileControlAffinity.leading,
-                                value: allCards,
+                                value: _allCards,
                                 title: const Text('Use all cards'),
                                 contentPadding: const EdgeInsets.all(0),
                                 splashRadius: 10,
@@ -278,7 +278,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                               child: Wrap(
                                 crossAxisAlignment: WrapCrossAlignment.start,
                                 children: VoteEnum.values.mapIndexed((index, value) {
-                                  final selected = index < cardsToUse.length ? cardsToUse[index] : false;
+                                  final selected = index < _cardsToUse.length ? _cardsToUse[index] : false;
                                   return SizedBox(
                                     width: 120,
                                     child: CheckboxListTile(
@@ -309,7 +309,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                             elevation: 5,
                           ),
-                          onPressed: () => addStory(room.id, stories),
+                          onPressed: () => addStory(_room.id, _stories),
                           child: const Text('Add Story'),
                         ),
                       ],
@@ -317,20 +317,20 @@ class _EditRoomPageState extends State<EditRoomPage> {
                     SingleChildScrollView(
                       child: Column(
                         spacing: 10,
-                        children: stories
+                        children: _stories
                             .mapIndexed(
                               (index, story) => EditRoomStory(
                                 story: story,
-                                onDelete: () => removeStory(stories, story),
-                                onMoveUp: index == 0 ? null : () => moveStoryUp(stories, index, story),
-                                onMoveDown: index >= stories.length - 1 ? null : () => moveStoryDown(stories, index, story),
-                                nextOrder: stories.length,
+                                onDelete: () => removeStory(_stories, story),
+                                onMoveUp: index == 0 ? null : () => moveStoryUp(_stories, index, story),
+                                onMoveDown: index >= _stories.length - 1 ? null : () => moveStoryDown(_stories, index, story),
+                                nextOrder: _stories.length,
                                 userId: _user.uid,
-                                roomId: room.id,
+                                roomId: _room.id,
                                 onCancelled: () {
                                   if (story.added) {
                                     setState(() {
-                                      stories.remove(story);
+                                      _stories.remove(story);
                                     });
                                   }
                                 },
