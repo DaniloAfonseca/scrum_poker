@@ -1,6 +1,6 @@
 # scrum_poker
 
-A online agile estimation tool in flutter
+An online agile estimation tool in flutter
 
 ## Getting Started
 
